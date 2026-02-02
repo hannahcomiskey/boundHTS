@@ -1,0 +1,43 @@
+Package: boundHTS
+Type: Package
+Title: Building Hierarchical Coherent Densities for Bounded Variables
+Author: Hannah Comiskey [aut, cre], David Fraizer [aut], Ole Maneesoonthorn [aut]
+Maintainer: Hannah Comiskey <hannahcomiskey68@gmail.com>
+Authors@R: c(person(given = "Hannah",
+                      family = "Comiskey",
+                      role = c("aut", "cre"),
+                      email = "hannahcomiskey68@gmail.com"),
+             person(given = "David",
+                      family = "Fraizer",
+                      role = "aut"),
+             person(given = "Ole",
+                      family = "Maneesoonthorn",
+                      role = "aut"))
+Description: Methods for probabilistic and coherent forecasting of hierarchical bounded time series.
+Version: 1.0.0
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends:
+    R (>= 3.5)
+LazyData: true
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    tidyr,
+    tidyverse,
+    ggplot2,
+    dplyr,
+    coda,
+    rjags,
+    MASS
+Config/testthat/edition: 3
+Imports:
+    ExtDist,
+    future,
+    future.apply,
+    stats,
+    pracma
+VignetteBuilder: knitr

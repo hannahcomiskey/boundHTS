@@ -1,0 +1,34 @@
+model {
+  for(b in 1:n_bottom) {
+    # AR(1) latent process
+    for(i in 2:n_obs) {
+      logit_mu[i,b] ~ dnorm(beta0[b] + beta_coef[b]*logit_mu[i-1,b], tau_proc[b])
+    }
+
+    # Beta observation model
+    for(i in 1:n_obs) {
+      mu[i,b] <- ilogit(logit_mu[i,b])
+      alpha_param[i,b] <- mu[i,b] * phi[b]
+      beta_param[i,b]  <- (1 - mu[i,b]) * phi[b]
+      y[i,b] ~ dbeta(alpha_param[i,b], beta_param[i,b])
+    }
+
+    # One-step-ahead prediction
+    logit_mu_pred[b] <- beta0[b] + beta_coef[b] * (logit_mu[n_obs,b])
+    mu_pred[b] <- ilogit(logit_mu_pred[b])
+    alpha_pred[b] <- mu_pred[b] * phi[b]
+    beta_pred[b]  <- (1 - mu_pred[b]) * phi[b]
+    y_pred[b] ~ dbeta(alpha_pred[b], beta_pred[b])
+
+   # Priors
+    sigma_proc[b] ~ dunif(0.05, 0.5)
+    tau_proc[b] <- pow(sigma_proc[b], -2) # process precision
+
+    beta0[b] ~ dnorm(priormu_b0[b], pow(priorsigma_b0[b], -2))
+    beta_coef[b] ~ dnorm(priormu_b1[b], pow(priorsigma_b1[b], -2))T(-0.999, 0.999)
+    phi[b] ~ dgamma(2, 0.1)
+
+    # Initial latent state
+    logit_mu[1,b] ~ dnorm(0, pow(10, -2))
+  }
+}

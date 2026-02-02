@@ -1,0 +1,33 @@
+model {
+  for(b in 1:n_bottom) {
+    # DGP
+    for (i in 1:N_pred) {
+      logit_mu[i,b] <- beta0[b] + inprod(beta_coef[1:K,b], X[i,1:K])
+    }
+    for(i in 1:N_pred) { # Beta distribution parameters
+      mu[i,b] <- ilogit(logit_mu[i,b])
+      alpha_param[i,b] <-  mu[i,b] * phi[b]
+      beta_param[i,b]  <- (1 - mu[i,b]) * phi[b]
+    }
+
+    # Likelihood
+    for (i in 1:n_obs) {
+      y[i, b] ~ dbeta(alpha_param[i,b], beta_param[i,b])
+    }
+
+    # Posterior predictive
+    y_pred[b] ~ dbeta(alpha_param[N_pred,b], beta_param[N_pred,b])
+
+    # Priors
+    beta0[b] ~ dnorm(0, pow(10, -2)) # intercept
+    for (j in 1:(K-1)) {
+      beta_coef[j, b] ~ dnorm(0, pow(10, -2)) # splines
+    }
+    # Sum-to-zero constraint
+    beta_coef[K, b] <- -sum(beta_coef[1:(K-1), b])
+
+    phi[b] ~ dunif(0, 100)
+
+  }
+}
+
