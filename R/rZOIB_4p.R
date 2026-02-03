@@ -1,7 +1,7 @@
 #' Vectorized Zero-One Inflated 4 parameter Beta sampler
 #'
 #' @param n_mc number of Monte Carlo samples
-#' @param sub_obs_data matrix (n_years x n_nodes)
+#' @param sub_obs_data matrix of observed data (n_years x n_nodes)
 #' @param phi_array array (n_draws x n_nodes x n_years)
 #' @param zoi_array array (n_draws x n_nodes x n_years)
 #' @param coi_array array (n_draws x n_nodes x n_years)

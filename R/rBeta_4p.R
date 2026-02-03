@@ -2,7 +2,7 @@
 #'
 #' @param n_mc number of Monte Carlo samples
 #' @param weights node weights (vector of length n_nodes)
-#' @param sub_obs_data matrix (n_years x n_nodes)
+#' @param sub_obs_data matrix of data to use as expectation (n_years x n_nodes)
 #' @param phi_array array (n_draws x n_nodes x n_years)
 #' @return 3D array (n_draws x n_nodes x n_years)
 

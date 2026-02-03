@@ -1,5 +1,16 @@
-convolution_density <- function(Y_t, # [n_mc × n_nodes]
-                                phi_array, # [n_draws × n_nodes]
+#' Vectorized ZOIB density
+#'
+#' @param z_values evaluation points
+#' @param n_mc number of Monte Carlo samples
+#' @param Y_mc Monte Carlo draws of Y
+#' @param phi_array Monte Carlo draws of phi
+#' @param zoi_array Monte Carlo draws of zero-one inflation
+#' @param coi_array Monte Carlo draws of conditional one inflation
+#' @param lower lower bound
+#' @param upper upper bound
+
+ZOIB_convolution_density <- function(Y_mc,
+                                phi_array,
                                 zoi_array,
                                 coi_array,
                                 weights,
@@ -23,7 +34,7 @@ convolution_density <- function(Y_t, # [n_mc × n_nodes]
       mean(
         dZOIB_4p(
           z       = z,
-          Y_mc    = Y_t,
+          Y_mc    = Y_mc,
           phi_mc  = phi_mc,
           zoi_mc  = zoi_mc,
           coi_mc  = coi_mc,

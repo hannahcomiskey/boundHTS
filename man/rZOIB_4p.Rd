@@ -9,7 +9,7 @@ rZOIB_4p(n_mc, sub_obs_data, phi_array, zoi_array, coi_array, weights)
 \arguments{
 \item{n_mc}{number of Monte Carlo samples}
 
-\item{sub_obs_data}{matrix (n_years x n_nodes)}
+\item{sub_obs_data}{matrix of observed data (n_years x n_nodes)}
 
 \item{phi_array}{array (n_draws x n_nodes x n_years)}
 
