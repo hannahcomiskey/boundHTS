@@ -23,13 +23,11 @@ ZOIB_convolution_density(
 
 \item{coi_array}{Monte Carlo draws of conditional one inflation}
 
+\item{weights}{node weights (vector of length n_nodes)}
+
 \item{z_values}{evaluation points}
 
 \item{n_mc}{number of Monte Carlo samples}
-
-\item{lower}{lower bound}
-
-\item{upper}{upper bound}
 }
 \description{
 Vectorized ZOIB density

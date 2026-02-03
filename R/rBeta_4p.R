@@ -2,7 +2,7 @@
 #'
 #' @param n_mc number of Monte Carlo samples
 #' @param weights node weights (vector of length n_nodes)
-#' @param sub_obs_data matrix of data to use as expectation (n_years x n_nodes)
+#' @param sub_obs_data matrix of bottom-level series to use as expectation in sampler (n_years x n_nodes)
 #' @param phi_array array (n_draws x n_nodes x n_years)
 #' @return 3D array (n_draws x n_nodes x n_years)
 
@@ -13,6 +13,11 @@ rBeta_4p <- function(n_mc, sub_obs_data, phi_array, weights) {
   n_years <- nrow(sub_obs_data)
   n_nodes <- ncol(sub_obs_data)
   n_draws <- dim(phi_array)[1]
+
+  if(n_nodes != dim(phi_array)[2] | n_nodes != length(weights)) {
+    cat("Error: Dimension mismatch across inputs. Check data, phi and weights. ")
+    stop()
+  }
 
   # Monte Carlo particles
   Y <- array(NA_real_, dim = c(n_mc, n_nodes, n_years))

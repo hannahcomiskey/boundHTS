@@ -1,14 +1,13 @@
 #' Vectorized ZOIB density
 #'
-#' @param z_values evaluation points
-#' @param n_mc number of Monte Carlo samples
 #' @param Y_mc Monte Carlo draws of Y
 #' @param phi_array Monte Carlo draws of phi
 #' @param zoi_array Monte Carlo draws of zero-one inflation
 #' @param coi_array Monte Carlo draws of conditional one inflation
-#' @param lower lower bound
-#' @param upper upper bound
-
+#' @param weights node weights (vector of length n_nodes)
+#' @param z_values evaluation points
+#' @param n_mc number of Monte Carlo samples
+#'
 ZOIB_convolution_density <- function(Y_mc,
                                 phi_array,
                                 zoi_array,
@@ -26,11 +25,12 @@ ZOIB_convolution_density <- function(Y_mc,
   zoi_mc <- zoi_array[draw_id, , drop = FALSE]
   coi_mc <- coi_array[draw_id, , drop = FALSE]
 
-  future::plan(future::multisession)
+  future::plan(future::sequential)
 
   Density <- future.apply::future_sapply(
     z_values,
     function(z) {
+      library(boundHTS)
       mean(
         dZOIB_4p(
           z       = z,
@@ -46,5 +46,8 @@ ZOIB_convolution_density <- function(Y_mc,
     future.seed = TRUE
   )
 
-  Density / pracma::trapz(z_values, Density)
+  norm_dens <- Density / pracma::trapz(z_values, Density)
+
+  return(norm_dens)
+
 }

@@ -9,7 +9,7 @@ rBeta_4p(n_mc, sub_obs_data, phi_array, weights)
 \arguments{
 \item{n_mc}{number of Monte Carlo samples}
 
-\item{sub_obs_data}{matrix of data to use as expectation (n_years x n_nodes)}
+\item{sub_obs_data}{matrix of bottom-level series to use as expectation in sampler (n_years x n_nodes)}
 
 \item{phi_array}{array (n_draws x n_nodes x n_years)}
 

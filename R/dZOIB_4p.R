@@ -18,13 +18,14 @@ dZOIB_4p <- function(z, Y_mc, phi_mc, zoi_mc, coi_mc, upper, lower = 0) {
   if (n_nodes > 1) {
     parent   <- n_nodes
     child_sum <- rowSums(Y_mc[, -parent, drop = FALSE]) # all nodes except the last
-    mu        <- Y_mc[, parent]
+    mu <- Y_mc[, parent]
     zoi_vec <- zoi_mc[, parent]
     coi_vec <- coi_mc[, parent]
     upper_vec <- upper[parent]
   } else {
     child_sum <- 0 # no other nodes
-    mu        <- Y_mc[, 1]
+    parent <- 1
+    mu <- Y_mc[, 1]
     zoi_vec <- zoi_mc[, 1]
     coi_vec <- coi_mc[, 1]
     upper_vec <- upper
@@ -44,12 +45,14 @@ dZOIB_4p <- function(z, Y_mc, phi_mc, zoi_mc, coi_mc, upper, lower = 0) {
   dens <- numeric(n_mc)
 
   # Boundary handling
-  at0    <- x_scaled <= 0 # handles negative values
-  at1    <- x_scaled >= 1 # handles values > 1
-  inside <- !at0 & !at1
+  at0 <- x_scaled == 0 # handles values == 0
+  at1 <- x_scaled == 1 # handles values == 1
+  inside <- x_scaled > 0 & x_scaled < 1 # handles values inside range
+  outside <- x_scaled < 0 | x_scaled > 1 # handles values outside range
 
-  dens[at0]    <- zoi_vec[at0] * (1 - coi_vec[at0])
-  dens[at1]    <- zoi_vec[at1] * coi_vec[at1]
+  dens[outside] <- 0
+  dens[at0] <- zoi_vec[at0] * (1 - coi_vec[at0])
+  dens[at1] <- zoi_vec[at1] * coi_vec[at1]
   dens[inside] <- (1 - zoi_vec[inside]) *
     ExtDist::dBeta_ab(x_vals[inside],
                       alpha[inside],
