@@ -15,7 +15,7 @@ ZOIB_convolution_density(
 )
 }
 \arguments{
-\item{Y_mc}{Monte Carlo draws of Y}
+\item{Y_mc}{Monte Carlo draws of weighted bottom-series samples}
 
 \item{phi_array}{Monte Carlo draws of phi}
 

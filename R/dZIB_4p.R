@@ -1,15 +1,14 @@
-#' Vectorized ZOIB density
+#' Vectorized Zero Inflated 4 parameter Beta density
 #'
 #' @param z evaluation points
 #' @param Y_mc Monte Carlo draws of Y
-#' @param phi_mc Monte Carlo draws of phi
-#' @param zoi_mc Monte Carlo draws of zero-one inflation
-#' @param coi_mc Monte Carlo draws of conditional one inflation
+#' @param phi_mc Monte Carlo draws of Beta precision (n_draws x n_nodes x n_years)
+#' @param zi_mc Monte Carlo draws of zero inflation (n_draws x n_nodes x n_years)
 #' @param lower lower bound
 #' @param upper upper bound
 
 
-dZOIB_4p <- function(z, Y_mc, phi_mc, zoi_mc, coi_mc, upper, lower = 0) {
+dZIB_4p <- function(z, Y_mc, phi_mc, zi_mc, upper, lower = 0) {
 
   n_nodes <- ncol(Y_mc)
   n_mc <- nrow(phi_mc)
@@ -19,15 +18,13 @@ dZOIB_4p <- function(z, Y_mc, phi_mc, zoi_mc, coi_mc, upper, lower = 0) {
     parent   <- n_nodes
     child_sum <- rowSums(Y_mc[, -parent, drop = FALSE]) # all nodes except the last
     mu <- Y_mc[, parent]
-    zoi_vec <- zoi_mc[, parent]
-    coi_vec <- coi_mc[, parent]
+    zi_vec <- zi_mc[, parent]
     upper_vec <- upper[parent]
   } else {
     child_sum <- 0 # no other nodes
     parent <- 1
     mu <- Y_mc[, 1]
-    zoi_vec <- zoi_mc[, 1]
-    coi_vec <- coi_mc[, 1]
+    zi_vec <- zi_mc[, 1]
     upper_vec <- upper
   }
 
@@ -46,19 +43,16 @@ dZOIB_4p <- function(z, Y_mc, phi_mc, zoi_mc, coi_mc, upper, lower = 0) {
 
   # Boundary handling
   at0 <- x_scaled == 0 # handles values == 0
-  at1 <- x_scaled == 1 # handles values == 1
   inside <- x_scaled > 0 & x_scaled < 1 # handles values inside range
   outside <- x_scaled < 0 | x_scaled > 1 # handles values outside range
 
   dens[outside] <- 0
-  dens[at0] <- zoi_vec[at0] * (1 - coi_vec[at0])
-  dens[at1] <- zoi_vec[at1] * coi_vec[at1]
-  dens[inside] <- (1 - zoi_vec[inside]) *
-    ExtDist::dBeta_ab(x_vals[inside],
-                      alpha[inside],
-                      beta[inside],
-                      lower,
-                      upper_vec)
+  dens[at0] <- zi_vec[at0]
+  dens[inside] <- (1 - zi_vec[inside]) * ExtDist::dBeta_ab(x_vals[inside],
+                                                           alpha[inside],
+                                                           beta[inside],
+                                                           lower,
+                                                           upper_vec)
 
   return(dens)
 }

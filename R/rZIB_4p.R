@@ -1,14 +1,13 @@
-#' Vectorized Zero-One Inflated 4 parameter Beta sampler
+#' Vectorized Zero Inflated 4 parameter Beta sampler
 #'
 #' @param n_mc number of Monte Carlo samples
 #' @param sub_obs_data matrix of observed data (n_years x n_nodes)
-#' @param phi_array array (n_draws x n_nodes x n_years)
-#' @param zoi_array array (n_draws x n_nodes x n_years)
-#' @param coi_array array (n_draws x n_nodes x n_years)
-#' @param weights node weights (vector of length n_nodes)
+#' @param phi_array Monte Carlo draws of Beta precision (n_draws x n_nodes x n_years)
+#' @param zi_array Monte Carlo draws of zero inflation (n_draws x n_nodes x n_years)
+#' @param weights node weights for 4 parameter Beta (vector of length n_nodes)
 #' @return 3D array (n_draws x n_nodes x n_years)
 
-rZOIB_4p <- function(n_mc, sub_obs_data, phi_array, zoi_array, coi_array, weights) {
+rZIB_4p <- function(n_mc, sub_obs_data, phi_array, zi_array, weights) {
 
   sub_obs_data <- as.matrix(sub_obs_data)
 
@@ -27,28 +26,25 @@ rZOIB_4p <- function(n_mc, sub_obs_data, phi_array, zoi_array, coi_array, weight
     r <- draw_id[m]
 
     phi_r <- phi_array[r, , ]   # [nodes × years]
-    zoi_r <- zoi_array[r, , ]
-    coi_r <- coi_array[r, , ]
+    zi_r <- zi_array[r, , ]
 
     for (t in seq_len(n_years)) {
 
       mu <- sub_obs_data[t, ]
 
-      inflate <- stats::runif(n_nodes) < zoi_r[,t]
+      inflate <- stats::runif(n_nodes) < zi_r[,t]
 
-      # zero/one inflation
+      # zero inflation
       if (any(inflate)) {
-        Y[m, inflate, t] <-
-          stats::rbinom(sum(inflate), 1, prob = coi_r[t]) *
-          weights[inflate]
+        Y[m, inflate, t] <- 0
       }
 
       # beta part
       if (any(!inflate)) {
         idx <- which(!inflate)
 
-        alpha <- mu[idx] * phi_r[,t]
-        beta  <- (1 - mu[idx]) * phi_r[,t]
+        alpha <- mu[idx] * phi_r[idx, t]
+        beta  <- (1 - mu[idx]) * phi_r[idx, t]
 
         Y[m, idx, t] <-
           ExtDist::rBeta_ab(
