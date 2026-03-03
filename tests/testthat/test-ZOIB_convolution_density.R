@@ -153,7 +153,7 @@ test_that("ZOIB_convolution_density returns zero density outside support", {
   z_values <- c(-1, 0, 0.5, 1, 2)
 
   Y_mc <- matrix(
-    runif(n_mc * n_nodes, 0.1, 0.3),
+    runif(n_draws*n_nodes, 0.1, 0.3),
     n_draws, n_nodes
   )
 

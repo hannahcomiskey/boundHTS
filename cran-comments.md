@@ -1,5 +1,10 @@
 Version 1.0.0 -------------------------------------------------------------------
 
+> devtools::check(cran = T)
+── R CMD check results ─────────────────────────────────────────────────────────────────────────────────────── boundHTS 1.0.0 ────
+Duration: 23.5s
+
+0 errors ✔ | 0 warnings ✔ | 0 notes ✔
 > devtools::test()
 ℹ Testing boundHTS
 ✔ | F W  S  OK | Context
