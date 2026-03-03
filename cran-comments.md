@@ -1,4 +1,12 @@
 Version 1.0.0 -------------------------------------------------------------------
+This is a new submission.
+
+All checks were performed using R CMD check --as-cran.
+No ERRORs or WARNINGs were found.
+
+The package has been tested on Windows, macOS, and Linux via GitHub Actions.
+
+Thank you for your time.
 
 > devtools::check(cran = T)
 ── R CMD check results ─────────────────────────────────────────────────────────────────────────────────────── boundHTS 1.0.0 ────

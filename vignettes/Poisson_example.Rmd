@@ -13,13 +13,6 @@ vignette: >
 
 ```{r, setup, message = FALSE, warning = FALSE}
 set.seed(123)
-library(tidyverse)
-library(tidyr)
-library(dplyr)
-library(ggplot2)
-library(rjags)
-library(coda)
-library(splines)
 ```
 
 
@@ -58,10 +51,10 @@ M <- 4 # Number of bottom level series
 Next, we generate series-specific GLM coefficients and a single predictor x of length N ranging from 0 to 1:
 
 ```{r}
-b0 <- runif(M, min=0.4, max = 0.5) # M covariates
-b1 <- runif(M, min=0.4, max = 0.5)
-b2 <- runif(M, min=0.4, max = 0.5)
-x <- runif(N, min = 0, max = 1) # N observations
+b0 <- stats::runif(M, min=0.4, max = 0.5) # M covariates
+b1 <- stats::runif(M, min=0.4, max = 0.5)
+b2 <- stats::runif(M, min=0.4, max = 0.5)
+x <- stats::runif(N, min = 0, max = 1) # N observations
 ```
 
 ```{r, echo=FALSE}
@@ -81,7 +74,7 @@ y <- matrix(NA, nrow = N, ncol = M)
 
 for(m in 1:M) {
   lambda[, m] <- exp(b0[m] + b1[m] * x + b2[m] * x^2)
-  y[, m] <- rpois(N, lambda = lambda[, m])
+  y[, m] <- stats::rpois(N, lambda = lambda[, m])
 }
 
 colnames(y) <- c("AA", "AB", "BA", "BB")
@@ -132,7 +125,7 @@ Tot = apply(y, 1, sum) # Top-level sum of the undisturbed series
 Tot = ifelse(Tot < 0, 0, Tot) # Ensure positivity
 
 # Final data set
-sim_data <- tibble(
+sim_data <- tibble::tibble(
   X=x,
   Tot  = Tot,
   AA = y_star[,1], 
@@ -147,12 +140,12 @@ This shows the four bottom-level series over the covariate X.
 ```{r}
 hts_data_long <- tidyr::pivot_longer(sim_data, cols = -c(X), names_to = "Level", values_to = "Value")
 
-ggplot(hts_data_long, aes(x = X, y = Value, color = Level)) +
-  geom_line() +
-  labs(title = "Simulated hierarchical count", x = "X", y = "Count") +
-  theme_minimal() + 
-  theme(legend.position = "none") +
-  facet_wrap(~Level, scales='free')
+ggplot2::ggplot(hts_data_long, ggplot2::aes(x = X, y = Value, color = Level)) +
+  ggplot2::geom_line() +
+  ggplot2::labs(title = "Simulated hierarchical count", x = "X", y = "Count") +
+  ggplot2::theme_minimal() + 
+  ggplot2::theme(legend.position = "none") +
+  ggplot2::facet_wrap(~Level, scales='free')
 
 ```
 
@@ -221,8 +214,8 @@ for (t in seq_along(test_indices)) {
 
     # Quadratic Poisson regression
     formula_str <- paste(series, "~ X + I(X^2)")
-    fit <- glm(
-      formula = as.formula(formula_str),
+    fit <- stats::glm(
+      formula = stats::as.formula(formula_str),
       data    = sim_data[train_idx, c("X", series)],
       family = "poisson"
     )
@@ -235,19 +228,19 @@ for (t in seq_along(test_indices)) {
 
     # One-step-ahead Poisson mean
     lambda_est[test_indices[t], series] <-
-      predict(fit, newdata = sim_data[test_indices[t], c("X", series)])
+      stats::predict(fit, newdata = sim_data[test_indices[t], c("X", series)])
 
     # Draw predictive samples from Poisson distribution
-    fits[, series] <- rpois(
+    fits[, series] <- stats::rpois(
       n = test_indices[t],
       lambda = lambda_est[, series]
     )
   }
 
   # Save results for this forecast origin
-  lambda_list[[t]]     <- lambda_est
-  fitted_list[[t]]     <- fits
-  poiss_GLM_reg[[t]]   <- poiss_reg
+  lambda_list[[t]] <- lambda_est
+  fitted_list[[t]] <- fits
+  poiss_GLM_reg[[t]] <- poiss_reg
 }
 
 ```
@@ -291,17 +284,17 @@ for(t in 1:length(test_indices)) {
   lambda_vec <- c(lambda_conv, as.numeric(lambda_bseries)) # convolution and bottom series lambda
   
   # fitted values
-  fitted_vals <- as_tibble(fitted_list[[t]])
+  fitted_vals <- tibble::as_tibble(fitted_list[[t]])
   fitted_bseries <- fitted_vals[test_indices[t],bottom_sum]
   
   # Construct tilted pmf for top and bottom series
   f_tilt <- matrix(NA, nrow = length(top_y_vals), ncol = length(lambda_vec))
   for(k in 1:length(lambda_vec)) {
     # Convolution step
-    f_y <- dpois(top_y_vals, lambda_vec[k]) # density of convolution
+    f_y <- stats::dpois(top_y_vals, lambda_vec[k]) # density of convolution
     
     # Solve for nu
-    nu_star <- uniroot(moment_condition_tilting, interval = c(-1, 1), 
+    nu_star <- stats::uniroot(moment_condition_tilting, interval = c(-1, 1), 
                        f_y = f_y, y_vals = top_y_vals, 
                        mu_theory = mu_theory[k])$root
 

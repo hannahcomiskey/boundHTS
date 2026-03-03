@@ -13,15 +13,6 @@ vignette: >
 
 ```{r, setup, message = FALSE, warning = FALSE}
 set.seed(123)
-library(tidyverse)
-library(tidyr)
-library(dplyr)
-library(ggplot2)
-library(rjags)
-library(coda)
-library(splines)
-
-
 n_obs   <- 400
 burn_in <- 150
 time    <- seq_len(n_obs)
