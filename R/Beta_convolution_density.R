@@ -6,7 +6,7 @@
 #' @param weighted_samps matrix of weighted samples for each element in the aggregate (N rows x b columns)
 #' @param weights vector of weights that are used to combine to form the aggregated density Z. (length b)
 #' @details
-#' A wrapper function for calculating Monte Carlo estimates for the aggregated Beta density Z.
+#' A wrapper function for calculating Monte Carlo estimates for the aggregated Beta density Z using `ExtDist::dBeta_ab`.
 #'
 #' @return The aggregate density Z over a grid of values.
 #' @export
@@ -19,10 +19,11 @@ Beta_convolution_density <- function(z, alpha_matrix, beta_matrix, weighted_samp
 
   for(m in 1:n_draws) {
     for(s in 1:n_sims) {
-      conv_pdf[s,m] <- dBeta_4p(x = z - sum(weighted_samps[s,m, 1:(N-1)]),
-                                   upper = weights[N],
-                                   alpha = alpha_matrix[s,N],
-                                   beta = beta_matrix[s,N])
+      conv_pdf[s,m] <- ExtDist::dBeta_ab(x = z - sum(weighted_samps[s,m, 1:(N-1)]),
+                                         alpha = alpha_matrix[s,N],
+                                         beta = beta_matrix[s,N],
+                                         lower=0,
+                                         upper=weights[N])
     }
   }
   avg_over_sims <- apply(conv_pdf, 2, mean)

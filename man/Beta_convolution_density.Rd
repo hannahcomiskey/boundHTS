@@ -24,5 +24,5 @@ The aggregate density Z over a grid of values.
 Calculate 4 parameter Beta PDF
 }
 \details{
-A wrapper function for calculating Monte Carlo estimates for the aggregated Beta density Z.
+A wrapper function for calculating Monte Carlo estimates for the aggregated Beta density Z using \code{ExtDist::dBeta_ab}.
 }

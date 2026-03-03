@@ -1,4 +1,4 @@
-#' Vectorized 4 parameter Beta sampler
+#' Vectorized 4 parameter Beta sampler using `ExtDist::rBeta_ab`.
 #'
 #' @param n_mc number of Monte Carlo samples
 #' @param weights node weights (vector of length n_nodes)

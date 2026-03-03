@@ -2,7 +2,7 @@
 % Please edit documentation in R/rBeta_4p.R
 \name{rBeta_4p}
 \alias{rBeta_4p}
-\title{Vectorized 4 parameter Beta sampler}
+\title{Vectorized 4 parameter Beta sampler using \code{ExtDist::rBeta_ab}.}
 \usage{
 rBeta_4p(n_mc, sub_obs_data, phi_array, weights)
 }
@@ -19,5 +19,5 @@ rBeta_4p(n_mc, sub_obs_data, phi_array, weights)
 3D array (n_draws x n_nodes x n_years)
 }
 \description{
-Vectorized 4 parameter Beta sampler
+Vectorized 4 parameter Beta sampler using \code{ExtDist::rBeta_ab}.
 }
