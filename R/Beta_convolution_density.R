@@ -15,7 +15,7 @@ Beta_convolution_density <- function(z, alpha_matrix, beta_matrix, weighted_samp
   N <- dim(weighted_samps)[3]
   n_sims <- dim(weighted_samps)[1]
   n_draws <- dim(weighted_samps)[2]
-  conv_pdf <- matrix(NA, nrow = n_sims, ncol=n_draws)
+  conv_pdf <- matrix(0, nrow = n_sims, ncol=n_draws)
 
   for(m in 1:n_draws) {
     for(s in 1:n_sims) {
