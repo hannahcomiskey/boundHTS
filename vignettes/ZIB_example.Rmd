@@ -1,5 +1,5 @@
 ---
-title: "Simulated Beta distribution example"
+title: "Simulated zero inflated Beta distribution example"
 output: 
   rmarkdown::html_vignette:
        toc: true
@@ -31,9 +31,9 @@ nodes <- c("A", "AA", "AB")
 
 This vignette demonstrates how to:
 
-1. Simulate correlated zero-one inflated Beta (ziB) distributed time series at the bottom level of a hierarchy
+1. Simulate correlated zero inflated Beta (ZIB) distributed time series at the bottom level of a hierarchy
 2. Aggregate these series to higher levels with additional variability
-3. Estimate Bayesian state–space models at each level using **JAGS**
+3. Estimate Bayesian state–space models at each level using **brms**
 4. Perform rolling one-step-ahead forecasting efficiently by reusing compiled models
 
 The example is intentionally simple (two bottom-level series and one aggregate),but the workflow generalizes to larger hierarchies.
@@ -45,10 +45,10 @@ We consider a two-level hierarchy:
 - **Bottom level**: two correlated proportions (`AA`, `AB`)
 - **Top level**: their aggregate (`A`) and the complement (`B = 1 - A`) with noise.
 
-All series take values in (0, 1) and are modelled using ziB distributions. Temporal dependence is introduced on the logit scale.
+All series take values in (0, 1) and are modelled using ZIB distributions. Temporal dependence is introduced on the logit scale.
 
 
-## Step 1: Generate ziB distributed data 
+## Step 1: Generate zero inflated Beta distributed data 
 
 We want to simulate data that is correlated at the bottom level, and then aggregate the bottom layers to give subsequent layers.
 
@@ -195,7 +195,7 @@ To keep rolling-window forecasting computationally efficient:
 
 ### 2.1 MCMC and brms settings
 
-```{r, brms-settings, echo=FALSE}
+```{r, brms-settings, eval=FALSE}
 training_data <- sim_data %>% filter(Time < 249)
 test_times <- sort(unique(sim_data$Time[sim_data$Time >= 249]))
 
@@ -238,8 +238,8 @@ fits <- list(
 
 ```
 
-#### Step 2.2: Model diagnostics 
-```{r}
+### Step 2.2: Model diagnostics 
+```{r, eval=FALSE}
 summary(fits$A)
 plot(fits$A)
 pp_check(fits$A)
@@ -362,7 +362,7 @@ zi_post_df <- abind::abind(forecast_results[[1]]$zi_draws, forecast_results[[2]]
 
 ## Step 4: Coherent hierarchical forecasting
 
-We estimate a coherent top-series probability density function (PDF) using a convolution and weighted ziB distributions. As inputs into this process we use:
+We estimate a coherent top-series probability density function (PDF) using a convolution and weighted ZIB distributions. As inputs into this process we use:
 - the **top-level series** (`A`) estimates
 - the **bottom-level series** (`AA`, `AB`) estimates
 - the precision estimates for each series.
@@ -543,14 +543,14 @@ for (t in seq_along(test_times)) {
 
 The figure presents the predictive density formed by convolving the estimated bottom-level weighted Beta distributions. The resulting density is subsequently tilted so that its expectation matches the corresponding one-step-ahead predictive mean, ensuring coherence between the full predictive distribution and the point forecast.
 
-For a single time point:
-```{r, echo=FALSE, out.width = "100%",  fig.align = "center"}
-knitr::include_graphics("visualisations/example_beta_tilted_density_testset_A.png")
-```
+<!-- For a single time point: -->
+<!-- ```{r, echo=FALSE, out.width = "100%",  fig.align = "center"} -->
+<!-- knitr::include_graphics("visualisations/example_ZIB_tilted_density_testset_A.png") -->
+<!-- ``` -->
 
 Across multiple time points:
 ```{r,  echo=FALSE, out.width = "100%",  fig.align = "center"}
-knitr::include_graphics("visualisations/example_beta_tilted_density_testset_A_ridges.png")
+knitr::include_graphics("visualisations/example_ZIB_tilted_density_testset_A_ridges.png")
 
 ```
 
