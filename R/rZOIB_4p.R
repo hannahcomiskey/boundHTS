@@ -34,7 +34,7 @@ rZOIB_4p <- function(n_mc, sub_obs_data, phi_array, zoi_array, coi_array, weight
 
       mu <- sub_obs_data[t, ]
 
-      inflate <- stats::runif(n_nodes) < zoi_r[,t]
+      inflate <- stats::runif(n_nodes) < zoi_r[t]
 
       # zero/one inflation
       if (any(inflate)) {
@@ -47,8 +47,8 @@ rZOIB_4p <- function(n_mc, sub_obs_data, phi_array, zoi_array, coi_array, weight
       if (any(!inflate)) {
         idx <- which(!inflate)
 
-        alpha <- mu[idx] * phi_r[,t]
-        beta  <- (1 - mu[idx]) * phi_r[,t]
+        alpha <- mu[idx] * phi_r[t]
+        beta  <- (1 - mu[idx]) * phi_r[t]
 
         Y[m, idx, t] <-
           ExtDist::rBeta_ab(

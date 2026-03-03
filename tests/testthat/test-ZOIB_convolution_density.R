@@ -11,8 +11,8 @@ test_that("ZOIB_convolution_density returns a valid density over z_values", {
 
   # Monte Carlo draws of Y
   Y_mc <- matrix(
-    runif(n_mc * n_nodes, 0.05, 0.3),
-    nrow = n_mc,
+    runif(n_draws * n_nodes, 0.05, 0.3),
+    nrow = n_draws,
     ncol = n_nodes
   )
 
@@ -64,9 +64,9 @@ test_that("ZOIB_convolution_density integrates to one", {
     n_mc, n_nodes
   )
 
-  phi_array <- array(10, dim = c(n_draws, n_nodes))
-  zoi_array <- array(0.2, dim = c(n_draws, n_nodes))
-  coi_array <- array(0.5, dim = c(n_draws, n_nodes))
+  phi_array <- array(10, dim = c(n_mc, n_nodes))
+  zoi_array <- array(0.2, dim = c(n_mc, n_nodes))
+  coi_array <- array(0.5, dim = c(n_mc, n_nodes))
 
   weights <- rep(1, n_nodes)
 
@@ -97,7 +97,7 @@ test_that("ZOIB_convolution_density is deterministic given fixed seed", {
 
   Y_mc <- matrix(
     runif(n_mc * n_nodes, 0.05, 0.3),
-    n_mc, n_nodes
+    n_draws, n_nodes
   )
 
   phi_array <- array(
@@ -154,7 +154,7 @@ test_that("ZOIB_convolution_density returns zero density outside support", {
 
   Y_mc <- matrix(
     runif(n_mc * n_nodes, 0.1, 0.3),
-    n_mc, n_nodes
+    n_draws, n_nodes
   )
 
   phi_array <- array(8, dim = c(n_draws, n_nodes))

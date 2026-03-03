@@ -1,0 +1,20 @@
+Version 1.0.0 -------------------------------------------------------------------
+
+> devtools::test()
+ℹ Testing boundHTS
+✔ | F W  S  OK | Context
+✔ |          7 | Beta_convolution_density
+✔ |          9 | dBeta_4p
+✔ |          9 | dZOIB_4p
+✔ |          7 | moment_condition_tilting
+✔ |          7 | rBeta_4p
+Error: Dimension mismatch across inputs. Check data, phi and weights.
+✔ |         12 | rZOIB_4p
+✔ |          9 | tilted_density_cont
+✔ |          9 | tilted_density_discrete
+✔ |          8 | ZOIB_convolution_density
+
+══ Results ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 77 ]
+
+
