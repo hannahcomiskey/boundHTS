@@ -1,0 +1,56 @@
+---
+title: "boundHTS: A R package for coherent hierarchical forecasting of bounded outcomes"
+date: "2026-03-04"
+abstract: >
+  An abstract of less than 150 words.
+draft: true
+author:  
+  - name: Hannah Comiskey
+    affiliation: Monash Univeristy
+    address:
+    - Department of Econcometrics and Business Statistics
+    - Melbourne, Australia
+    url: https://hannahcomiskey.github.io/
+    orcid: 0000-0003-0034-6725
+    email: hannahcomiskey@monash.edu
+  - name: David Frazier
+    affiliation: Monash Univeristy
+    address:
+    - Department of Econcometrics and Business Statistics
+    - Melbourne, Australia
+  - name: Ole Maneesoonthorn
+    affiliation: Monash Univeristy
+    address:
+    - Department of Econcometrics and Business Statistics
+    - Melbourne, Australia
+type: package
+output: 
+  rjtools::rjournal_article:
+    self_contained: yes
+    toc: no
+bibliography: RJreferences.bib
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(plotly)
+library(ggplot2)
+library(boundHTS)
+library(kableExtra)
+```
+
+# Introduction
+
+A hierarchical time series is a multivariate time series subject to linear aggregation constraints \citep{Hyndman2022}. Forecasts for such series are considered coherent when lower-level predictions aggregate exactly to higher levels, satisfying the system’s aggregation constraints. In practice, base forecasts are often produced independently at each level, which can lead to incoherence. Forecast reconciliation provides a principled post-processing framework that adjusts these base forecasts to produce aggregate-consistent predictions while retaining as much of the original information as possible \citep{Hyndman2021}. Forecasts may be either point forecasts, representing single most-likely future values, or probabilistic forecasts, representing a distribution over possible future outcomes. A comprehensive review of point and probabilistic reconciliation methods is provided by \citet{Athanasopoulos2024}.
+
+Several R packages on CRAN implement forecast reconciliation across diverse scenarios, including point versus probabilistic forecasts, discrete versus continuous data, and different hierarchical structures (e.g., temporal or cross-sectional). While forecast reconciliation has been studied extensively for discrete and continuous-valued time series, comparatively little attention has been given to hierarchical forecasting under bounded constraints.
+
+One of the most widely used packages for point-forecast reconciliation of hierarchical and grouped time series is \CRANpkg{hts}. This package implements classical methods such as bottom-up (BU), where bottom-level forecasts are aggregated to form higher-level predictions, and top-down (TD), where parent-level forecasts are disaggregated to child nodes. It also provides more advanced methods, including the Optimal Combination (OC) approach of \citet{Hyndman2011} and the Minimum Trace (MinT) method of \citet{Wickramasuriya2019}. OC uses a regression-based framework to adjust forecasts at the bottom level so that they aggregate coherently, while MinT formulates reconciliation as a constrained optimization problem that minimizes the trace of the reconciled forecast error covariance matrix. The \CRANpkg{fabletools} package extends hierarchical reconciliation to the tidyverse ecosystem, providing BU, TD, middle-out (MO), and MinT methods. Both \CRANpkg{hts} and \CRANpkg{fabletools} focus on point forecasts for cross-sectional hierarchies, assuming underlying Gaussian distributions. For more complex or non-standard structures, including temporal hierarchies, \CRANpkg{FoReco} offers flexible reconciliation methods with efficient sparse matrix handling, though it also targets point forecasts only.
+
+For probabilistic reconciliation, the works of \citet{Taieb2017} and \citet{Panagiotelis2023} have been foundational. The \CRANpkg{ProbReco} package explicitly frames reconciliation as an optimization problem based on proper scoring rules, generating coherent probabilistic samples by minimizing the Energy Score \citep{gneiting2007, Panagiotelis2023}. However like the aforementioned packages, this method also only considers reconciliation of data generated from Gaussian distributions. Many empirical applications further involve discrete or bounded supports, introducing additional challenges that are not adequately addressed by these standard Gaussian-based reconciliation methods. \CRANpkg{bayesRecon} enforces coherence through conditioning under aggregation constraints. It supports Gaussian data as well as count data, employing Bottom-Up Importance Sampling (BUIS) to produce lower-bounded, aggregate-consistent probabilistic forecasts \citep{Corani2023}. However, this package does not deal with fully-bounded distributions like the Beta distribution for the reconciliation of proportions.
+
+To address these challenges, we present the \pkg{boundHTS} package which generates coherent hierarchical forecasts for bounded continuous and lower-bounded discrete variables. Our contribution lies in combining distributional aggregation via convolution with exponential tilting to obtain coherent and accurate forecast densities. The approach respects the natural bounds of parent distributions. We demonstrate its performance using simulated Beta and Poisson hierarchical data structures.
+
+# Using the \pkg{boundHTS} package
+

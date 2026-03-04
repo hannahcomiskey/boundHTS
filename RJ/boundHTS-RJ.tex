@@ -1,0 +1,49 @@
+% !TeX root = RJwrapper.tex
+\title{boundHTS: A R package for coherent hierarchical forecasting of bounded outcomes}
+
+
+\author{by Hannah Comiskey, David Frazier, Ole Maneesoonthorn}
+
+\maketitle
+
+\abstract{%
+An abstract of less than 150 words.
+}
+
+\section{Introduction}\label{introduction}
+
+A set of hierarchical time series can be defined as a multivariate time series that are subject to linear aggregation constraints \citep{Hyndman2022}. A set of hierarchical forecasts are said to be coherent when they are internally consistent, meaning forecasts at lower levels aggregate exactly to those at higher levels of the hierarchy and satisfy the system's aggregation constraints. In practice, base forecasts are often generated independently at each level of the hierarchy and consequently fail to respect these relationships. Forecast reconciliation provides a principled post-processing framework that adjusts these incoherent base forecasts to produce aggregate-consistent, hierarchical predictions while preserving as much of the original forecasting information as possible \citep{Hyndman2021}. Forecast are considered to be either be point forecasts or probabilistic forecasts. Point forecasts are a single, most-likely future value, while probabilistic forecasts predict a range of possible outcomes with associated likelihoods. A complete review of point and probabilistic forecast reconciliation methods may be found in \citet{Athanasopoulos2024}.
+
+There are many R packages available on CRAN that carry out forecast reconciliation across many different scenarios, such as whether a user has point or probabilistic base forecasts, data generated from discrete or continuous distribution, and finally, different hierarchies, such as temporal or cross-sectional hierarchies. With these in mind, one of the most widely known packages for hierarchical and grouped time series forecasting for point predictions is \pkg{hts}. This package implements traditional hierarchical point-forecast reconciliation methods such as bottom-up reconciliation (BU) where bottom-level forecasts are aggregated to give parent nodes and conversely, top-down (TD) reconciliation whether parent nodes are disaggregated to give child nodes. It also implements more nuanced methods like Optimal Combination of \citet{Hyndman2011} and Minimum Trace (MinT) approach of \citet{Wickramasuriya2019}.
+
+\bibliography{RJreferences.bib}
+
+\address{%
+Hannah Comiskey\\
+Monash Univeristy\\%
+Department of Econcometrics and Business Statistics\\ Melbourne, Australia\\
+%
+\url{https://hannahcomiskey.github.io/}\\%
+\textit{ORCiD: \href{https://orcid.org/0000-0003-0034-6725}{0000-0003-0034-6725}}\\%
+\href{mailto:hannahcomiskey@monash.edu}{\nolinkurl{hannahcomiskey@monash.edu}}%
+}
+
+\address{%
+David Frazier\\
+Monash Univeristy\\%
+Department of Econcometrics and Business Statistics\\ Melbourne, Australia\\
+%
+%
+%
+%
+}
+
+\address{%
+Ole Maneesoonthorn\\
+Monash Univeristy\\%
+Department of Econcometrics and Business Statistics\\ Melbourne, Australia\\
+%
+%
+%
+%
+}
