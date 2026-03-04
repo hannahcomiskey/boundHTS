@@ -8,3 +8,122 @@ library(ggplot2)
 library(boundHTS)
 library(kableExtra)
 
+devtools::load_all()
+
+
+## ----sim_poisson_setup, fig.cap="The two-level hierarchical set up of the Poisson simulation. The four child nodes (A, B, C, D) aggregate to the parent node, Total."----
+knitr::include_graphics("figures/sim_node_hierarchy.pdf")
+
+
+## ----glm-helper, include=FALSE------------------------------------------------
+
+rolling_poisson_glm <- function(sim_data, test_indices, series_names) {
+  
+  lambda_list  <- vector("list", length(test_indices))
+  fitted_list  <- vector("list", length(test_indices))
+  model_list   <- vector("list", length(test_indices))
+  
+  for (t in seq_along(test_indices)) {
+    
+    train_idx <- seq_len(test_indices[t] - 1)
+    
+    fits <- lambda_est <- matrix(NA, nrow = test_indices[t], ncol = length(series_names))
+    colnames(fits) <- colnames(lambda_est) <- series_names
+    
+    models_t <- list()
+    
+    for (series in series_names) {
+      
+      fit <- stats::glm(
+        stats::as.formula(paste(series, "~ X + I(X^2)")),
+        data   = sim_data[train_idx, c("X", series)],
+        family = "poisson"
+      )
+      
+      lambda_est[, series] <- stats::predict(
+        fit,
+        newdata = sim_data[seq_len(test_indices[t]), c("X", series)],
+        type = "response"
+      )
+      
+      fits[, series] <- stats::rpois(
+        n = test_indices[t],
+        lambda = lambda_est[, series]
+      )
+      
+      models_t[[series]] <- fit
+    }
+    
+    lambda_list[[t]] <- lambda_est
+    fitted_list[[t]] <- fits
+    
+    model_list[[t]] <- models_t
+  }
+  
+  list(
+    models  = model_list,
+    lambda  = lambda_list,
+    fitted  = fitted_list
+  )
+}
+
+
+
+## ----set up, echo=TRUE--------------------------------------------------------
+N <- nrow(boundHTS::poisson_sim_data) 
+m <- 4 
+n_series <- ncol(boundHTS::poisson_sim_data[,-1])
+n_train <- c(1:c(N-50)) # withhold the last 50 observations for validation
+test_indices <- c(length(n_train)+1):N
+n_samples <- length(test_indices)
+sum_bottom <- c("AA", "AB", "BA", "BB")
+max_obs <- max(boundHTS::poisson_sim_data$Tot)
+top_y_vals <- seq(from = 0, to = max_obs+10)
+
+
+glm_results <- rolling_poisson_glm(boundHTS::poisson_sim_data, test_indices, colnames(poisson_sim_data[,-c(1)]))
+
+
+
+## ----pois_tilt, echo=TRUE-----------------------------------------------------
+f_tilde_exp <- list()
+nu_exp <- list()
+f_y <- vector()
+bottom_sum <- c("AA", "AB", "BA", "BB")
+pmf_values <- vector()
+
+for(t in 1:length(test_indices)) {
+  
+  # lambda values
+  lambda_vals <- as.data.frame(glm_results$lambda[[t]])
+  mu_theory <- as.vector(unlist(lambda_vals[test_indices[t], ])) # predictive mean
+  
+  lambda_bseries <- lambda_vals[test_indices[t],bottom_sum]
+  lambda_conv <- sum(lambda_bseries) # sum poissons
+  lambda_vec <- c(lambda_conv, as.numeric(lambda_bseries)) # convolution and bottom series lambda
+  
+  # fitted values
+  fitted_vals <- tibble::as_tibble(glm_results$fitted[[t]])
+  fitted_bseries <- fitted_vals[test_indices[t],bottom_sum]
+  
+  # Construct tilted pmf for top and bottom series
+  f_tilt <- matrix(NA, nrow = length(top_y_vals), ncol = length(lambda_vec))
+  for(k in 1:length(lambda_vec)) {
+    # Convolution step
+    f_y <- stats::dpois(top_y_vals, lambda_vec[k]) # density of convolution
+    
+    # Solve for the tilting parameter 
+    nu_star <- stats::uniroot(moment_condition_tilting, interval = c(-1, 1), 
+                       f_y = f_y, y_vals = top_y_vals, 
+                       mu_theory = mu_theory[k])$root
+    
+    # Generate the tilted density
+    f_tilt[,k] <- tilted_density_discrete(nu_star, f_y, top_y_vals)
+  }
+  colnames(f_tilt) <- colnames(fitted_vals)
+  
+  nu_exp[[t]] <- nu_star
+  f_tilde_exp[[t]] <- f_tilt # density of top level 
+}
+
+

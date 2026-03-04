@@ -29,7 +29,8 @@ output:
     self_contained: yes
     toc: no
 bibliography: RJreferences.bib
-
+header-includes:
+  - \providecommand{\pandocbounded}[1]{#1}
 ---
 
 ```{r setup, include=FALSE}
@@ -38,6 +39,8 @@ library(plotly)
 library(ggplot2)
 library(boundHTS)
 library(kableExtra)
+
+devtools::load_all()
 ```
 
 # Introduction
@@ -52,5 +55,207 @@ For probabilistic reconciliation, the works of \citet{Taieb2017} and \citet{Pana
 
 To address these challenges, we present the \pkg{boundHTS} package which generates coherent hierarchical forecasts for bounded continuous and lower-bounded discrete variables. Our contribution lies in combining distributional aggregation via convolution with exponential tilting to obtain coherent and accurate forecast densities. The approach respects the natural bounds of parent distributions. We demonstrate its performance using simulated Beta and Poisson hierarchical data structures.
 
-# Using the \pkg{boundHTS} package
+# Theory and Methods unpinning \pkg{boundHTS}
+
+
+
+
+
+# Using \pkg{boundHTS}
+## Case 1: Aggregating count forecasts
+### The data
+To begin, we consider a two-tier cross-sectional hierarchical time series where the observations are simulated from low-count Poisson distributions. The hierarchical structure is given by Figure \@ref(fig:sim_poisson_setup). We consider a scenario where four bottom series (M=4) and 2000 observations (N=2000). The rate parameters of the bottom series are generated using generalised linear models with a log-link. These rate parameters then generate low-value counts via the Poisson distribution. Additional variability is introduced to the bottom series counts using integer values shocks to each series to perturb these series subject to a strict non-negativity constraint. To generate the top-level series, the rate parameters of the bottom series are aggregated. The complete procedure for the data simulation procedure can be found in the Supplementary Materials. This simulated data is stored as `poisson_sim_data` within \pkg{boundHTS}. To evaluate the utility of our method, we split the data into 1750 training observations and 250 test observations. 
+
+
+```{r sim_poisson_setup, fig.cap="The two-level hierarchical set up of the Poisson simulation. The four child nodes (A, B, C, D) aggregate to the parent node, Total."}
+knitr::include_graphics("figures/sim_node_hierarchy.pdf")
+```
+
+
+### Modelling the base forecasts
+To obtain base forecasts, we fit standard generalized linear models (GLMs) independently to each node in the hierarchy using `glm()` from the \pkg{stats} package. These models serve as a simple and reproducible forecasting baseline; our primary contribution lies in the reconciliation methodology applied to the resulting forecasts. For each node, we generate a series of rolling one-step-ahead forecasts. At each step, we record both the in-sample fitted values and the one-step-ahead predictive mean for the rate parameter of each observation. These values are subsequently used to construct a predictive point forecast for each series. These predictions form the base point forecasts that are subsequently reconciled.
+
+### Coherent hierarchical forecasting
+
+We construct a coherent probabilistic forecast for the top-level series by combining bottom-level Poisson forecasts through convolution and subsequently enforcing moment consistency via exponential tilting. As the sum of independent Poisson random variables is also Poisson, we may use a stepwise procedure in which lower-level tilted densities are convolved to form the starting density of their parent node. This ensures that the resulting probability mass function (PMF) respects aggregation constraints while aligning with the predictive means obtained from the base models.
+
+The procedure requires:
+
+- Predictive mean estimates for the **top-level series** (`A`)
+- Predictive mean estimates for the **bottom-level series** (`AA`, `AB`, `BA`, `BB`)
+- A discrete support grid over which the PMFs are evaluated  
+
+To begin, for time $t$ we will denote the top series as $u_{t}$ and the bottom series $m$ as $b_{m, t}$. We assume the bottom series is given by $b_{m, t} \sim \mathrm{Poisson}(\lambda_{m,t})$ and let the mean of these forecasts be given by $\hat{\lambda}_{m,t}$. Taking advantage of the summation property of Poisson distributed variables, the expected value of the convoluted density is given by $\sum_{i=1}^{j}\lambda_{i,t}$. Via convolution, the estimated PMF of the top series node is given by,
+\begin{align}
+    f_{m+1,t}(u_{t}) &=
+    \frac{ (\sum_{i=1}^{j}\lambda_{i,t})^{u_{t}} e^{-(\sum_{i=1}^{j}\lambda_{i,t})}}{u_{t}!},
+    \qquad u_{t} \in \mathbb{N}_0.
+\end{align}
+
+For illustration, base forecasts are generated using a rolling Poisson GLM. The implementation is provided in a helper function within the article for reproducibility, but the reconciliation framework is model-agnostic and can be applied to any suitable base forecasts.
+
+```{r glm-helper, include=FALSE}
+
+rolling_poisson_glm <- function(sim_data, test_indices, series_names) {
+  
+  lambda_list  <- vector("list", length(test_indices))
+  fitted_list  <- vector("list", length(test_indices))
+  model_list   <- vector("list", length(test_indices))
+  
+  for (t in seq_along(test_indices)) {
+    
+    train_idx <- seq_len(test_indices[t] - 1)
+    
+    fits <- lambda_est <- matrix(NA, nrow = test_indices[t], ncol = length(series_names))
+    colnames(fits) <- colnames(lambda_est) <- series_names
+    
+    models_t <- list()
+    
+    for (series in series_names) {
+      
+      fit <- stats::glm(
+        stats::as.formula(paste(series, "~ X + I(X^2)")),
+        data   = sim_data[train_idx, c("X", series)],
+        family = "poisson"
+      )
+      
+      lambda_est[, series] <- stats::predict(
+        fit,
+        newdata = sim_data[seq_len(test_indices[t]), c("X", series)],
+        type = "response"
+      )
+      
+      fits[, series] <- stats::rpois(
+        n = test_indices[t],
+        lambda = lambda_est[, series]
+      )
+      
+      models_t[[series]] <- fit
+    }
+    
+    lambda_list[[t]] <- lambda_est
+    fitted_list[[t]] <- fits
+    
+    model_list[[t]] <- models_t
+  }
+  
+  list(
+    models  = model_list,
+    lambda  = lambda_list,
+    fitted  = fitted_list
+  )
+}
+
+```
+
+
+
+```{r set up, echo=TRUE}
+N <- nrow(boundHTS::poisson_sim_data) 
+m <- 4 
+n_series <- ncol(boundHTS::poisson_sim_data[,-1])
+n_train <- c(1:c(N-50)) # withhold the last 50 observations for validation
+test_indices <- c(length(n_train)+1):N
+n_samples <- length(test_indices)
+sum_bottom <- c("AA", "AB", "BA", "BB")
+max_obs <- max(boundHTS::poisson_sim_data$Tot)
+top_y_vals <- seq(from = 0, to = max_obs+10)
+
+
+glm_results <- rolling_poisson_glm(boundHTS::poisson_sim_data, test_indices, colnames(poisson_sim_data[,-c(1)]))
+
+```
+
+
+To reconcile the mean of the convolution and the predictive mean $\hat{\lambda}_{k,t}$, we apply exponential tilting using the estimated tilting parameter and predictive means of each series.
+```{r pois_tilt, echo=TRUE}
+f_tilde_exp <- list()
+nu_exp <- list()
+f_y <- vector()
+bottom_sum <- c("AA", "AB", "BA", "BB")
+pmf_values <- vector()
+
+for(t in 1:length(test_indices)) {
+  
+  # lambda values
+  lambda_vals <- as.data.frame(glm_results$lambda[[t]])
+  mu_theory <- as.vector(unlist(lambda_vals[test_indices[t], ])) # predictive mean
+  
+  lambda_bseries <- lambda_vals[test_indices[t],bottom_sum]
+  lambda_conv <- sum(lambda_bseries) # sum poissons
+  lambda_vec <- c(lambda_conv, as.numeric(lambda_bseries)) # convolution and bottom series lambda
+  
+  # fitted values
+  fitted_vals <- tibble::as_tibble(glm_results$fitted[[t]])
+  fitted_bseries <- fitted_vals[test_indices[t],bottom_sum]
+  
+  # Construct tilted pmf for top and bottom series
+  f_tilt <- matrix(NA, nrow = length(top_y_vals), ncol = length(lambda_vec))
+  for(k in 1:length(lambda_vec)) {
+    # Convolution step
+    f_y <- stats::dpois(top_y_vals, lambda_vec[k]) # density of convolution
+    
+    # Solve for the tilting parameter 
+    nu_star <- stats::uniroot(moment_condition_tilting, interval = c(-1, 1), 
+                       f_y = f_y, y_vals = top_y_vals, 
+                       mu_theory = mu_theory[k])$root
+    
+    # Generate the tilted density
+    f_tilt[,k] <- tilted_density_discrete(nu_star, f_y, top_y_vals)
+  }
+  colnames(f_tilt) <- colnames(fitted_vals)
+  
+  nu_exp[[t]] <- nu_star
+  f_tilde_exp[[t]] <- f_tilt # density of top level 
+}
+
+```
+
+
+
+
+
+## Case 2: Aggregating proportional forecasts
+
+
+
+
+# Appendix
+## Data generating process for Poisson data of Case 1
+The bottom-level series are constructed using a generalized linear model with a quadratic log-link. For each series $m=1,\dots,M$, regression coefficients are drawn independently from a uniform distribution,
+\begin{align*}
+(\theta_{0,m}, \theta_{1,m}, \theta_{2,m}) \sim \text{Uniform}(0.4,\,0.5).
+\end{align*}
+A common covariate $x_{t}$ is drawn for each observation $t=1,\dots,N$ from a uniform distribution on $[0,1]$,
+\begin{align*}
+x_{t} \sim \text{Uniform}(0, 1).
+\end{align*}
+The Poisson rate parameter is then defined as
+\begin{align*}
+\lambda_{m,t} &= \exp\!\big( \theta_{0,m} + \theta_{1,m}x_t + \theta_{2,m} x_t^2 \big),
+\end{align*}
+with observed counts generated according to
+\begin{align*}
+b_{m,t} &\sim \text{Poisson}(\lambda_{m,t}).
+\end{align*}
+To introduce additional variability, integer-valued shocks 
+$\varepsilon_{m,t} \in \{-1,0,1\}$ are added independently to each $b_{m,t}$. 
+The distribution of $\varepsilon_{i,m}$ is series-specific to ensure that noise does not systematically cancel out when aggregating across series:
+\begin{align*}
+\begin{aligned}
+\varepsilon_{1,t} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.3,0.4,0.3), \\
+\varepsilon_{2,t} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.5,0.4,0.1), \\
+\varepsilon_{3,} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.33,0.33,0.34), \\
+\varepsilon_{4,t} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.2,0.3,0.5).
+\end{aligned}
+\end{align*}
+To ensuring non-negativity, the perturbed bottom-level series are then given by
+\begin{align*}
+b^{*}_{m,t} = \max\!\big(0,\, b_{m,t} + \varepsilon_{m,t}\big).
+\end{align*}  
+At the aggregate level, the series is obtained by summing across the unperturbed bottom-level counts:
+\begin{align*}
+y^\text{tot.}_t  = \sum_{m=1}^M b_{m,t}.
+\end{align*}
+The final noisy dataset consists of 2000 draws of the covariate $x$, the aggregate series $\text{Tot}$, and the four perturbed bottom-level series $(b^{\ast}_{1},\dots,b^{\ast}_{4})$.
 
