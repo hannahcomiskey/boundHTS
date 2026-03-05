@@ -248,7 +248,8 @@ ggplot() +
   geom_line(data = conv_plot, aes(x = y, y = pmf, col='Convoluted denisty')) +
   geom_vline(data = means_df,
              aes(xintercept = mean, linetype = "Predicitive mean")) +
-  facet_grid(~ node) +
+  facet_wrap(~ node, nrow=5) +
+  scale_colour_brewer(palette="Set1") +
   labs(x = "Counts",
        y = "Tilted probability mass")
 
