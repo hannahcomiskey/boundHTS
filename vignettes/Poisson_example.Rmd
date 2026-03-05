@@ -18,15 +18,13 @@ set.seed(123)
 
 This vignette demonstrates how to:
 
-1. Simulate correlated Poisson-distributed time series at the bottom level of a hierarchy
-2. Aggregate these series to higher levels with additional variability
-3. Estimate Bayesian state–space models at each level using **JAGS**
-4. Perform rolling one-step-ahead forecasting efficiently by reusing compiled models
+1. Forecast simulated Poisson-distributed time series using `glm` from the \CRANpkg{stats}.
+2. Perform rolling one-step-ahead forecasting efficiently by reusing compiled models
 
-The example is intentionally simple (two bottom-level series and one aggregate),but the workflow generalizes to larger hierarchies.
+The example is intentionally simple (two bottom-level series and one aggregate), but the workflow generalizes to larger hierarchies.
 
 ### Hierarchical structure
-In this example, we simulate a simple hierarchical count dataset with four bottom-level series.  Each series is generated from a Poisson GLM with quadratic dependence on a covariate `x`. We then add discrete noise to create variation beyond the Poisson mean.
+In this example, we use a simple simulated hierarchical count dataset with four bottom-level series.  Each series is generated from a Poisson GLM with quadratic dependence on a covariate `x`. 
 
 We consider a two-level hierarchy:
 
@@ -34,109 +32,14 @@ We consider a two-level hierarchy:
 - **Top level**: their aggregate (`Total`) with noise.
 
 
-## Step 1: Generate Beta distributed data 
-
-We first define the number of observations (`N`) and number of bottom-level series (`M`).
+## Step 1: Load and visualise Poisson distributed data 
 
 ```{r}
-N <- 2000 # Number of observations
-M <- 4 # Number of bottom level series
+sim_data <- boundHTS::poisson_sim_data
 
 ```
 
-
-
-### 1.1 Bottom-level dynamics
-
-Next, we generate series-specific GLM coefficients and a single predictor x of length N ranging from 0 to 1:
-
-```{r}
-b0 <- stats::runif(M, min=0.4, max = 0.5) # M covariates
-b1 <- stats::runif(M, min=0.4, max = 0.5)
-b2 <- stats::runif(M, min=0.4, max = 0.5)
-x <- stats::runif(N, min = 0, max = 1) # N observations
-```
-
-```{r, echo=FALSE}
-cat("b0 coefficients: ", b0)
-cat("\n b1 coefficients: ", b1)
-cat("\n b2 coefficients: ", b2)
-cat("\n x covariate: ", head(x, n=10))
-
-```
-
-### 1.2 Simulate Poisson counts
-We calculate the Poisson rate (lambda) for each bottom-level series and generate counts:
-
-```{r}
-lambda <- matrix(NA, nrow = N, ncol = M)
-y <- matrix(NA, nrow = N, ncol = M)
-
-for(m in 1:M) {
-  lambda[, m] <- exp(b0[m] + b1[m] * x + b2[m] * x^2)
-  y[, m] <- stats::rpois(N, lambda = lambda[, m])
-}
-
-colnames(y) <- c("AA", "AB", "BA", "BB")
-head(y)
-
-```
-
-### Step 1.3 Add discrete noise to simulate extra variation
-We create epsilon noise that takes values -1, 0, or 1 with series-specific probabilities:
-```{r}
-eps <- matrix(NA, nrow = N, ncol = M)
-
-eps[,1] <- sample(c(-1,0,1), N, replace = TRUE, prob = c(0.3, 0.4, 0.3))
-eps[,2] <- sample(c(-1,0,1), N, replace = TRUE, prob = c(0.5, 0.4, 0.1))
-eps[,3] <- sample(c(-1,0,1), N, replace = TRUE, prob = c(0.33, 0.33, 0.34))
-eps[,4] <- sample(c(-1,0,1), N, replace = TRUE, prob = c(0.2, 0.3, 0.5))
-
-```
-
-We then disturb the bottom-level series:
-```{r}
-y_star <- matrix(NA, nrow = N, ncol = M)
-
-for(m in 1:M) {
-  y_star[, m] <- pmax(0, y[, m] + eps[, m])  # ensure non-negative counts
-}
-
-colnames(y_star) <- c("AA", "AB", "BA", "BB")
-head(y_star)
-
-```
-
-
-You can check the distribution of a series:
-
-```{r}
-hist(y_star[,4], main = "Histogram of series BB", xlab = "Counts")
-
-```
-
-
-### 1.4 Final data set
-The resulting data set contains all hierarchical levels and will be used as input for the Bayesian models in Step 2.
-
-```{r, top-level}
-
-Tot = apply(y, 1, sum) # Top-level sum of the undisturbed series
-Tot = ifelse(Tot < 0, 0, Tot) # Ensure positivity
-
-# Final data set
-sim_data <- tibble::tibble(
-  X=x,
-  Tot  = Tot,
-  AA = y_star[,1], 
-  AB = y_star[,2],
-  BA = y_star[,3],
-  BB = y_star[,4]
-)
-
-```
-
-This shows the four bottom-level series over the covariate X.
+This shows the counts recorded over the covariate X for each node in the hierarchy.
 ```{r}
 hts_data_long <- tidyr::pivot_longer(sim_data, cols = -c(X), names_to = "Level", values_to = "Value")
 
@@ -149,13 +52,6 @@ ggplot2::ggplot(hts_data_long, ggplot2::aes(x = X, y = Value, color = Level)) +
 
 ```
 
-- y_star contains bottom-level counts with extra discrete noise.
-
-- Tot is the aggregated top-level count.
-
-- The covariate X drives the Poisson mean in a quadratic GLM.
-
-- Different noise structures per series introduce realistic heterogeneity.
 
 ## Step 2: Generating model estimates
 
@@ -313,9 +209,48 @@ for(t in 1:length(test_indices)) {
 
 The figure presents the predictive density formed by convolving the estimated bottom-level Poisson distributions. The resulting density is subsequently tilted so that its expectation matches the corresponding one-step-ahead predictive mean, ensuring coherence between the full predictive distribution and the point forecast.
 
-Across multiple observations:
 ```{r,  echo=FALSE, out.width = "100%",  fig.align = "center"}
-knitr::include_graphics("visualisations/example_pois_tilted_density_testset_Tot.png")
+
+t=50
+
+t_idx <- test_indices[t]
+
+# Extract predictive means at time t
+lambda_mat <- lambda_list[[t]]
+lambda_t   <- lambda_mat[t_idx, ]
+
+lambda_bottom <- lambda_t[-1]
+  
+# density of convolution 
+conv_top_dens <- dpois(top_y_vals, sum(lambda_bottom))
+
+conv_plot <- data.frame(
+   y = top_y_vals,
+   pmf = conv_top_dens,
+   node = "Tot"
+)
+
+# tilted density
+df_plot <- data.frame(
+  y = rep(top_y_vals, ncol(f_tilde_exp[[t]])),
+  pmf = as.vector(f_tilde_exp[[t]]),
+  node = rep(colnames(f_tilde_exp[[t]]), each = length(top_y_vals))
+)
+
+means_df <- data.frame(
+  node = names(lambda_t),
+  mean = lambda_t
+  ) 
+  
+
+ggplot() +
+  geom_line(data = df_plot, aes(x = y, y = pmf, col='Tilted density')) +
+  geom_line(data = conv_plot, aes(x = y, y = pmf, col='Convoluted denisty')) +
+  geom_vline(data = means_df,
+             aes(xintercept = mean, linetype = "Predicitive mean")) +
+  facet_grid(~ node) +
+  labs(x = "Counts",
+       y = "Tilted probability mass")
 
 ```
 
