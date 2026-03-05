@@ -95,9 +95,6 @@ To begin, we assume the bottom series is given by $b_{m, t} \sim \mathrm{Poisson
 For illustration, base forecasts are generated using a rolling Poisson GLM. The implementation is provided in a helper function within the article for reproducibility, but the reconciliation framework is model-agnostic and can be applied to any suitable base forecasts.
 
 ```{r glm-helper, include=FALSE}
-
-poisson_sim_data$Tot_edit <- pmax(0, poisson_sim_data$Tot + sample(c(-10:10), length(poisson_sim_data$Tot), replace=TRUE))
-
 rolling_poisson_glm <- function(sim_data, test_indices, series_names) {
   
   lambda_list  <- vector("list", length(test_indices))
