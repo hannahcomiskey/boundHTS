@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.4)  4 MAR 2026 17:33
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.4)  5 MAR 2026 11:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -740,7 +740,7 @@ Package microtype Info: Loading generic protrusion settings for font family
 [1{/Users/hcom0005/Library/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/Users/hcom0005/Library/TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}
 
 ]
-<figures/sim_node_hierarchy.pdf, id=86, 815.19577pt x 246.80968pt>
+<figures/sim_node_hierarchy.pdf, id=102, 815.19577pt x 246.80968pt>
 File: figures/sim_node_hierarchy.pdf Graphic file (type pdf)
 <use figures/sim_node_hierarchy.pdf>
 Package pdftex.def Info: figures/sim_node_hierarchy.pdf  used on input line 37.
@@ -800,38 +800,55 @@ LaTeX Font Info:    Font shape `U/msb/m/n' will be
 LaTeX Font Info:    Trying to load font information for U+fplmbb on input line 66.
 (/Users/hcom0005/Library/TinyTeX/texmf-dist/tex/latex/psnfss/ufplmbb.fd
 File: ufplmbb.fd 2003/10/30 Fontinst v1.914 font definitions for U/fplmbb.
-)
-Overfull \hbox (109.61021pt too wide) in paragraph at lines 83--83
-[]\T1/zi4/m/n/9 glm_results <- rolling_poisson_glm(boundHTS::poisson_sim_data, test_indices, colnames(poisson_sim_data[,-c(1)]))[] 
+) [3]
+
+Package natbib Warning: Citation `ref' on page 4 undefined on input line 141.
+
+<boundHTS_files/figure-latex/poisson-tilted-plot-1.pdf, id=127, 469.755pt x 325.215pt>
+File: boundHTS_files/figure-latex/poisson-tilted-plot-1.pdf Graphic file (type pdf)
+<use boundHTS_files/figure-latex/poisson-tilted-plot-1.pdf>
+Package pdftex.def Info: boundHTS_files/figure-latex/poisson-tilted-plot-1.pdf  used on input line 143.
+(pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
+
+Overfull \hbox (86.41528pt too wide) in paragraph at lines 143--144
+[][] 
  []
 
-
-Overfull \hbox (30.02815pt too wide) in paragraph at lines 127--127
-[]  \T1/zi4/m/n/9 lambda_vec <- c(lambda_conv, as.numeric(lambda_bseries)) # convolution and bottom series lambda[] 
- []
-
-[3] (./RJwrapper.bbl (./RJwrapper.brf)
+[4 <./boundHTS_files/figure-latex/poisson-tilted-plot-1.pdf>] (./RJwrapper.bbl (./RJwrapper.brf)
 \tf@brf=\write6
 \openout6 = `RJwrapper.brf'.
 
-[4])
+[5]
+Underfull \hbox (badness 2142) in paragraph at lines 74--74
+[]\T1/ppl/m/n/9 (+20) A. Pana-giotelis.  \T1/ppl/m/it/9 (+20) Pro-bReco: Score Op-ti-mal Prob-a-bilis-tic Fore-cast Rec-on-cil-i-a-tion\T1/ppl/m/n/9 (+20) , 2025.  URL
+ []
+
+
+Underfull \hbox (badness 1199) in paragraph at lines 74--74
+[][]$\T1/zi4/m/n/9 https : / / github . com / anastasiospanagiotelis / ProbReco$[][]\T1/ppl/m/n/9 (+20) .  R pack-age ver-sion 0.1.2, com-mit
+ []
+
+)
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 182.
+(Font)              using `T1/zi4/m/n' instead on input line 198.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 182.
+(Font)              scaled to size 9.18004pt on input line 198.
 
-Underfull \hbox (badness 10000) in paragraph at lines 192--193
+Underfull \hbox (badness 10000) in paragraph at lines 208--209
 
  []
 
 )
-Underfull \hbox (badness 10000) in paragraph at lines 202--67
+Underfull \hbox (badness 10000) in paragraph at lines 218--67
 
  []
 
-[5] (./RJwrapper.aux)
+
+Package natbib Warning: There were undefined citations.
+
+[6] (./RJwrapper.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -842,21 +859,21 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
 (rerunfilecheck)             Checksum: 721EA0F2E75E618336782BC800E56206;1845.
 Package rerunfilecheck Info: File `RJwrapper.brf' has not changed.
-(rerunfilecheck)             Checksum: F5737559045007876E4C8885DCC40432;492.
+(rerunfilecheck)             Checksum: 07B7F9EBB9032E0C15FFEDC9B9E60455;716.
  ) 
 Here is how much of TeX's memory you used:
- 27029 strings out of 469515
- 492867 string characters out of 5468854
- 918807 words of memory out of 5000000
- 54940 multiletter control sequences out of 15000+600000
- 672036 words of font info for 245 fonts, out of 8000000 for 9000
+ 27078 strings out of 469515
+ 493886 string characters out of 5468854
+ 920099 words of memory out of 5000000
+ 54977 multiletter control sequences out of 15000+600000
+ 672276 words of font info for 249 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 117i,16n,131p,1366b,899s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 117i,16n,131p,1419b,901s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/hcom0005/Library/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></Users/hcom0005/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></Users/hcom0005/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></Users/hcom0005/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></Users/hcom0005/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmbb.pfb></Users/hcom0005/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb></Users/hcom0005/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb></Users/hcom0005/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb></Users/hcom0005/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></Users/hcom0005/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on RJwrapper.pdf (5 pages, 149105 bytes).
+Output written on RJwrapper.pdf (6 pages, 159464 bytes).
 PDF statistics:
- 189 PDF objects out of 1000 (max. 8388607)
- 158 compressed objects within 2 object streams
- 27 named destinations out of 1000 (max. 500000)
- 61522 words of extra memory for PDF output out of 61914 (max. 10000000)
+ 226 PDF objects out of 1000 (max. 8388607)
+ 192 compressed objects within 2 object streams
+ 33 named destinations out of 1000 (max. 500000)
+ 61527 words of extra memory for PDF output out of 61914 (max. 10000000)
 

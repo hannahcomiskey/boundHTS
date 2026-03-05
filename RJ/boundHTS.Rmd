@@ -49,11 +49,11 @@ A hierarchical time series is a multivariate time series subject to linear aggre
 
 Several R packages on CRAN implement forecast reconciliation across diverse scenarios, including point versus probabilistic forecasts, discrete versus continuous data, and different hierarchical structures (e.g., temporal or cross-sectional). While forecast reconciliation has been studied extensively for discrete and continuous-valued time series, comparatively little attention has been given to hierarchical forecasting under bounded constraints.
 
-One of the most widely used packages for point-forecast reconciliation of hierarchical and grouped time series is \CRANpkg{hts}. This package implements classical methods such as bottom-up (BU), where bottom-level forecasts are aggregated to form higher-level predictions, and top-down (TD), where parent-level forecasts are disaggregated to child nodes. It also provides more advanced methods, including the Optimal Combination (OC) approach of \citet{Hyndman2011} and the Minimum Trace (MinT) method of \citet{Wickramasuriya2019}. OC uses a regression-based framework to adjust forecasts at the bottom level so that they aggregate coherently, while MinT formulates reconciliation as a constrained optimization problem that minimizes the trace of the reconciled forecast error covariance matrix. The \CRANpkg{fabletools} package extends hierarchical reconciliation to the tidyverse ecosystem, providing BU, TD, middle-out (MO), and MinT methods. Both \CRANpkg{hts} and \CRANpkg{fabletools} focus on point forecasts for cross-sectional hierarchies, assuming underlying Gaussian distributions. For more complex or non-standard structures, including temporal hierarchies, \CRANpkg{FoReco} offers flexible reconciliation methods with efficient sparse matrix handling, though it also targets point forecasts only.
+One of the most widely used packages for point-forecast reconciliation of hierarchical and grouped time series is \CRANpkg{hts} \citep{htspackage}. This package implements classical methods such as bottom-up (BU), where bottom-level forecasts are aggregated to form higher-level predictions, and top-down (TD), where parent-level forecasts are disaggregated to child nodes. It also provides more advanced methods, including the Optimal Combination (OC) approach of \citet{Hyndman2011} and the Minimum Trace (MinT) method of \citet{Wickramasuriya2019}. OC uses a regression-based framework to adjust forecasts at the bottom level so that they aggregate coherently, while MinT formulates reconciliation as a constrained optimization problem that minimizes the trace of the reconciled forecast error covariance matrix. The \CRANpkg{fabletools} package extends hierarchical reconciliation to the tidyverse ecosystem, providing BU, TD, middle-out (MO), and MinT methods \citep{fabletools}. Both \CRANpkg{hts} and \CRANpkg{fabletools} focus on point forecasts for cross-sectional hierarchies, assuming underlying Gaussian distributions. For more complex or non-standard structures, including temporal hierarchies, \CRANpkg{FoReco} offers flexible reconciliation methods with efficient sparse matrix handling, though it also targets point forecasts only \citep{FoReco}.
 
-For probabilistic reconciliation, the works of \citet{Taieb2017} and \citet{Panagiotelis2023} have been foundational. The \CRANpkg{ProbReco} package explicitly frames reconciliation as an optimization problem based on proper scoring rules, generating coherent probabilistic samples by minimizing the Energy Score \citep{gneiting2007, Panagiotelis2023}. However like the aforementioned packages, this method also only considers reconciliation of data generated from Gaussian distributions. Many empirical applications further involve discrete or bounded supports, introducing additional challenges that are not adequately addressed by these standard Gaussian-based reconciliation methods. \CRANpkg{bayesRecon} enforces coherence through conditioning under aggregation constraints. It supports Gaussian data as well as count data, employing Bottom-Up Importance Sampling (BUIS) to produce lower-bounded, aggregate-consistent probabilistic forecasts \citep{Corani2023}. However, this package does not deal with fully-bounded distributions like the Beta distribution for the reconciliation of proportions.
+For probabilistic reconciliation, the works of \citet{Taieb2017} and \citet{Panagiotelis2023} have been foundational. The \CRANpkg{ProbReco} package explicitly frames reconciliation as an optimization problem based on proper scoring rules, generating coherent probabilistic samples by minimizing the Energy Score \citep{gneiting2007, Panagiotelis2023, ProbReco}. However like the aforementioned packages, this method also only considers reconciliation of data generated from Gaussian distributions. Many empirical applications further involve discrete or bounded supports, introducing additional challenges that are not adequately addressed by these standard Gaussian-based reconciliation methods. \CRANpkg{bayesRecon} enforces coherence through conditioning under aggregation constraints. It supports Gaussian data as well as count data, employing Bottom-Up Importance Sampling (BUIS) to produce lower-bounded, aggregate-consistent probabilistic forecasts \citep{Corani2023, bayesRecon}. However, this package does not deal with fully-bounded distributions like the Beta distribution for the reconciliation of proportions.
 
-To address these challenges, we present the \pkg{boundHTS} package which generates coherent hierarchical forecasts for bounded continuous and lower-bounded discrete variables. Our contribution lies in combining distributional aggregation via convolution with exponential tilting to obtain coherent and accurate forecast densities. The approach respects the natural bounds of parent distributions. We demonstrate its performance using simulated Beta and Poisson hierarchical data structures.
+To address these challenges, we present the \pkg{boundHTS} package which generates coherent hierarchical forecasts for bounded continuous and lower-bounded discrete variables. Our contribution lies in providing a method to obtain coherent and accurate forecast densities for both bounded and lower-bounded densities. The approach respects the natural bounds of parent distributions. We demonstrate its performance using simulated Beta and Poisson hierarchical data structures.
 
 # Theory and Methods unpinning \pkg{boundHTS}
 
@@ -81,11 +81,11 @@ We construct a coherent probabilistic forecast for the top-level series by combi
 
 The procedure requires:
 
-- Predictive mean estimates for the **top-level series** (`A`)
-- Predictive mean estimates for the **bottom-level series** (`AA`, `AB`, `BA`, `BB`)
+- Predictive mean estimates for the top-level series (`A`)
+- Predictive mean estimates for the bottom-level series (`AA`, `AB`, `BA`, `BB`)
 - A discrete support grid over which the PMFs are evaluated  
 
-To begin, for time $t$ we will denote the top series as $u_{t}$ and the bottom series $m$ as $b_{m, t}$. We assume the bottom series is given by $b_{m, t} \sim \mathrm{Poisson}(\lambda_{m,t})$ and let the mean of these forecasts be given by $\hat{\lambda}_{m,t}$. Taking advantage of the summation property of Poisson distributed variables, the expected value of the convoluted density is given by $\sum_{i=1}^{j}\lambda_{i,t}$. Via convolution, the estimated PMF of the top series node is given by,
+To begin, we assume the bottom series is given by $b_{m, t} \sim \mathrm{Poisson}(\lambda_{m,t})$ and let the mean of these forecasts be given by $\hat{\lambda}_{m,t}$. Taking advantage of the summation property of Poisson distributed variables, the expected value of the convoluted top series density is given by $\sum_{i=1}^{j}\lambda_{i,t}$. Thus via convolution, the estimated PMF of the top series node is given by,
 \begin{align}
     f_{m+1,t}(u_{t}) &=
     \frac{ (\sum_{i=1}^{j}\lambda_{i,t})^{u_{t}} e^{-(\sum_{i=1}^{j}\lambda_{i,t})}}{u_{t}!},
@@ -95,6 +95,8 @@ To begin, for time $t$ we will denote the top series as $u_{t}$ and the bottom s
 For illustration, base forecasts are generated using a rolling Poisson GLM. The implementation is provided in a helper function within the article for reproducibility, but the reconciliation framework is model-agnostic and can be applied to any suitable base forecasts.
 
 ```{r glm-helper, include=FALSE}
+
+poisson_sim_data$Tot_edit <- pmax(0, poisson_sim_data$Tot + sample(c(-10:10), length(poisson_sim_data$Tot), replace=TRUE))
 
 rolling_poisson_glm <- function(sim_data, test_indices, series_names) {
   
@@ -135,7 +137,6 @@ rolling_poisson_glm <- function(sim_data, test_indices, series_names) {
     
     lambda_list[[t]] <- lambda_est
     fitted_list[[t]] <- fits
-    
     model_list[[t]] <- models_t
   }
   
@@ -152,67 +153,127 @@ rolling_poisson_glm <- function(sim_data, test_indices, series_names) {
 
 ```{r set up, echo=TRUE}
 N <- nrow(boundHTS::poisson_sim_data) 
-m <- 4 
-n_series <- ncol(boundHTS::poisson_sim_data[,-1])
-n_train <- c(1:c(N-50)) # withhold the last 50 observations for validation
-test_indices <- c(length(n_train)+1):N
-n_samples <- length(test_indices)
-sum_bottom <- c("AA", "AB", "BA", "BB")
-max_obs <- max(boundHTS::poisson_sim_data$Tot)
-top_y_vals <- seq(from = 0, to = max_obs+10)
+test_indices  <- seq(from = N - 49, to = N)
 
-
-glm_results <- rolling_poisson_glm(boundHTS::poisson_sim_data, test_indices, colnames(poisson_sim_data[,-c(1)]))
+glm_results <- rolling_poisson_glm(sim_data = poisson_sim_data,
+                                   test_indices =  c(N-49):N,
+                                   series_names = c("Tot_edit", "AA", "AB", "BA", "BB"))
 
 ```
 
 
 To reconcile the mean of the convolution and the predictive mean $\hat{\lambda}_{k,t}$, we apply exponential tilting using the estimated tilting parameter and predictive means of each series.
-```{r pois_tilt, echo=TRUE}
-f_tilde_exp <- list()
-nu_exp <- list()
-f_y <- vector()
-bottom_sum <- c("AA", "AB", "BA", "BB")
-pmf_values <- vector()
 
-for(t in 1:length(test_indices)) {
+
+```{r pois_tilt, echo=TRUE}
+
+bottom_series <- c("AA", "AB", "BA", "BB")
+top_y_vals <- seq(from = 0, to = max(poisson_sim_data$Tot_edit)+10)
+n_support <- length(top_y_vals)
+n_series  <- length(bottom_series) + 1  # top + bottom
+
+f_tilde_exp <- vector("list", length(test_indices))
+nu_exp      <- vector("list", length(test_indices))
+
+for (i in seq_along(test_indices)) {
+
+  t_idx <- test_indices[i]
+
+  # Extract predictive means at time t
+  lambda_mat <- glm_results$lambda[[i]]
+  lambda_t   <- lambda_mat[t_idx, ]
+
+  lambda_bottom <- lambda_t[bottom_series]
   
-  # lambda values
-  lambda_vals <- as.data.frame(glm_results$lambda[[t]])
-  mu_theory <- as.vector(unlist(lambda_vals[test_indices[t], ])) # predictive mean
-  
-  lambda_bseries <- lambda_vals[test_indices[t],bottom_sum]
-  lambda_conv <- sum(lambda_bseries) # sum poissons
-  lambda_vec <- c(lambda_conv, as.numeric(lambda_bseries)) # convolution and bottom series lambda
-  
-  # fitted values
-  fitted_vals <- tibble::as_tibble(glm_results$fitted[[t]])
-  fitted_bseries <- fitted_vals[test_indices[t],bottom_sum]
-  
-  # Construct tilted pmf for top and bottom series
-  f_tilt <- matrix(NA, nrow = length(top_y_vals), ncol = length(lambda_vec))
-  for(k in 1:length(lambda_vec)) {
-    # Convolution step
-    f_y <- stats::dpois(top_y_vals, lambda_vec[k]) # density of convolution
+  # convolution of bottom series
+  lambda_top    <- sum(lambda_bottom) 
+  lambda_vec <- c(Total = lambda_top, lambda_bottom)
+
+  ## Allocate storage
+  f_tilt <- matrix(0, nrow = n_support, ncol = n_series)
+  nu_vec <- numeric(n_series)
+
+  # Construct tilted PMFs
+  for (k in seq_along(lambda_vec)) {
     
-    # Solve for the tilting parameter 
-    nu_star <- stats::uniroot(moment_condition_tilting, interval = c(-1, 1), 
-                       f_y = f_y, y_vals = top_y_vals, 
-                       mu_theory = mu_theory[k])$root
+    # Get PMF of convoluted top series
+    base_pmf <- stats::dpois(top_y_vals, lambda_vec[k])
     
-    # Generate the tilted density
-    f_tilt[,k] <- tilted_density_discrete(nu_star, f_y, top_y_vals)
+    # Find tilting parameter
+    nu_k <- stats::uniroot(
+      moment_condition_tilting,
+      interval  = c(-1, 1),
+      f_y       = base_pmf,
+      y_vals    = top_y_vals,
+      mu_theory = lambda_t[k]
+    )$root
+    
+    # Save tilting parameter
+    nu_vec[k] <- nu_k
+        
+    # Tilt convoluted density towards predictive mean of top series
+    f_tilt[, k] <- tilted_density_discrete(
+      nu = nu_k,
+      f_y = base_pmf,
+      y_vals = top_y_vals
+    )
   }
-  colnames(f_tilt) <- colnames(fitted_vals)
-  
-  nu_exp[[t]] <- nu_star
-  f_tilde_exp[[t]] <- f_tilt # density of top level 
+
+  colnames(f_tilt) <- names(lambda_vec)
+
+  f_tilde_exp[[i]] <- f_tilt
+  nu_exp[[i]]      <- nu_vec
 }
 
 ```
 
+Figure @ref(fig:poisson-tilted-plot) displays the exponentially tilted predictive mass functions for the top and bottom level series at a representative forecast origin. The unadjusted Poisson distribution implied by aggregation is shifted via exponential tilting so that its expected value coincides with the predictive mean from the base model. As expected, the adjustment primarily alters the tail behaviour of the distribution while maintaining the aggregation constraint.
+
+```{r poisson-tilted-plot}
+t=50
+
+t_idx <- test_indices[t]
+
+# Extract predictive means at time t
+lambda_mat <- glm_results$lambda[[t]]
+lambda_t   <- lambda_mat[t_idx, ]
+
+lambda_bottom <- lambda_t[bottom_series]
+  
+# density of convolution 
+conv_top_dens <- dpois(top_y_vals, sum(lambda_bottom))
+
+conv_plot <- data.frame(
+   y = top_y_vals,
+   pmf = conv_top_dens,
+   node = "Total"
+)
+
+# tilted density
+df_plot <- data.frame(
+  y = rep(top_y_vals, ncol(f_tilde_exp[[t]])),
+  pmf = as.vector(f_tilde_exp[[t]]),
+  node = rep(colnames(f_tilde_exp[[t]]), each = length(top_y_vals))
+)
+
+means_df <- data.frame(
+  node = names(lambda_t),
+  mean = lambda_t
+  ) %>% mutate(node = ifelse(node=="Tot_edit", "Total", node))
+  
+
+ggplot() +
+  geom_line(data = df_plot, aes(x = y, y = pmf, col='Tilted density')) +
+  geom_line(data = conv_plot, aes(x = y, y = pmf, col='Convoluted denisty')) +
+  geom_vline(data = means_df,
+             aes(xintercept = mean, linetype = "Predicitive mean")) +
+  facet_grid(~ node) +
+  labs(x = "Counts",
+       y = "Tilted probability mass")
 
 
+
+```
 
 
 ## Case 2: Aggregating proportional forecasts
