@@ -117,12 +117,18 @@ rolling_poisson_glm <- function(sim_data, test_indices, series_names) {
         data   = sim_data[train_idx, c("X", series)],
         family = "poisson"
       )
+      # In-sample fitted Poisson means
+      lambda_est[train_idx, series] <- fit$fitted.values
       
-      lambda_est[, series] <- stats::predict(
-        fit,
-        newdata = sim_data[seq_len(test_indices[t]), c("X", series)],
-        type = "response"
-      )
+      # One-step-ahead Poisson mean
+      lambda_est[test_indices[t], series] <-
+      stats::predict(fit, newdata = sim_data[test_indices[t], c("X", series)])
+
+    # Draw predictive samples from Poisson distribution
+    fits[, series] <- stats::rpois(
+      n = test_indices[t],
+      lambda = lambda_est[, series]
+    )
       
       fits[, series] <- stats::rpois(
         n = test_indices[t],
@@ -154,7 +160,7 @@ test_indices  <- seq(from = N - 49, to = N)
 
 glm_results <- rolling_poisson_glm(sim_data = poisson_sim_data,
                                    test_indices =  c(N-49):N,
-                                   series_names = c("Tot_edit", "AA", "AB", "BA", "BB"))
+                                   series_names = c("Tot", "AA", "AB", "BA", "BB"))
 
 ```
 
@@ -165,7 +171,7 @@ To reconcile the mean of the convolution and the predictive mean $\hat{\lambda}_
 ```{r pois_tilt, echo=TRUE}
 
 bottom_series <- c("AA", "AB", "BA", "BB")
-top_y_vals <- seq(from = 0, to = max(poisson_sim_data$Tot_edit)+10)
+top_y_vals <- seq(from = 0, to = max(poisson_sim_data$Tot)+10)
 n_support <- length(top_y_vals)
 n_series  <- length(bottom_series) + 1  # top + bottom
 
@@ -229,11 +235,9 @@ Figure @ref(fig:poisson-tilted-plot) displays the exponentially tilted predictiv
 ```{r poisson-tilted-plot}
 t=50
 
-t_idx <- test_indices[t]
-
 # Extract predictive means at time t
 lambda_mat <- glm_results$lambda[[t]]
-lambda_t   <- lambda_mat[t_idx, ]
+lambda_t   <- lambda_mat[nrow(lambda_mat), ]
 
 lambda_bottom <- lambda_t[bottom_series]
   
@@ -256,7 +260,7 @@ df_plot <- data.frame(
 means_df <- data.frame(
   node = names(lambda_t),
   mean = lambda_t
-  ) %>% mutate(node = ifelse(node=="Tot_edit", "Total", node))
+  ) %>% mutate(node = ifelse(node=="Tot", "Total", node))
   
 
 ggplot() +
@@ -264,7 +268,8 @@ ggplot() +
   geom_line(data = conv_plot, aes(x = y, y = pmf, col='Convoluted denisty')) +
   geom_vline(data = means_df,
              aes(xintercept = mean, linetype = "Predicitive mean")) +
-  facet_grid(~ node) +
+  facet_wrap(~ node, nrow=5) +
+  scale_colour_brewer(palette="Set1") +
   labs(x = "Counts",
        y = "Tilted probability mass")
 
