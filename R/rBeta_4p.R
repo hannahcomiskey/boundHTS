@@ -15,7 +15,7 @@ rBeta_4p <- function(n_mc, sub_obs_data, phi_array, weights) {
   n_draws <- dim(phi_array)[1]
 
   if(n_nodes != dim(phi_array)[2] | n_nodes != length(weights)) {
-    cat("Error: Dimension mismatch across inputs. Check data, phi and weights. ")
+    message("Error: Dimension mismatch across inputs. Check data, phi and weights. ")
     stop()
   }
 

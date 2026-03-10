@@ -1,19 +1,22 @@
 Package: boundHTS
 Type: Package
 Title: Building Hierarchical Coherent Densities for Bounded Variables
-Author: Hannah Comiskey [aut, cre], David Fraizer [aut], Ole Maneesoonthorn [aut]
+Author: Hannah Comiskey [aut, cre], David Frazier [aut], Ole Maneesoonthorn [aut]
 Maintainer: Hannah Comiskey <hannahcomiskey68@gmail.com>
 Authors@R: c(person(given = "Hannah",
                       family = "Comiskey",
                       role = c("aut", "cre"),
                       email = "hannahcomiskey68@gmail.com"),
-             person(given = "David",
-                      family = "Fraizer",
+             person(given = "David T.",
+                      family = "Frazier",
                       role = "aut"),
+            person(given = "Ole",
+                      family = "Maneesoonthorn",
+                      role = "ctb")
              person(given = "Ole",
                       family = "Maneesoonthorn",
                       role = "aut"))
-Description: Methods for probabilistic and coherent forecasting of hierarchical bounded time series.
+Description: Tools for post-hoc reconciliation of hierarchical forecast distributions for discrete or bounded data. The methods construct coherent and distributionally consistent forecasts while preserving the support of the underlying distributions. This enables hierarchical probabilistic forecasting for count and proportion time series where Gaussian assumptions are inappropriate.
 Version: 1.0.1
 License: MIT + file LICENSE
 Encoding: UTF-8

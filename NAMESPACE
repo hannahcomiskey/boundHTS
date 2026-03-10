@@ -2,7 +2,6 @@
 
 export(Beta_convolution_density)
 export(Beta_convolution_density_parallel)
-export(dBeta_4p)
 export(logit_vcov_delta)
 export(moment_condition_tilting)
 export(tilted_density_cont)
