@@ -5,19 +5,16 @@ Author: Hannah Comiskey [aut, cre], David Frazier [aut], Ole Maneesoonthorn [aut
 Maintainer: Hannah Comiskey <hannahcomiskey68@gmail.com>
 Authors@R: c(person(given = "Hannah",
                       family = "Comiskey",
-                      role = c("aut", "cre"),
+                      role = c("aut", "cre", "cph"),
                       email = "hannahcomiskey68@gmail.com"),
              person(given = "David T.",
                       family = "Frazier",
                       role = "aut"),
-            person(given = "Ole",
-                      family = "Maneesoonthorn",
-                      role = "ctb")
              person(given = "Ole",
                       family = "Maneesoonthorn",
                       role = "aut"))
 Description: Tools for post-hoc reconciliation of hierarchical forecast distributions for discrete or bounded data. The methods construct coherent and distributionally consistent forecasts while preserving the support of the underlying distributions. This enables hierarchical probabilistic forecasting for count and proportion time series where Gaussian assumptions are inappropriate.
-Version: 1.0.1
+Version: 1.0.2
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

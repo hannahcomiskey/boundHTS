@@ -1,11 +1,44 @@
-#' Vectorized Zero Inflated 4 parameter Beta sampler
+#' Vectorized Zero-Inflated Four-Parameter Beta Density Sampler
 #'
-#' @param n_mc number of Monte Carlo samples
-#' @param sub_obs_data matrix of observed data (n_years x n_nodes)
-#' @param phi_array Monte Carlo draws of Beta precision (n_draws x n_nodes x n_years)
-#' @param zi_array Monte Carlo draws of zero inflation (n_draws x n_nodes x n_years)
-#' @param weights node weights for 4 parameter Beta (vector of length n_nodes)
-#' @return 3D array (n_draws x n_nodes x n_years)
+#' @param n_mc Integer; number of Monte Carlo samples to generate.
+#' @param sub_obs_data Numeric matrix of observed bottom-level series to use as
+#'   the mean parameter in the sampler (dimensions: n_years x n_nodes).
+#' @param phi_array Numeric array of posterior draws for the Beta precision
+#'   parameter (dimensions: n_draws x n_nodes x n_years).
+#' @param zi_array Numeric array of posterior draws for the zero-inflation
+#'   probability (dimensions: n_draws x n_nodes x n_years).
+#' @param weights Numeric vector of node-specific upper bounds for the
+#'   Beta distribution (length = n_nodes).
+#'
+#' @details
+#' For each Monte Carlo sample, a posterior draw is selected from `phi_array` and `zi_array`.
+#' Zero inflation is applied according to the sampled `zi_r` probabilities.
+#' For nodes not set to zero by the inflation, samples are drawn from a Beta distribution
+#' scaled to `[0, weight]` using `ExtDist::rBeta_ab`.
+#'
+#' @return A numeric array of dimension \code{n_mc x n_nodes x n_years} containing
+#'   the Monte Carlo samples of the zero-inflated Beta distribution.
+#'
+#' @examples
+#' set.seed(1)
+#'
+#' n_mc <- 10
+#' n_years <- 3
+#' n_nodes <- 2
+#' n_draws <- 5
+#'
+#' sub_obs_data <- matrix(runif(n_years * n_nodes, 0.2, 0.8),
+#'                        nrow = n_years, ncol = n_nodes)
+#' phi_array <- array(rexp(n_draws * n_nodes * n_years, 1),
+#'                    dim = c(n_draws, n_nodes, n_years))
+#' zi_array <- array(runif(n_draws * n_nodes * n_years, 0, 0.2),
+#'                   dim = c(n_draws, n_nodes, n_years))
+#' weights <- rep(1, n_nodes)
+#'
+#' samples <- rZIB_4p(n_mc, sub_obs_data, phi_array, zi_array, weights)
+#' dim(samples)
+#'
+#' @export
 
 rZIB_4p <- function(n_mc, sub_obs_data, phi_array, zi_array, weights) {
 

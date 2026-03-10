@@ -2,22 +2,49 @@
 % Please edit documentation in R/rBeta_4p.R
 \name{rBeta_4p}
 \alias{rBeta_4p}
-\title{Vectorized 4 parameter Beta sampler using \code{ExtDist::rBeta_ab}.}
+\title{Vectorized Four-Parameter Beta Density Sampler}
 \usage{
 rBeta_4p(n_mc, sub_obs_data, phi_array, weights)
 }
 \arguments{
-\item{n_mc}{number of Monte Carlo samples}
+\item{n_mc}{Integer; number of Monte Carlo samples to generate.}
 
-\item{sub_obs_data}{matrix of bottom-level series to use as expectation in sampler (n_years x n_nodes)}
+\item{sub_obs_data}{Numeric matrix of bottom-level series to use as the
+mean parameter in the sampler (dimensions: n_years x n_nodes).}
 
-\item{phi_array}{array (n_draws x n_nodes x n_years)}
+\item{phi_array}{Numeric array of posterior draws for the precision
+parameter (dimensions: n_draws x n_nodes x n_years).}
 
-\item{weights}{node weights (vector of length n_nodes)}
+\item{weights}{Numeric vector of node-specific upper bounds (length = n_nodes).}
 }
 \value{
-3D array (n_draws x n_nodes x n_years)
+A numeric array of dimension \code{n_mc x n_nodes x n_years} containing the Monte Carlo samples.
 }
 \description{
-Vectorized 4 parameter Beta sampler using \code{ExtDist::rBeta_ab}.
+Vectorized Four-Parameter Beta Density Sampler
+}
+\details{
+For each Monte Carlo sample, a posterior draw is selected from \code{phi_array}.
+The Beta shape parameters are computed as \code{alpha = mu * phi} and
+\code{beta = (1 - mu) * phi}, where \code{mu} comes from \code{sub_obs_data}.
+The resulting samples are drawn using \code{ExtDist::rBeta_ab} and returned
+as a 3D array (n_mc x n_nodes x n_years).
+}
+\examples{
+set.seed(1)
+
+n_mc <- 10
+n_years <- 3
+n_nodes <- 2
+n_draws <- 5
+
+sub_obs_data <- matrix(runif(n_years * n_nodes, 0.2, 0.8),
+                       nrow = n_years, ncol = n_nodes)
+phi_array <- array(rexp(n_draws * n_nodes * n_years, 1),
+                   dim = c(n_draws, n_nodes, n_years))
+weights <- rep(1, n_nodes)
+
+samples <- rBeta_4p(n_mc, sub_obs_data, phi_array, weights)
+dim(samples)
+
 }

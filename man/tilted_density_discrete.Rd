@@ -2,20 +2,37 @@
 % Please edit documentation in R/tilted_density_discrete.R
 \name{tilted_density_discrete}
 \alias{tilted_density_discrete}
-\title{Tilting the density of f(y) using the optimised nu parameter.}
+\title{Tilt the Density of f(y) for Discrete Outcomes Using the Optimized Nu Parameter}
 \usage{
 tilted_density_discrete(nu, f_y, y_vals)
 }
 \arguments{
-\item{nu}{The tilting parameter}
+\item{nu}{Numeric; the tilting parameter.}
 
-\item{f_y}{calculate density of aggregated}
+\item{f_y}{Numeric vector; the discrete density values of the aggregated
+series evaluated at \code{y_vals}.}
 
-\item{y_vals}{evaluation points over which the density is calculated}
+\item{y_vals}{Numeric vector; evaluation points corresponding to \code{f_y}.}
 }
 \value{
-The tilted density of f(y).
+Numeric vector of the same length as \code{y_vals}, representing the
+normalized tilted discrete density.
 }
 \description{
-Tilting the density of f(y) using the optimised nu parameter.
+Tilt the Density of f(y) for Discrete Outcomes Using the Optimized Nu Parameter
+}
+\details{
+Exponential tilting adjusts the density to shift the mean (or other moments)
+according to a tilting parameter \code{nu}. For discrete densities, the tilted
+density is computed as:
+
+\deqn{f_{\rm tilt}(y_i) = \frac{\exp(\nu y_i) f_y[i]}{\sum_j \exp(\nu y_j) f_y[j]}}
+}
+\examples{
+y_vals <- 0:5
+f_y <- dbinom(y_vals, size = 5, prob = 0.5)
+nu <- 0.5
+f_tilt <- tilted_density_discrete(nu, f_y, y_vals)
+sum(f_tilt)  # should be 1
+
 }

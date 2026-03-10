@@ -2,25 +2,67 @@
 % Please edit documentation in R/dZOIB_4p.R
 \name{dZOIB_4p}
 \alias{dZOIB_4p}
-\title{Vectorized ZOIB density}
+\title{Vectorized Zero-One-Inflated Four-Parameter Beta Density}
 \usage{
 dZOIB_4p(z, Y_mc, phi_mc, zoi_mc, coi_mc, upper, lower = 0)
 }
 \arguments{
-\item{z}{evaluation points}
+\item{z}{Numeric evaluation point for the density.}
 
-\item{Y_mc}{Monte Carlo draws of Y}
+\item{Y_mc}{Matrix of Monte Carlo draws of the mean parameter \eqn{\mu}
+(n_mc x n_nodes).}
 
-\item{phi_mc}{Monte Carlo draws of phi}
+\item{phi_mc}{Matrix of Monte Carlo draws of the precision parameter
+\eqn{\phi} (n_mc x n_nodes).}
 
-\item{zoi_mc}{Monte Carlo draws of zero-one inflation}
+\item{zoi_mc}{Matrix of Monte Carlo draws of the zero-one inflation
+probability (n_mc x n_nodes).}
 
-\item{coi_mc}{Monte Carlo draws of conditional one inflation}
+\item{coi_mc}{Matrix of Monte Carlo draws of the conditional one inflation
+probability (n_mc x n_nodes).}
 
-\item{upper}{upper bound}
+\item{upper}{Numeric vector giving the upper bound for each node.}
 
-\item{lower}{lower bound}
+\item{lower}{Numeric scalar giving the lower bound (default is 0).}
+}
+\value{
+A numeric vector of length \code{n_mc} containing the density
+evaluated at \code{z} for each Monte Carlo draw.
 }
 \description{
-Vectorized ZOIB density
+Vectorized Zero-One-Inflated Four-Parameter Beta Density
+}
+\details{
+The Zero-One-Inflated Beta (ZOIB) distribution places probability mass at both
+boundaries (0 and 1) and follows a Beta distribution on the interior of the
+interval. This function evaluates the density conditional on Monte Carlo
+draws of the model parameters and supports hierarchical aggregation by
+subtracting the contribution of child nodes before evaluating the density
+of the parent node.
+
+The Beta density is evaluated using \code{ExtDist::dBeta_ab()} for the
+interior of the support.
+}
+\examples{
+set.seed(1)
+
+n_mc <- 100
+n_nodes <- 2
+
+Y_mc <- matrix(runif(n_mc * n_nodes, 0.2, 0.8), nrow = n_mc)
+phi_mc <- matrix(rexp(n_mc * n_nodes, 1), nrow = n_mc)
+zoi_mc <- matrix(runif(n_mc * n_nodes, 0, 0.2), nrow = n_mc)
+coi_mc <- matrix(runif(n_mc * n_nodes, 0, 0.2), nrow = n_mc)
+
+upper <- c(1, 1)
+
+dZOIB_4p(
+  z = 0.5,
+  Y_mc = Y_mc,
+  phi_mc = phi_mc,
+  zoi_mc = zoi_mc,
+  coi_mc = coi_mc,
+  upper = upper
+)
+
 }

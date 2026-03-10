@@ -1,13 +1,54 @@
-#' Vectorized ZOIB density
+#' Vectorized Zero-One-Inflated Four-Parameter Beta Density
 #'
-#' @param z evaluation points
-#' @param Y_mc Monte Carlo draws of Y
-#' @param phi_mc Monte Carlo draws of phi
-#' @param zoi_mc Monte Carlo draws of zero-one inflation
-#' @param coi_mc Monte Carlo draws of conditional one inflation
-#' @param lower lower bound
-#' @param upper upper bound
-
+#' @param z Numeric evaluation point for the density.
+#' @param Y_mc Matrix of Monte Carlo draws of the mean parameter \eqn{\mu}
+#'   (n_mc x n_nodes).
+#' @param phi_mc Matrix of Monte Carlo draws of the precision parameter
+#'   \eqn{\phi} (n_mc x n_nodes).
+#' @param zoi_mc Matrix of Monte Carlo draws of the zero-one inflation
+#'   probability (n_mc x n_nodes).
+#' @param coi_mc Matrix of Monte Carlo draws of the conditional one inflation
+#'   probability (n_mc x n_nodes).
+#' @param upper Numeric vector giving the upper bound for each node.
+#' @param lower Numeric scalar giving the lower bound (default is 0).
+#'
+#' @details
+#' The Zero-One-Inflated Beta (ZOIB) distribution places probability mass at both
+#' boundaries (0 and 1) and follows a Beta distribution on the interior of the
+#' interval. This function evaluates the density conditional on Monte Carlo
+#' draws of the model parameters and supports hierarchical aggregation by
+#' subtracting the contribution of child nodes before evaluating the density
+#' of the parent node.
+#'
+#' The Beta density is evaluated using \code{ExtDist::dBeta_ab()} for the
+#' interior of the support.
+#'
+#' @return A numeric vector of length \code{n_mc} containing the density
+#' evaluated at \code{z} for each Monte Carlo draw.
+#'
+#' @examples
+#' set.seed(1)
+#'
+#' n_mc <- 100
+#' n_nodes <- 2
+#'
+#' Y_mc <- matrix(runif(n_mc * n_nodes, 0.2, 0.8), nrow = n_mc)
+#' phi_mc <- matrix(rexp(n_mc * n_nodes, 1), nrow = n_mc)
+#' zoi_mc <- matrix(runif(n_mc * n_nodes, 0, 0.2), nrow = n_mc)
+#' coi_mc <- matrix(runif(n_mc * n_nodes, 0, 0.2), nrow = n_mc)
+#'
+#' upper <- c(1, 1)
+#'
+#' dZOIB_4p(
+#'   z = 0.5,
+#'   Y_mc = Y_mc,
+#'   phi_mc = phi_mc,
+#'   zoi_mc = zoi_mc,
+#'   coi_mc = coi_mc,
+#'   upper = upper
+#' )
+#'
+#' @export
 
 dZOIB_4p <- function(z, Y_mc, phi_mc, zoi_mc, coi_mc, upper, lower = 0) {
 

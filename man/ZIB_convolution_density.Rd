@@ -2,23 +2,51 @@
 % Please edit documentation in R/ZIB_convolution_density.R
 \name{ZIB_convolution_density}
 \alias{ZIB_convolution_density}
-\title{Vectorized Zero Inflated 4 parameter Beta density}
+\title{Monte Carlo Estimate of Aggregated Zero-Inflated Four-Parameter Beta (ZIB) Density}
 \usage{
 ZIB_convolution_density(Y_mc, phi_array, zi_array, weights, z_values, n_mc)
 }
 \arguments{
-\item{Y_mc}{Monte Carlo draws of weighted bottom-series samples}
+\item{Y_mc}{Numeric matrix; Monte Carlo draws of weighted bottom-series samples (n_draws x n_nodes).}
 
-\item{phi_array}{Monte Carlo draws of phi}
+\item{phi_array}{Numeric matrix; Monte Carlo draws of the Beta precision parameter (n_draws x n_nodes).}
 
-\item{zi_array}{Monte Carlo draws of zero inflation}
+\item{zi_array}{Numeric matrix; Monte Carlo draws of zero-inflation probability (n_draws x n_nodes).}
 
-\item{weights}{node weights (vector of length n_nodes)}
+\item{weights}{Numeric vector; node-specific upper bounds for the Beta distribution (length = n_nodes).}
 
-\item{z_values}{evaluation points}
+\item{z_values}{Numeric vector; evaluation points over which the density is calculated.}
 
-\item{n_mc}{number of Monte Carlo samples}
+\item{n_mc}{Integer; number of Monte Carlo samples to use for aggregation.}
+}
+\value{
+Numeric vector of the same length as \code{z_values} representing the normalized
+aggregated zero-inflated Beta density.
 }
 \description{
-Vectorized Zero Inflated 4 parameter Beta density
+Monte Carlo Estimate of Aggregated Zero-Inflated Four-Parameter Beta (ZIB) Density
+}
+\details{
+For each evaluation point \code{z}, a Monte Carlo estimate of the aggregated zero-inflated Beta
+density is computed by resampling posterior draws from \code{phi_array} and \code{zi_array} and
+averaging \code{dZIB_4p} across the selected draws. The resulting density is normalized
+using the trapezoidal rule (\code{pracma::trapz}) to ensure integration to 1.
+}
+\examples{
+set.seed(1)
+
+n_draws <- 5
+n_nodes <- 2
+n_mc <- 10
+n_z <- 50
+
+Y_mc <- matrix(runif(n_draws * n_nodes), nrow = n_draws)
+phi_array <- matrix(rexp(n_draws * n_nodes, 1), nrow = n_draws)
+zi_array <- matrix(runif(n_draws * n_nodes, 0, 0.2), nrow = n_draws)
+weights <- rep(1, n_nodes)
+z_values <- seq(0, sum(weights), length.out = n_z)
+
+density <- ZIB_convolution_density(Y_mc, phi_array, zi_array, weights, z_values, n_mc)
+plot(z_values, density, type = "l")
+
 }

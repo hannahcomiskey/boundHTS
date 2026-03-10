@@ -2,7 +2,7 @@
 % Please edit documentation in R/dZIB_4p.R
 \name{dZIB_4p}
 \alias{dZIB_4p}
-\title{Vectorized Zero Inflated 4 parameter Beta density}
+\title{Vectorized Zero-Inflated Four-Parameter Beta Density}
 \usage{
 dZIB_4p(z, Y_mc, phi_mc, zi_mc, upper, lower = 0)
 }
@@ -19,6 +19,36 @@ dZIB_4p(z, Y_mc, phi_mc, zi_mc, upper, lower = 0)
 
 \item{lower}{lower bound}
 }
+\value{
+A numeric vector containing the estimated density values for each Monte Carlo draw.
+}
 \description{
-Vectorized Zero Inflated 4 parameter Beta density
+Vectorized Zero-Inflated Four-Parameter Beta Density
+}
+\details{
+Computes the density of a zero-inflated four-parameter Beta distribution using Monte Carlo draws.
+The function evaluates the density at points \code{z} while accounting for hierarchical aggregation across nodes.
+}
+\examples{
+set.seed(1)
+
+# Monte Carlo size
+n_mc <- 100
+n_nodes <- 1
+
+# Simulated Monte Carlo draws
+Y_mc  <- matrix(runif(n_mc * n_nodes, 0.2, 0.8), nrow = n_mc)
+phi_mc <- matrix(rexp(n_mc * n_nodes, 1), nrow = n_mc)
+zi_mc  <- matrix(runif(n_mc * n_nodes, 0, 0.2), nrow = n_mc)
+
+# Evaluation points
+z <- seq(0, 1, length.out = 50)
+
+# Bounds
+lower <- 0
+upper <- 1
+
+dens <- dZIB_4p(z[25], Y_mc, phi_mc, zi_mc, upper, lower)
+head(dens)
+
 }

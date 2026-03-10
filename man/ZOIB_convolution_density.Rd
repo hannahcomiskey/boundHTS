@@ -2,7 +2,7 @@
 % Please edit documentation in R/ZOIB_convolution_density.R
 \name{ZOIB_convolution_density}
 \alias{ZOIB_convolution_density}
-\title{Vectorized ZOIB density}
+\title{Monte Carlo Convolution Density for Zero-One-Inflated Beta Distributions}
 \usage{
 ZOIB_convolution_density(
   Y_mc,
@@ -15,20 +15,63 @@ ZOIB_convolution_density(
 )
 }
 \arguments{
-\item{Y_mc}{Monte Carlo draws of weighted bottom-series samples}
+\item{Y_mc}{Monte Carlo draws of weighted bottom-series samples
+(matrix: n_draws x n_nodes).}
 
-\item{phi_array}{Monte Carlo draws of phi}
+\item{phi_array}{Monte Carlo draws of the Beta precision parameter
+(matrix: n_draws x n_nodes).}
 
-\item{zoi_array}{Monte Carlo draws of zero-one inflation}
+\item{zoi_array}{Monte Carlo draws of the zero-one inflation probability
+(matrix: n_draws x n_nodes).}
 
-\item{coi_array}{Monte Carlo draws of conditional one inflation}
+\item{coi_array}{Monte Carlo draws of the conditional one inflation probability
+(matrix: n_draws x n_nodes).}
 
-\item{weights}{node weights (vector of length n_nodes)}
+\item{weights}{Node weights (vector of length n_nodes) defining the
+aggregation structure.}
 
-\item{z_values}{evaluation points}
+\item{z_values}{Numeric vector of evaluation points for the aggregate density.}
 
-\item{n_mc}{number of Monte Carlo samples}
+\item{n_mc}{Number of Monte Carlo samples used in the convolution estimate.}
+}
+\value{
+A numeric vector containing the estimated aggregate density evaluated at \code{z_values}.
 }
 \description{
-Vectorized ZOIB density
+Monte Carlo Convolution Density for Zero-One-Inflated Beta Distributions
+}
+\details{
+This function computes a Monte Carlo approximation of the density of an
+aggregated Zero-One-Inflated Beta (ZOIB) distribution. Posterior draws are passed to \code{dZOIB_4p()},
+which evaluates the ZOIB density for each Monte Carlo draw.
+The resulting density is normalised using numerical integration.
+}
+\examples{
+set.seed(1)
+
+# Simulation setup
+n_draws <- 200
+n_nodes <- 2
+
+# Simulated posterior draws
+Y_mc <- matrix(runif(n_draws * n_nodes, 0.1, 0.9), nrow = n_draws)
+phi_array <- matrix(rexp(n_draws * n_nodes, 1), nrow = n_draws)
+zoi_array <- matrix(runif(n_draws * n_nodes, 0, 0.2), nrow = n_draws)
+coi_array <- matrix(runif(n_draws * n_nodes, 0, 0.2), nrow = n_draws)
+
+weights <- c(1, 1)
+z_values <- seq(0, 2, length.out = 50)
+
+dens <- ZOIB_convolution_density(
+  Y_mc = Y_mc,
+  phi_array = phi_array,
+  zoi_array = zoi_array,
+  coi_array = coi_array,
+  weights = weights,
+  z_values = z_values,
+  n_mc = 100
+)
+
+head(dens)
+
 }

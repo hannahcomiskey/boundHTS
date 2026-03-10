@@ -1,4 +1,4 @@
-#' Vectorized Zero Inflated 4 parameter Beta density
+#' Vectorized Zero-Inflated Four-Parameter Beta Density
 #'
 #' @param z evaluation points
 #' @param Y_mc Monte Carlo draws of Y
@@ -6,7 +6,36 @@
 #' @param zi_mc Monte Carlo draws of zero inflation (n_draws x n_nodes x n_years)
 #' @param lower lower bound
 #' @param upper upper bound
-
+#' @details
+#' Computes the density of a zero-inflated four-parameter Beta distribution using Monte Carlo draws.
+#' The function evaluates the density at points `z` while accounting for hierarchical aggregation across nodes.
+#'
+#' @return A numeric vector containing the estimated density values for each Monte Carlo draw.
+#'
+#' @examples
+#' set.seed(1)
+#'
+#' # Monte Carlo size
+#' n_mc <- 100
+#' n_nodes <- 1
+#'
+#' # Simulated Monte Carlo draws
+#' Y_mc  <- matrix(runif(n_mc * n_nodes, 0.2, 0.8), nrow = n_mc)
+#' phi_mc <- matrix(rexp(n_mc * n_nodes, 1), nrow = n_mc)
+#' zi_mc  <- matrix(runif(n_mc * n_nodes, 0, 0.2), nrow = n_mc)
+#'
+#' # Evaluation points
+#' z <- seq(0, 1, length.out = 50)
+#'
+#' # Bounds
+#' lower <- 0
+#' upper <- 1
+#'
+#' dens <- dZIB_4p(z[25], Y_mc, phi_mc, zi_mc, upper, lower)
+#' head(dens)
+#'
+#' @importFrom ExtDist dBeta_ab
+#' @export
 
 dZIB_4p <- function(z, Y_mc, phi_mc, zi_mc, upper, lower = 0) {
 

@@ -1,13 +1,38 @@
-#' The moment condition via the cumulant generating function (CGF) for continuous densities.
+#' Moment Condition via the Cumulant Generating Function (CGF) for Continuous Densities
 #'
-#' @param f_y calculate density of aggregated
-#' @param y_vals evaluation points over which the density is calculated
-#' @param nu The tilting parameter
-#' @param mu_theory The theorised (target) mean
+#' Computes the moment condition used in exponential tilting by comparing the
+#' expected value under a tilted density to a target theoretical mean. This is
+#' useful when solving for the tilting parameter \code{nu} that shifts the
+#' density to match a desired mean.
+#'
+#' @param nu Numeric tilting parameter.
+#' @param f_y Numeric vector giving the density values of the aggregated variable
+#'   evaluated at \code{y_vals}.
+#' @param y_vals Numeric vector of evaluation points corresponding to \code{f_y}.
+#' @param mu_theory Numeric scalar specifying the target mean.
+#'
 #' @details
-#' A loss function to optimise over to evaluate the tilting parameter (nu) used in exponential tilting.
+#' The function computes a loss or residual based on the difference between the
+#' expected value under the tilted density and the theoretical target mean:
 #'
-#' @return The residuals in means (estimated - target) after tilting with a given nu
+#' \deqn{R(\nu) = \frac{\sum y_i \exp(\nu y_i) f_y \Delta y}{\sum \exp(\nu y_i) f_y \Delta y} - \mu_{\rm theory}}
+#'
+#' where \eqn{\Delta y} is the spacing of \code{y_vals}. This residual can be
+#' used in a root-finding procedure to solve for \code{nu}.
+#'
+#' @return Numeric scalar: the residual between the mean of the tilted density
+#'   and the target mean.
+#'
+#' @examples
+#' # Simple Gaussian example
+#' y_vals <- seq(-3, 3, length.out = 100)
+#' f_y <- dnorm(y_vals)
+#' mu_theory <- 0.5
+#' nu_start <- 0
+#'
+#' # Evaluate residual at nu = 0
+#' moment_condition_tilting(nu_start, f_y, y_vals, mu_theory)
+#'
 #' @export
 
 moment_condition_tilting <- function(nu, f_y, y_vals, mu_theory) {

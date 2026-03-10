@@ -1,4 +1,15 @@
-Version 1.0.0 -------------------------------------------------------------------
+Version 1.0.2 -------------------------------------------------------------------
+
+Updates following CRAN submission 10-03-2026
+
+1. Description file updated to included a more useful description of the package.
+2. References for the methods will be available soon, and the description file will update accordingly.
+3. Examples added to exported functions.
+4. message() used instead of cat() in `rBeta_4p`.
+4. The package uses functions from the ExtDist package via Imports and explicit namespace calls (ExtDist::).
+The function `dBeta_4p` has been removed. Therefore, no code has been copied or modified from ExtDist, and its authors are not listed in Authors@R.
+
+Version 1.0.1 -------------------------------------------------------------------
 This is a new submission.
 
 All checks were performed using R CMD check --as-cran.

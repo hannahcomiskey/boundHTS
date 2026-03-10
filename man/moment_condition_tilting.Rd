@@ -2,25 +2,47 @@
 % Please edit documentation in R/moment_condition_tilting.R
 \name{moment_condition_tilting}
 \alias{moment_condition_tilting}
-\title{The moment condition via the cumulant generating function (CGF) for continuous densities.}
+\title{Moment Condition via the Cumulant Generating Function (CGF) for Continuous Densities}
 \usage{
 moment_condition_tilting(nu, f_y, y_vals, mu_theory)
 }
 \arguments{
-\item{nu}{The tilting parameter}
+\item{nu}{Numeric tilting parameter.}
 
-\item{f_y}{calculate density of aggregated}
+\item{f_y}{Numeric vector giving the density values of the aggregated variable
+evaluated at \code{y_vals}.}
 
-\item{y_vals}{evaluation points over which the density is calculated}
+\item{y_vals}{Numeric vector of evaluation points corresponding to \code{f_y}.}
 
-\item{mu_theory}{The theorised (target) mean}
+\item{mu_theory}{Numeric scalar specifying the target mean.}
 }
 \value{
-The residuals in means (estimated - target) after tilting with a given nu
+Numeric scalar: the residual between the mean of the tilted density
+and the target mean.
 }
 \description{
-The moment condition via the cumulant generating function (CGF) for continuous densities.
+Computes the moment condition used in exponential tilting by comparing the
+expected value under a tilted density to a target theoretical mean. This is
+useful when solving for the tilting parameter \code{nu} that shifts the
+density to match a desired mean.
 }
 \details{
-A loss function to optimise over to evaluate the tilting parameter (nu) used in exponential tilting.
+The function computes a loss or residual based on the difference between the
+expected value under the tilted density and the theoretical target mean:
+
+\deqn{R(\nu) = \frac{\sum y_i \exp(\nu y_i) f_y \Delta y}{\sum \exp(\nu y_i) f_y \Delta y} - \mu_{\rm theory}}
+
+where \eqn{\Delta y} is the spacing of \code{y_vals}. This residual can be
+used in a root-finding procedure to solve for \code{nu}.
+}
+\examples{
+# Simple Gaussian example
+y_vals <- seq(-3, 3, length.out = 100)
+f_y <- dnorm(y_vals)
+mu_theory <- 0.5
+nu_start <- 0
+
+# Evaluate residual at nu = 0
+moment_condition_tilting(nu_start, f_y, y_vals, mu_theory)
+
 }

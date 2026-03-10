@@ -1,13 +1,39 @@
-#' Vectorized Zero Inflated 4 parameter Beta density
+#' Monte Carlo Estimate of Aggregated Zero-Inflated Four-Parameter Beta (ZIB) Density
 #'
-#' @param Y_mc Monte Carlo draws of weighted bottom-series samples
-#' @param phi_array Monte Carlo draws of phi
-#' @param zi_array Monte Carlo draws of zero inflation
-#' @param weights node weights (vector of length n_nodes)
-#' @param z_values evaluation points
-#' @param n_mc number of Monte Carlo samples
+#' @param Y_mc Numeric matrix; Monte Carlo draws of weighted bottom-series samples (n_draws x n_nodes).
+#' @param phi_array Numeric matrix; Monte Carlo draws of the Beta precision parameter (n_draws x n_nodes).
+#' @param zi_array Numeric matrix; Monte Carlo draws of zero-inflation probability (n_draws x n_nodes).
+#' @param weights Numeric vector; node-specific upper bounds for the Beta distribution (length = n_nodes).
+#' @param z_values Numeric vector; evaluation points over which the density is calculated.
+#' @param n_mc Integer; number of Monte Carlo samples to use for aggregation.
 #'
+#' @details
+#' For each evaluation point `z`, a Monte Carlo estimate of the aggregated zero-inflated Beta
+#' density is computed by resampling posterior draws from `phi_array` and `zi_array` and
+#' averaging `dZIB_4p` across the selected draws. The resulting density is normalized
+#' using the trapezoidal rule (`pracma::trapz`) to ensure integration to 1.
 #'
+#' @return Numeric vector of the same length as `z_values` representing the normalized
+#'   aggregated zero-inflated Beta density.
+#'
+#' @examples
+#' set.seed(1)
+#'
+#' n_draws <- 5
+#' n_nodes <- 2
+#' n_mc <- 10
+#' n_z <- 50
+#'
+#' Y_mc <- matrix(runif(n_draws * n_nodes), nrow = n_draws)
+#' phi_array <- matrix(rexp(n_draws * n_nodes, 1), nrow = n_draws)
+#' zi_array <- matrix(runif(n_draws * n_nodes, 0, 0.2), nrow = n_draws)
+#' weights <- rep(1, n_nodes)
+#' z_values <- seq(0, sum(weights), length.out = n_z)
+#'
+#' density <- ZIB_convolution_density(Y_mc, phi_array, zi_array, weights, z_values, n_mc)
+#' plot(z_values, density, type = "l")
+#'
+#' @export
 
 ZIB_convolution_density <- function(Y_mc,
                                 phi_array,

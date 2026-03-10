@@ -2,20 +2,39 @@
 % Please edit documentation in R/tilted_density_cont.R
 \name{tilted_density_cont}
 \alias{tilted_density_cont}
-\title{Tilting the density of f(y) using the optimised nu parameter.}
+\title{Tilt the Density of f(y) Using the Optimized Nu Parameter}
 \usage{
 tilted_density_cont(nu, f_y, y_vals)
 }
 \arguments{
-\item{nu}{The tilting parameter}
+\item{nu}{Numeric; the tilting parameter.}
 
-\item{f_y}{calculate density of aggregated series}
+\item{f_y}{Numeric vector; the density values of the aggregated series
+evaluated at \code{y_vals}.}
 
-\item{y_vals}{evaluation points over which the density is calculated}
+\item{y_vals}{Numeric vector; evaluation points corresponding to \code{f_y}.}
 }
 \value{
-The tilted density of f(y).
+Numeric vector of the same length as \code{y_vals}, representing the
+normalized tilted density.
 }
 \description{
-Tilting the density of f(y) using the optimised nu parameter.
+Tilt the Density of f(y) Using the Optimized Nu Parameter
+}
+\details{
+Exponential tilting adjusts the density to shift the mean (or other moments)
+according to a tilting parameter \code{nu}. The tilted density is computed as:
+
+\deqn{f_{\rm tilt}(y) = \frac{\exp(\nu y) f_y}{\int \exp(\nu y) f_y dy}}
+
+The integral in the denominator is approximated numerically using the
+trapezoidal rule via \code{pracma::trapz}.
+}
+\examples{
+y_vals <- seq(-3, 3, length.out = 100)
+f_y <- dnorm(y_vals)
+nu <- 0.5
+f_tilt <- tilted_density_cont(nu, f_y, y_vals)
+sum(f_tilt) * mean(diff(y_vals))  # approx. 1
+
 }

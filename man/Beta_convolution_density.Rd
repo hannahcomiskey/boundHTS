@@ -2,27 +2,61 @@
 % Please edit documentation in R/Beta_convolution_density.R
 \name{Beta_convolution_density}
 \alias{Beta_convolution_density}
-\title{Calculate 4 parameter Beta PDF}
+\title{Monte Carlo Convolution Density for Four-Parameter Beta Distributions}
 \usage{
 Beta_convolution_density(z, alpha_matrix, beta_matrix, weighted_samps, weights)
 }
 \arguments{
-\item{z}{evaluation points}
+\item{z}{Numeric evaluation point for the aggregated density.}
 
-\item{alpha_matrix}{matrix of shape parameters for each element (b) in the aggregate over each of the N observations (N rows x b columns)}
+\item{alpha_matrix}{Matrix of alpha (shape1) parameters for the Beta
+distribution for each observation (rows correspond to simulations).}
 
-\item{beta_matrix}{matrix of shape parameters for each element in the aggregate (N rows x b columns)}
+\item{beta_matrix}{Matrix of beta (shape2) parameters for the Beta
+distribution for each observation (rows correspond to simulations).}
 
-\item{weighted_samps}{matrix of weighted samples for each element in the aggregate (N rows x b columns)}
+\item{weighted_samps}{Array of weighted samples for each element in the
+aggregate (dimensions: n_sims x n_draws x b).}
 
-\item{weights}{vector of weights that are used to combine to form the aggregated density Z. (length b)}
+\item{weights}{Numeric vector of weights used to combine the components
+into the aggregated density \eqn{Z} (length b).}
 }
 \value{
-The aggregate density Z over a grid of values.
+A numeric value representing the estimated aggregated density evaluated at \code{z}.
 }
 \description{
-Calculate 4 parameter Beta PDF
+Monte Carlo Convolution Density for Four-Parameter Beta Distributions
 }
 \details{
-A wrapper function for calculating Monte Carlo estimates for the aggregated Beta density Z using \code{ExtDist::dBeta_ab}.
+This function computes a Monte Carlo approximation of the density of an
+aggregated random variable formed from a weighted sum of Beta-distributed
+components. For each Monte Carlo simulation and posterior draw, the density
+is evaluated using \code{ExtDist::dBeta_ab()}, and the result is averaged
+across simulations and posterior draws.
+}
+\examples{
+set.seed(1)
+
+# Simulation setup
+n_sims <- 50
+n_draws <- 10
+b <- 2
+
+# Simulated weighted samples
+weighted_samps <- array(runif(n_sims * n_draws * b),
+                        dim = c(n_sims, n_draws, b))
+
+alpha_matrix <- matrix(runif(n_sims * b, 2, 5), nrow = n_sims)
+beta_matrix  <- matrix(runif(n_sims * b, 2, 5), nrow = n_sims)
+
+weights <- c(1, 1)
+
+Beta_convolution_density(
+  z = 0.5,
+  alpha_matrix = alpha_matrix,
+  beta_matrix = beta_matrix,
+  weighted_samps = weighted_samps,
+  weights = weights
+)
+
 }

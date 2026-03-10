@@ -11,11 +11,6 @@ vignette: >
 
 ## Overview
 
-```{r, setup, message = FALSE, warning = FALSE}
-set.seed(123)
-```
-
-
 This vignette demonstrates how to:
 
 1. Forecast simulated Poisson-distributed time series using `glm` from the \CRANpkg{stats}.
@@ -35,13 +30,16 @@ We consider a two-level hierarchy:
 ## Step 1: Load and visualise Poisson distributed data 
 
 ```{r}
-sim_data <- boundHTS::poisson_sim_data
+set.seed(123)
+library(boundHTS)
 
+data("poisson_sim_data")         # load data
+head(poisson_sim_data)
 ```
 
 This shows the counts recorded over the covariate X for each node in the hierarchy.
 ```{r}
-hts_data_long <- tidyr::pivot_longer(sim_data, cols = -c(X), names_to = "Level", values_to = "Value")
+hts_data_long <- tidyr::pivot_longer(poisson_sim_data, cols = -c(X), names_to = "Level", values_to = "Value")
 
 ggplot2::ggplot(hts_data_long, ggplot2::aes(x = X, y = Value, color = Level)) +
   ggplot2::geom_line() +
@@ -66,15 +64,15 @@ At each forecast origin:
 
 ### Step 2.1 Set up modelling variables 
 ```{r}
-N <- nrow(sim_data) # 2000 rows
+N <- nrow(poisson_sim_data) # 2000 rows
 m <- 4 # bottom series
-n_series <- ncol(sim_data[,-1])
+n_series <- ncol(poisson_sim_data[,-1])
 n_train <- c(1:c(N-50)) # withhold the last 50 observations for validation
 test_indices <- c(length(n_train)+1):N
 n_samples <- length(test_indices)
 sum_bottom <- c("AA", "AB", "BA", "BB")
-top_y_vals <- seq(from = 0, to = c(max(sim_data$Tot)+10))
-ally <- sim_data[,-c(1)] # remove covariates
+top_y_vals <- seq(from = 0, to = c(max(poisson_sim_data$Tot)+10))
+ally <- poisson_sim_data[,-c(1)] # remove covariates
 
 ```
 
@@ -112,7 +110,7 @@ for (t in seq_along(test_indices)) {
     formula_str <- paste(series, "~ X + I(X^2)")
     fit <- stats::glm(
       formula = stats::as.formula(formula_str),
-      data    = sim_data[train_idx, c("X", series)],
+      data    = poisson_sim_data[train_idx, c("X", series)],
       family = "poisson"
     )
 
@@ -124,7 +122,7 @@ for (t in seq_along(test_indices)) {
 
     # One-step-ahead Poisson mean
     lambda_est[test_indices[t], series] <-
-      stats::predict(fit, newdata = sim_data[test_indices[t], c("X", series)])
+      stats::predict(fit, newdata = poisson_sim_data[test_indices[t], c("X", series)])
 
     # Draw predictive samples from Poisson distribution
     fits[, series] <- stats::rpois(
@@ -158,7 +156,7 @@ We estimate a coherent top-series probability mass function (PMF) using a convol
 #### Step 3.1: Set up inputs for convolution
 We will generate PMFs for the withheld data points to validate of our method. You can loop over all years of you wish by updating the code to do so.
 
-```{r, eval=FALSE}
+```{r}
 f_tilde_exp <- list()
 nu_exp <- list()
 f_y <- vector()
@@ -168,7 +166,7 @@ pmf_values <- vector()
 
 
 #### Step 3.2: Generate PMF via convolution and tilt the convoluted PMF towards the predictive mean.
-```{r, eval=FALSE}
+```{r}
 # Apply to predictions
 for(t in 1:length(test_indices)) {
   # lambda values
@@ -209,7 +207,7 @@ for(t in 1:length(test_indices)) {
 
 The figure presents the predictive density formed by convolving the estimated bottom-level Poisson distributions. The resulting density is subsequently tilted so that its expectation matches the corresponding one-step-ahead predictive mean, ensuring coherence between the full predictive distribution and the point forecast.
 
-```{r,  echo=FALSE, out.width = "100%",  fig.align = "center"}
+```{r}
 
 t=50
 
@@ -243,14 +241,14 @@ means_df <- data.frame(
   ) 
   
 
-ggplot() +
-  geom_line(data = df_plot, aes(x = y, y = pmf, col='Tilted density')) +
-  geom_line(data = conv_plot, aes(x = y, y = pmf, col='Convoluted denisty')) +
-  geom_vline(data = means_df,
-             aes(xintercept = mean, linetype = "Predicitive mean")) +
-  facet_wrap(~ node, nrow=5) +
-  scale_colour_brewer(palette="Set1") +
-  labs(x = "Counts",
+ggplot2::ggplot() +
+  ggplot2::geom_line(data = df_plot, ggplot2::aes(x = y, y = pmf, col='Tilted density')) +
+  ggplot2::geom_line(data = conv_plot, ggplot2::aes(x = y, y = pmf, col='Convoluted denisty')) +
+  ggplot2::geom_vline(data = means_df,
+             ggplot2::aes(xintercept = mean, linetype = "Predicitive mean")) +
+  ggplot2::facet_wrap(~ node, nrow=5) +
+  ggplot2::scale_colour_brewer(palette="Set1") +
+  ggplot2::labs(x = "Counts",
        y = "Tilted probability mass")
 
 ```
