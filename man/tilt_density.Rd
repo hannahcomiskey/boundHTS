@@ -26,11 +26,7 @@ A list with components:
 }
 }
 \description{
-Constructs a tilted version of a discrete or continuous base density
-so that its mean matches a specified theoretical value. The function
-applies exponential tilting to the input density, ensuring that the
-resulting density is normalized and coherent. It also provides random
-samples drawn from the tilted density.
+Tilt a Base Density to Match a Target Mean
 }
 \details{
 The function searches for the tilting parameter \code{nu} that satisfies the

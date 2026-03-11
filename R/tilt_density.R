@@ -1,12 +1,5 @@
 #' Tilt a Base Density to Match a Target Mean
 #'
-#' @description
-#' Constructs a tilted version of a discrete or continuous base density
-#' so that its mean matches a specified theoretical value. The function
-#' applies exponential tilting to the input density, ensuring that the
-#' resulting density is normalized and coherent. It also provides random
-#' samples drawn from the tilted density.
-#'
 #' @param mu_theory Numeric. The target mean to match with the tilted density.
 #' @param y_vals Numeric vector. Support points of the base density.
 #' @param f_y Numeric vector. Base density values corresponding to `y_vals`.
@@ -65,14 +58,9 @@ tilt_density <- function(mu_theory, y_vals, f_y, discrete=FALSE) {
   # Extract and normalise convolution base density
   if(discrete==FALSE) {
     f_y <- f_y / pracma::trapz(y_vals, f_y)
-    mu_base <- pracma::trapz(y_vals, y_vals * f_y)     # Base mean
   } else{
     f_y <- f_y / sum(f_y)
-    mu_base <- sum(y_vals * f_y) # Base mean
   }
-
-  message("mu base:", mu_base, "\n")
-  message("mu theory:", mu_theory, "\n")
 
   # Root finding bracket search
   nu_grid <- seq(-2000, 2000, length.out = 4000)

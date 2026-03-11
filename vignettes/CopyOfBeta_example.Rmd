@@ -19,17 +19,6 @@ set.seed(123)
 n_obs   <- 400
 burn_in <- 150
 time    <- seq_len(n_obs)
-
-inv_logit <- function(x) {
- p <- 1 / (1 + exp(-x))
- return(p)
-}
-
-inv_logit_delta <- function(mu, var) {
-  prop_var <- (mu * (1 - mu))^2 * var
-  return(prop_var)
-} 
-
 ```
 
 
@@ -52,130 +41,375 @@ We consider a two-level hierarchy:
 All series take values in (0, 1) and are modelled using Beta distributions. Temporal dependence is introduced on the logit scale.
 
 
-## Step 1: Load simulated Beta distributed data 
+## Step 1: Generate Beta distributed data 
 
-```{r}
-head(beta_sim_data)
+We want to simulate data that is correlated at the bottom level, and then aggregate the bottom layers to give subsequent layers.
+
+### 1.1 Bottom-level dynamics (correlated AR(1) processes)
+
+We introduce temporal dependence on the **logit scale** to ensure that the resulting series remain in (0, 1) after transformation.
+
+```{r, bottom-level-ar1}
+# Bottom-level nodes: AA and AB
+# Modelled as correlated AR(1) processes on the logit scale
+
+beta0 <- c(0.2, 0.1)
+beta1 <- c(0.65, 0.55)
+
+# Stationary mean of each AR(1) process
+mu <- beta0 / (1 - beta1)
+
+# Innovation covariance
+sd_AA <- sd_AB <- 0.15
+rho   <- -0.6
+
+Sigma <- matrix(
+  c(sd_AA^2, rho * sd_AA * sd_AB,
+    rho * sd_AA * sd_AB, sd_AB^2),
+  nrow = 2
+)
+
+logit_mat <- matrix(NA_real_, n_obs, 2)
+logit_mat[1, ] <- rnorm(2)
+
+# Simulate correlated AR(1) dynamics on the logit scale
+for (t in 2:n_obs) {
+  logit_mat[t, ] <-
+    mu +
+    beta1 * (logit_mat[t - 1, ] - mu) +
+    MASS::mvrnorm(1, mu = c(0, 0), Sigma = Sigma)
+}
+
+# Remove burn-in
+logit_mat <- logit_mat[-seq_len(burn_in), ]
+
+# Transform to proportions
+AA <- plogis(logit_mat[, 1])
+AB <- plogis(logit_mat[, 2])
+```
+
+### 1.2 Dependence diagnostics
+
+```{r, dependence-check}
+# Dependence between bottom-level nodes
+stats::cor.test(logit_mat[, 1], logit_mat[, 2], method = "kendall")
+```
+
+### 1.3 Aggregation to the top level
+At the next level, we aggregate the bottom-level proportions by averaging them.
+To allow for additional variability at this level, we generate observations from a Beta distribution centered on the aggregate mean.
+
+```{r, aggregation-A}
+# Aggregation at node A with additional variability
+A_mean <- 0.5 * AA + 0.5 * AB
+
+kappa_A <- 200
+A <- stats::rbeta(
+  n      = length(A_mean),
+  shape1 = kappa_A * A_mean,
+  shape2 = kappa_A * (1 - A_mean)
+)
+
+## aggregation-diagnostics, fig.height=3 ----------------------------------
+plot(
+  A - A_mean,
+  type = "l",
+  ylab = expression(A[t] - E(A[t])),
+  xlab = "Time"
+)
+abline(h = 0, lty = 2)
+
+# Top-level split
+B <- 1 - A
+
+```
+
+### 1.4 Final data set
+The resulting data set contains all hierarchical levels and will be used as input for the Bayesian models in Step 2.
+
+```{r, top-level}
+
+# Final data set
+sim_data <- tibble::tibble(
+  Time = 1:c(n_obs-burn_in),
+  A  = A,
+  B  = B,
+  AA = AA, 
+  AB = AB
+)
 
 ```
 
 
 ## Step 2: Generating model estimates
 
-We estimate separate state–space models for:
+We estimate separate Bayesian state–space models for:
 
 - the **top-level series** (`A`)
 - the **bottom-level series** (`AA`, `AB`)
 
-We will use the logit-transformed proportions and an ARMA model to capture the temporal changes
+To keep rolling-window forecasting computationally efficient:
 
-### 2.1 Calculate logit of data
+1. Each model is **compiled once**
+2. An initial long MCMC run is performed
+3. Subsequent forecasts use **short warm-up updates**
 
-```{r}
+**Note:** This section can take several minutes to run, as it fits Bayesian models using MCMC. For a quicker test, reduce the number of iterations or shorten the rolling window.
 
-logit_sim_data <- beta_sim_data %>% 
-  mutate(logit_A = log(A/(1-A)),
-         logit_AA = log(AA/(1-AA)),
-         logit_AB = log(AB/(1-AB)))
+### 2.1 MCMC settings
 
-```
+```{r, jags-settings}
+n_chains <- 3
 
-### 2.2 Run the models
+# Initial long run (performed once)
+init_burnin_iter <- 4000
+init_sample_iter <- 4000
+init_thin <- 2
 
-```{r}
-forecasts_sims <- forecasts <- data.frame()
-nsim <- 2000
+# Subsequent rolling updates
+update_short <- 1000
+sample_short <- 2000
+thin_short <- 1
 
-# Top model
-for(t in seq_along(n_testyears)) {
-  
-  # Calculate training data
-  train_idx <- which(logit_sim_data$Time < n_testyears[t])
-  training_data <- logit_sim_data[train_idx, , drop = FALSE]
-  
-  # Fit models
-  mod_A_logit <- forecast::auto.arima(training_data$logit_A) 
-  mod_AA_logit <- forecast::auto.arima(training_data$logit_AA) 
-  mod_AB_logit <- forecast::auto.arima(training_data$logit_AB) 
-  
-  if(t==1) {
-    pred_A <- tibble(logit_mean = mod_A_logit$fitted) %>% 
-      mutate(Node = "A", Time = 1:length(mod_A_logit$fitted))
-    pred_AA <- tibble(logit_mean = mod_AA_logit$fitted) %>% 
-      mutate(Node = "AA", Time = 1:length(mod_AA_logit$fitted))
-    pred_AB <- tibble(logit_mean = mod_AB_logit$fitted) %>% 
-      mutate(Node = "AB", Time = 1:length(mod_AB_logit$fitted))
-    
-    training_mods <- list("A" = replicate(5000,
-                                          simulate(mod_A_logit,
-                                                   nsim = length(training_data$logit_A))),
-                          "AA" = replicate(5000,
-                                           simulate(mod_AA_logit,
-                                                    nsim = length(training_data$logit_AA))), 
-                          "AB" = replicate(5000,
-                                           simulate(mod_AB_logit,
-                                                    nsim = length(training_data$logit_AB))))
-    
-    forecasts <- bind_rows(forecasts, pred_A, pred_AA, pred_AB) # training data estimates
-    
-  }
-  
-  # Get one-step ahead predictions
-  fc_A <- as_tibble(forecast::forecast(mod_A_logit, h = 1))
-  fc_AA <- as_tibble(forecast::forecast(mod_AA_logit, h = 1))
-  fc_AB <- as_tibble(forecast::forecast(mod_AB_logit, h = 1))
-  
-  # Get variance of one-step ahead forecast
-  sim_logit_A <- replicate(5000, simulate(mod_A_logit, nsim = 1, future = TRUE))
-  var_beta_A  <- var(sim_logit_A)
-  sim_logit_AA <- replicate(5000, simulate(mod_AA_logit, nsim = 1, future = TRUE))
-  var_beta_AA  <- var(sim_logit_AA)
-  sim_logit_AB <-  replicate(5000, simulate(mod_AB_logit, nsim = 1, future = TRUE))
-  var_beta_AB  <- var(sim_logit_AB)
-  
-  # Create results dataframes
-  fc_A <- fc_A %>% mutate(Node = "A",
-                          Time = n_testyears[t],
-                          logit_var = var_beta_A) %>%
-    rename(logit_mean = `Point Forecast`)
-  fc_AA <- fc_AA %>% mutate(Node = "AA",
-                            Time = n_testyears[t],
-                            logit_var = var_beta_AA)  %>%
-    rename(logit_mean = `Point Forecast`)
-  fc_AB <- fc_AB %>% mutate(Node = "AB",
-                            Time = n_testyears[t],
-                            logit_var = var_beta_AB)  %>%
-    rename(logit_mean = `Point Forecast`)
-  
-  forecasts <- bind_rows(forecasts, fc_A, fc_AA, fc_AB)
- 
-  # Create results dataframes
-  sim_logit_A <- tibble(Node = "A",
-                        Time = n_testyears[t],
-                        logit_samp = sim_logit_A) 
-  sim_logit_AA <- tibble(Node = "AA",
-                        Time = n_testyears[t],
-                        logit_samp = sim_logit_AA) 
-  sim_logit_AB <- tibble(Node = "AB",
-                        Time = n_testyears[t],
-                        logit_samp = sim_logit_AB) 
-  
-  forecasts_sims <- bind_rows(forecasts_sims, sim_logit_A, sim_logit_AA, sim_logit_AB)
-  
+# helper function
+samples_to_matrix <- function(samples_mcmc_list, varname) {
+  mat_list <- lapply(samples_mcmc_list, as.matrix)
+  fullmat  <- do.call(rbind, mat_list)
+  cols <- grep(paste0("^", varname, "(\\b|\\[)"),
+               colnames(fullmat), value = TRUE)
+  fullmat[, cols, drop = FALSE]
 }
 
 ```
 
+### 2.2 Compile models (run once)
 
-### 2.3 Back-transform the proportions
 ```{r}
-# Back transform to proportions
-prop_var <- inv_logit_delta(inv_logit(forecasts$logit_mean), forecasts$logit_var)
+preds_post_all <- preds_mean_all <- data.frame()
+n_testyears <- c(max(sim_data$Time)-5):max(sim_data$Time)
 
-forecasts <- forecasts %>%
-  mutate(proportion = inv_logit(forecasts$logit_mean),
-         prop_var = prop_var) %>%
-  select(Time, Node, logit_mean, logit_var, proportion, prop_var)
+#---------------------
+# Prepare initial training window (first t) to compile models once
+#---------------------
+first_t <- min(n_testyears)
+
+train_idx0 <- which(sim_data$Time < first_t)
+training_data0 <- sim_data[train_idx0, , drop = FALSE]
+yA0 <- training_data0[, "A", drop = FALSE]
+
+# Top model initial data (for model compilation) ---
+N_pred0_top <- nrow(yA0) + 1
+X0 <- splines::bs(1:N_pred0_top, df = 10)
+K0 <- ncol(X0)
+
+jags_data_top_env <- list2env(list(
+  n_bottom = 1,
+  X = X0,
+  K = K0,
+  n_obs = nrow(yA0),
+  N_pred = N_pred0_top,
+  y = as.matrix(yA0)
+), parent = emptyenv())
+
+
+# Compile top model once
+cat("Compiling TOP model (this happens once)...\n")
+mod_top <- rjags::jags.model(
+  file = system.file("model/beta_sim_top_series_model.txt", package = "boundHTS"),
+  data = jags_data_top_env,
+  n.chains = n_chains,
+  n.adapt = 500  # small adapt at compile; we'll burn-in explicitly below
+)
+
+# Bottom model initial data 
+# Use the first training dataset bottom columns
+yB0 <- training_data0[, c("AA", "AB"), drop = FALSE]
+N_pred0_bottom <- nrow(yB0) + 1
+
+jags_data_bottom_env <- list2env(list(
+  n_bottom = ncol(yB0),
+  priormu_b0 = c(-0.85, -0.5), # default priors for compilation
+  priormu_b1 = c(0.5, 0.4),
+  priorsigma_b0 = c(0.5, 0.5),
+  priorsigma_b1 = c(0.3, 0.3),
+  prior_phi_alpha = 2,
+  prior_phi_beta = 2,
+  n_obs = nrow(yB0),
+  N_pred = N_pred0_bottom,
+  y = as.matrix(yB0)
+), parent = emptyenv())
+
+cat("Compiling BOTTOM model (this happens once)...\n")
+mod_bottom <- rjags::jags.model(
+  file = system.file("model/beta_sim_bottom_series_model.txt", package = "boundHTS"),
+  data = jags_data_bottom_env,
+  n.chains = n_chains,
+  n.adapt = 500
+)
+```
+
+
+### 2.3 Initial long MCMC run
+```{r}
+#---------------------
+# First (initial) warm long run for both models (long burnin + sampling)
+#---------------------
+cat("Initial burn-in & sampling for TOP model...\n")
+
+# burn-in
+update(mod_top, init_burnin_iter)
+
+# sample
+params_top <- c("phi", "mu", "beta0", "beta_coef", "y_pred")
+samps_top_init <- rjags::coda.samples(mod_top, variable.names = params_top,
+                               n.iter = init_sample_iter, thin = init_thin)
+
+# get mean of y_pred and phi and mu
+y_pred_top_mat <- samples_to_matrix(samps_top_init, "y_pred")
+phi_top_mat <- samples_to_matrix(samps_top_init, "phi")
+mu_top_mat <- samples_to_matrix(samps_top_init, "mu")
+
+y_pred_top_mean <- colMeans(y_pred_top_mat)
+phi_top_mean <- colMeans(phi_top_mat)
+mu_top_mean <- colMeans(mu_top_mat)
+
+
+# Bottom level
+cat("Initial burn-in & sampling for BOTTOM model...\n")
+params_bottom <- c("phi", "mu", "beta0", "beta_coef", "y_pred")
+update(mod_bottom, init_burnin_iter)
+samps_bottom_init <- rjags::coda.samples(mod_bottom, variable.names = params_bottom,
+                                  n.iter = init_sample_iter, thin = init_thin)
+
+# get mean of y_pred and phi and mu
+y_pred_bottom_mat <- samples_to_matrix(samps_bottom_init, "y_pred")
+phi_bottom_mat <- samples_to_matrix(samps_bottom_init, "phi")
+mu_bottom_mat <- samples_to_matrix(samps_bottom_init, "mu")
+
+y_pred_bottom_mean <- colMeans(y_pred_bottom_mat)
+phi_bottom_mean <- colMeans(phi_bottom_mat)
+mu_bottom_mean <- colMeans(mu_bottom_mat)
+
+# store initial mu estimates if first_t matches your save criteria
+if (first_t == min(n_testyears)) {
+  mu_A <- mu_top_mean # mean
+  mu_A_post <- mu_top_mat # posterior samples
+  mu_bottom <- mu_bottom_mean
+  mu_bottom_post <- mu_bottom_mat
+}
+
+# Append results for first_t
+preds_mean_all <- dplyr::bind_rows(preds_mean_all,
+                                   as.data.frame(
+                                     cbind(Time = first_t,
+                                           A = y_pred_top_mean[ncol(y_pred_top_mat) ],      # last entry corresponds to N_pred
+                                           pred_AA = y_pred_bottom_mean[ ncol(y_pred_bottom_mat) ],
+                                           pred_AB = y_pred_bottom_mean[ ncol(y_pred_bottom_mat) - 1 ], # adjust if ordering differs
+                                           phi_A = mean(phi_top_mean),
+                                           phi_AA = phi_bottom_mean[1],
+                                           phi_AB = phi_bottom_mean[2])
+                                     ))
+
+# save posterior draws (for first_t)
+# For consistent column ordering create a data.frame with Time and draws
+n_draws_init <- nrow(y_pred_top_mat)
+Npred_index_top <- ncol(y_pred_top_mat)  # last column is the N_pred
+Npred_index_bottom <- ncol(y_pred_bottom_mat)
+
+pred_post_init <- data.frame(
+  Time = rep(first_t, n_draws_init),
+  A = y_pred_top_mat[, Npred_index_top],
+  AA = y_pred_bottom_mat[, Npred_index_bottom - 1],  # adjust if necessary
+  AB = y_pred_bottom_mat[, Npred_index_bottom]
+)
+preds_post_all <- dplyr::bind_rows(preds_post_all, pred_post_init)
+```
+
+
+### 2.4 Rolling one-step-ahead forecasts
+
+```{r}
+remaining_t <- setdiff(n_testyears, first_t)
+
+for (t in remaining_t) {
+  cat("Processing t =", t, "...\n")
+  
+  train_idx <- which(sim_data$Time < t)
+  training_data <- sim_data[train_idx, , drop = FALSE]
+  
+  # TOP model: update environment variables for new training data -----
+  yA <- training_data[, "A", drop = FALSE]
+  N_pred_top <- nrow(yA) + 1
+  X_top <- splines::bs(1:N_pred_top, df = 10)
+  K_top <- ncol(X_top)
+  
+  # replace data in the top model's environment
+  assign("X", X_top, envir = jags_data_top_env)
+  assign("K", K_top, envir = jags_data_top_env)
+  assign("n_obs", nrow(yA), envir = jags_data_top_env)
+  assign("N_pred", N_pred_top, envir = jags_data_top_env)
+  assign("y", as.matrix(yA), envir = jags_data_top_env)
+  
+  # short warm-up and sample
+  stats::update(mod_top, update_short)
+  samps_top <- rjags::coda.samples(mod_top, variable.names = params_top,
+                            n.iter = sample_short, thin = thin_short)
+  
+  # extract means and posterior predictive draws
+  y_pred_top_mat <- samples_to_matrix(samps_top, "y_pred")
+  phi_top_mat <- samples_to_matrix(samps_top, "phi")
+  mu_top_mat <- samples_to_matrix(samps_top, "mu")
+  
+  y_pred_top_mean <- colMeans(y_pred_top_mat)
+  phi_top_mean <- colMeans(phi_top_mat)
+  mu_top_mean <- colMeans(mu_top_mat)
+  
+  # BOTTOM model: update data env -----
+  yB <- training_data[, c("AA", "AB"), drop = FALSE]
+  N_pred_bottom <- nrow(yB) + 1
+  assign("n_bottom", ncol(yB), envir = jags_data_bottom_env)
+  assign("n_obs", nrow(yB), envir = jags_data_bottom_env)
+  assign("N_pred", N_pred_bottom, envir = jags_data_bottom_env)
+  assign("y", as.matrix(yB), envir = jags_data_bottom_env)
+  
+  stats::update(mod_bottom, update_short)
+  samps_bottom <- rjags::coda.samples(mod_bottom, variable.names = params_bottom,
+                               n.iter = sample_short, thin = thin_short)
+  
+  y_pred_bottom_mat <- samples_to_matrix(samps_bottom, "y_pred")
+  phi_bottom_mat <- samples_to_matrix(samps_bottom, "phi")
+  mu_bottom_mat <- samples_to_matrix(samps_bottom, "mu")
+  
+  y_pred_bottom_mean <- colMeans(y_pred_bottom_mat)
+  phi_bottom_mean <- colMeans(phi_bottom_mat)
+  mu_bottom_mean <- colMeans(mu_bottom_mat)
+  
+  # create summary row 
+  Npred_idx_top <- ncol(y_pred_top_mat)
+  Npred_idx_bottom <- ncol(y_pred_bottom_mat)
+  
+  preds_mean <- cbind(
+    Time = t,
+    A      = y_pred_top_mean[Npred_idx_top],
+    pred_AA = y_pred_bottom_mean[Npred_idx_bottom - 1],
+    pred_AB = y_pred_bottom_mean[Npred_idx_bottom],
+    phi_A  = mean(phi_top_mean),
+    phi_AA = phi_bottom_mean[1],
+    phi_AB = phi_bottom_mean[2]
+  )
+  
+  # posterior draws for this t
+  n_draws <- nrow(y_pred_top_mat)
+  pred_post <- data.frame(
+    Time = rep(t, n_draws),
+    A = y_pred_top_mat[, Npred_idx_top],
+    AA = y_pred_bottom_mat[, Npred_idx_bottom - 1],
+    AB = y_pred_bottom_mat[, Npred_idx_bottom]
+  )
+  
+  preds_mean_all <- dplyr::bind_rows(preds_mean_all, as.data.frame(preds_mean))
+  preds_post_all <- dplyr::bind_rows(preds_post_all, pred_post)
+}
 
 ```
 

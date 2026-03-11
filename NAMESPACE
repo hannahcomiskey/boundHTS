@@ -2,8 +2,11 @@
 
 export(Beta_convolution_density)
 export(Beta_convolution_density_parallel)
+export(Beta_convolution_density_point)
 export(ZIB_convolution_density)
+export(ZIB_convolution_density_point)
 export(ZOIB_convolution_density)
+export(ZOIB_convolution_density_point)
 export(dZIB_4p)
 export(dZOIB_4p)
 export(logit_vcov_delta)

@@ -183,16 +183,16 @@ for(t in 1:length(test_indices)) {
   
   # Construct tilted pmf for top and bottom series
   f_tilt <- matrix(NA, nrow = length(top_y_vals), ncol = length(lambda_vec))
+  nu_star <- vector()
   for(k in 1:length(lambda_vec)) {
     # Convolution step
     f_y <- stats::dpois(top_y_vals, lambda_vec[k]) # density of convolution
     
-    # Solve for nu
-    nu_star <- stats::uniroot(moment_condition_tilting, interval = c(-1, 1), 
-                       f_y = f_y, y_vals = top_y_vals, 
-                       mu_theory = mu_theory[k])$root
-
-    f_tilt[,k] <- tilted_density_discrete(nu_star, f_y, top_y_vals)
+    # Tilt density
+    tilted_dens <- tilt_density(mu_theory[k], top_y_vals, f_y, discrete=TRUE) # tilt density
+  
+    f_tilt[,k] <- tilted_dens$f_tilted
+    nu_star <- c(tilted_dens$nu_star, nu_star)
   }
   colnames(f_tilt) <- colnames(fitted_vals)
   
