@@ -3,6 +3,7 @@
 export(Beta_convolution_density)
 export(Beta_convolution_density_parallel)
 export(Beta_convolution_density_point)
+export(Beta_convolution_density_point_parallel)
 export(ZIB_convolution_density)
 export(ZIB_convolution_density_point)
 export(ZOIB_convolution_density)
