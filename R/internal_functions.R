@@ -6,7 +6,7 @@
 #' The corresponding alpha and beta shape parameters
 #'
 #' @return A vector of shape parameters
-#' @noRd
+#' @export
 
 beta_params <- function(mean, sd) {
   var <- sd^2
@@ -18,7 +18,7 @@ beta_params <- function(mean, sd) {
 
 #' Define safe exponential (to avoid numbers blowing up)
 #' @param x vector of values to exponentiate
-#' @noRd
+#' @export
 
 safe_exp <- function(x) {
   exp(pmin(x, 700))

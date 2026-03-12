@@ -17,6 +17,7 @@
 
 Beta_convolution_density_point_parallel <- function(z_values, alpha_point, beta_point, weighted_samps, weights) {
   Density <- future.apply::future_sapply(z_values,
+                                         Beta_convolution_density_point,
                                          alpha_point = alpha_point,
                                          beta_point = beta_point,
                                          weighted_samps = weighted_samps,
