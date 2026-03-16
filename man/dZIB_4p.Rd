@@ -4,20 +4,21 @@
 \alias{dZIB_4p}
 \title{Vectorized Zero-Inflated Four-Parameter Beta Density}
 \usage{
-dZIB_4p(z, Y_mc, phi_mc, zi_mc, upper, lower = 0)
+dZIB_4p(x, alpha_point, beta_point, zi_point, weight)
 }
 \arguments{
-\item{z}{evaluation points}
+\item{x}{evaluation points}
 
-\item{Y_mc}{Monte Carlo draws of Y}
+\item{alpha_point}{Point estimates of alpha (shape1) parameters for the Beta
+distribution for each observation.}
 
-\item{phi_mc}{Monte Carlo draws of Beta precision (n_draws x n_nodes x n_years)}
+\item{beta_point}{Point estimates of beta (shape2) parameters for the Beta
+distribution for each observation.}
 
-\item{zi_mc}{Monte Carlo draws of zero inflation (n_draws x n_nodes x n_years)}
+\item{zi_point}{Point estimates of zero inflation}
 
-\item{upper}{upper bound}
-
-\item{lower}{lower bound}
+\item{weights}{Numeric vector of weights used to combine the components
+into the aggregated density \eqn{Z} (length b).}
 }
 \value{
 A numeric vector containing the estimated density values for each Monte Carlo draw.
@@ -34,21 +35,24 @@ set.seed(1)
 
 # Monte Carlo size
 n_mc <- 100
-n_nodes <- 1
+n_nodes <- 2
+n_draws <- 100
 
 # Simulated Monte Carlo draws
-Y_mc  <- matrix(runif(n_mc * n_nodes, 0.2, 0.8), nrow = n_mc)
-phi_mc <- matrix(rexp(n_mc * n_nodes, 1), nrow = n_mc)
-zi_mc  <- matrix(runif(n_mc * n_nodes, 0, 0.2), nrow = n_mc)
+weighted_samps  <- array(runif(n_mc*n_draws*n_nodes, 0.2, 0.8),
+dim=c(n_mc,n_draws,n_nodes))
+alpha_point <- runif(n_nodes, 2, 5)
+beta_point  <- runif(n_nodes, 2, 5)
+zi_point <- runif(n_nodes, 0, 0.2)
 
 # Evaluation points
 z <- seq(0, 1, length.out = 50)
 
 # Bounds
-lower <- 0
-upper <- 1
+weights <- rep(0.5, 2)
 
-dens <- dZIB_4p(z[25], Y_mc, phi_mc, zi_mc, upper, lower)
+dens <- dZIB_4p(z[25], weighted_samps, alpha_point, beta_point,
+ zi_point, weights)
 head(dens)
 
 }

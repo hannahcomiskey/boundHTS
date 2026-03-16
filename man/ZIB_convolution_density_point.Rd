@@ -5,29 +5,30 @@
 \title{Monte Carlo Estimate of Aggregated Zero-Inflated Four-Parameter Beta (ZIB) Density}
 \usage{
 ZIB_convolution_density_point(
+  z,
   weighted_samps,
-  phi_point,
+  alpha_point,
+  beta_point,
   zi_point,
-  weights,
-  z_values,
-  n_mc
+  weights
 )
 }
 \arguments{
+\item{z}{Numeric evaluation point for the aggregated density.}
+
 \item{weighted_samps}{Numeric matrix; Monte Carlo draws of weighted
 bottom-series samples (n_draws x n_nodes).}
 
-\item{phi_point}{Numeric vector; Beta precision parameter (length = n_nodes).}
+\item{alpha_point}{Point estimates of alpha (shape1) parameters for the Beta
+distribution for each observation.}
+
+\item{beta_point}{Point estimates of beta (shape2) parameters for the Beta
+distribution for each observation.}
 
 \item{zi_point}{Numeric vector; zero-inflation probability (length = n_nodes).}
 
 \item{weights}{Numeric vector; node-specific upper bounds for the
 Beta distribution (length = n_nodes).}
-
-\item{z_values}{Numeric vector; evaluation points over which the
-density is calculated.}
-
-\item{n_mc}{Integer; number of Monte Carlo samples to use for aggregation.}
 }
 \value{
 Numeric vector of the same length as \code{z_values} representing
@@ -38,10 +39,10 @@ Monte Carlo Estimate of Aggregated Zero-Inflated Four-Parameter Beta (ZIB) Densi
 }
 \details{
 For each evaluation point \code{z}, a Monte Carlo estimate of the aggregated
-zero-inflated Beta density is computed by resampling posterior draws
-from \code{phi_point} and \code{zi_point} and averaging \code{dZIB_4p} across the
-selected draws. The resulting density is normalized using the
-trapezoidal rule (\code{pracma::trapz}) to ensure integration to 1.
+zero-inflated Beta density is computed from \code{alpha_point}, \code{beta_point},
+and \code{zi_point} and averaging \code{dZIB_4p} across the selected draws.
+The resulting density is normalized using the trapezoidal rule
+(\code{pracma::trapz}) to ensure integration to 1.
 }
 \examples{
 set.seed(1)
@@ -52,12 +53,13 @@ n_mc <- 10
 n_z <- 50
 
 weighted_samps <- matrix(runif(n_draws * n_nodes), nrow = n_draws)
-phi_point <- rexp(n_nodes, 1)
 zi_point <- runif(n_nodes, 0, 0.2)
+alpha_point <- runif(n_nodes, 2, 5)
+beta_point  <- runif(n_nodes, 2, 5)
 weights <- rep(1, n_nodes)
-z_values <- seq(0, sum(weights), length.out = n_z)
-
-density <- ZIB_convolution_density_point(weighted_samps, phi_point, zi_point, weights, z_values, n_mc)
+partial_sum <- rowSums(weighted_samps[, , 1:(N-1), drop = FALSE], dims = n_nodes)
+x <- 0.25 - partial_sum
+density <- ZIB_convolution_density_point(x, zi_point, weights, z_values, n_mc)
 plot(z_values, density, type = "l")
 
 }

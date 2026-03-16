@@ -4,26 +4,22 @@
 \alias{dZOIB_4p}
 \title{Vectorized Zero-One-Inflated Four-Parameter Beta Density}
 \usage{
-dZOIB_4p(z, Y_mc, phi_mc, zoi_mc, coi_mc, upper, lower = 0)
+dZOIB_4p(x, alpha_point, beta_point, zi_point, coi_point, weight)
 }
 \arguments{
-\item{z}{Numeric evaluation point for the density.}
+\item{x}{evaluation points}
 
-\item{Y_mc}{Matrix of Monte Carlo draws of the mean parameter \eqn{\mu}
-(n_mc x n_nodes).}
+\item{alpha_point}{Point estimates of alpha (shape1) parameters for the Beta
+distribution for each observation.}
 
-\item{phi_mc}{Matrix of Monte Carlo draws of the precision parameter
-\eqn{\phi} (n_mc x n_nodes).}
+\item{beta_point}{Point estimates of beta (shape2) parameters for the Beta
+distribution for each observation.}
 
-\item{zoi_mc}{Matrix of Monte Carlo draws of the zero-one inflation
-probability (n_mc x n_nodes).}
+\item{zi_point}{Point estimates of zero inflation (n_nodes).}
 
-\item{coi_mc}{Matrix of Monte Carlo draws of the conditional one inflation
-probability (n_mc x n_nodes).}
+\item{coi_point}{Point estimate of conditional one inflation probability (n_nodes).}
 
-\item{upper}{Numeric vector giving the upper bound for each node.}
-
-\item{lower}{Numeric scalar giving the lower bound (default is 0).}
+\item{weight}{Weight used to combine the components into the aggregated density \eqn{Z}.}
 }
 \value{
 A numeric vector of length \code{n_mc} containing the density
@@ -45,24 +41,15 @@ interior of the support.
 }
 \examples{
 set.seed(1)
-
-n_mc <- 100
-n_nodes <- 2
-
-Y_mc <- matrix(runif(n_mc * n_nodes, 0.2, 0.8), nrow = n_mc)
-phi_mc <- matrix(rexp(n_mc * n_nodes, 1), nrow = n_mc)
-zoi_mc <- matrix(runif(n_mc * n_nodes, 0, 0.2), nrow = n_mc)
-coi_mc <- matrix(runif(n_mc * n_nodes, 0, 0.2), nrow = n_mc)
-
-upper <- c(1, 1)
-
-dZOIB_4p(
-  z = 0.5,
-  Y_mc = Y_mc,
-  phi_mc = phi_mc,
-  zoi_mc = zoi_mc,
-  coi_mc = coi_mc,
-  upper = upper
-)
+weighted_samps  <- array(runif(n_mc * n_draws * n_nodes, 0.2, 0.8), dim=c(n_mc, n_draws, n_nodes))
+alpha_point <- runif(n_nodes, 2, 5)
+beta_point  <- runif(n_nodes, 2, 5)
+zi_point <- runif(n_nodes, 0, 0.05)
+coi_point <- runif(n_nodes, 0, 0.02)
+# Evaluation points
+z <- seq(0, 1, length.out = 50)
+weights <- 0.5
+dens <- dZOIB_4p(z[25], alpha_point[2], beta_point[2], zi_point[2], coi_point[2], weights)
+dens
 
 }

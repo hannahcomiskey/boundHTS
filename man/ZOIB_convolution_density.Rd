@@ -5,34 +5,29 @@
 \title{Monte Carlo Convolution Density for Zero-One-Inflated Beta Distributions}
 \usage{
 ZOIB_convolution_density(
-  Y_mc,
-  phi_array,
-  zoi_array,
-  coi_array,
-  weights,
-  z_values,
-  n_mc
+  z,
+  alpha_matrix,
+  beta_matrix,
+  coi_matrix,
+  zi_matrix,
+  weighted_samps,
+  weights
 )
 }
 \arguments{
-\item{Y_mc}{Monte Carlo draws of weighted bottom-series samples
-(matrix: n_draws x n_nodes).}
+\item{z}{Numeric evaluation point for the aggregated density.}
 
-\item{phi_array}{Monte Carlo draws of the Beta precision parameter
-(matrix: n_draws x n_nodes).}
+\item{alpha_matrix}{matrix of shape parameters for each element (b) in the aggregate over each of the N observations (N rows x n_nodes)}
 
-\item{zoi_array}{Monte Carlo draws of the zero-one inflation probability
-(matrix: n_draws x n_nodes).}
+\item{beta_matrix}{matrix of shape parameters for each element in the aggregate (N rows x n_nodes).}
 
-\item{coi_array}{Monte Carlo draws of the conditional one inflation probability
-(matrix: n_draws x n_nodes).}
+\item{coi_matrix}{Numeric matrix; Monte Carlo draws of conditional one-inflation probability (n_draws x n_nodes).}
 
-\item{weights}{Node weights (vector of length n_nodes) defining the
-aggregation structure.}
+\item{weighted_samps}{matrix of weighted samples for each element in the aggregate (N rows x n_nodes)}
 
-\item{z_values}{Numeric vector of evaluation points for the aggregate density.}
+\item{weights}{vector of weights that are used to combine to form the aggregated density Z. (length n_nodes)}
 
-\item{n_mc}{Number of Monte Carlo samples used in the convolution estimate.}
+\item{zoi_matrix}{Numeric matrix; Monte Carlo draws of zero-inflation probability (n_draws x n_nodes).}
 }
 \value{
 A numeric vector containing the estimated aggregate density evaluated at \code{z_values}.

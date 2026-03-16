@@ -1,16 +1,13 @@
 #' Vectorized Zero-One-Inflated Four-Parameter Beta Density
 #'
-#' @param z Numeric evaluation point for the density.
-#' @param Y_mc Matrix of Monte Carlo draws of the mean parameter \eqn{\mu}
-#'   (n_mc x n_nodes).
-#' @param phi_mc Matrix of Monte Carlo draws of the precision parameter
-#'   \eqn{\phi} (n_mc x n_nodes).
-#' @param zoi_mc Matrix of Monte Carlo draws of the zero-one inflation
-#'   probability (n_mc x n_nodes).
-#' @param coi_mc Matrix of Monte Carlo draws of the conditional one inflation
-#'   probability (n_mc x n_nodes).
-#' @param upper Numeric vector giving the upper bound for each node.
-#' @param lower Numeric scalar giving the lower bound (default is 0).
+#' @param x evaluation points
+#' @param alpha_point Point estimates of alpha (shape1) parameters for the Beta
+#'   distribution for each observation.
+#' @param beta_point Point estimates of beta (shape2) parameters for the Beta
+#'   distribution for each observation.
+#' @param zi_point Point estimates of zero inflation (n_nodes).
+#' @param coi_point Point estimate of conditional one inflation probability (n_nodes).
+#' @param weight Weight used to combine the components into the aggregated density \eqn{Z}.
 #'
 #' @details
 #' The Zero-One-Inflated Beta (ZOIB) distribution places probability mass at both
@@ -28,62 +25,26 @@
 #'
 #' @examples
 #' set.seed(1)
-#'
-#' n_mc <- 100
-#' n_nodes <- 2
-#'
-#' Y_mc <- matrix(runif(n_mc * n_nodes, 0.2, 0.8), nrow = n_mc)
-#' phi_mc <- matrix(rexp(n_mc * n_nodes, 1), nrow = n_mc)
-#' zoi_mc <- matrix(runif(n_mc * n_nodes, 0, 0.2), nrow = n_mc)
-#' coi_mc <- matrix(runif(n_mc * n_nodes, 0, 0.2), nrow = n_mc)
-#'
-#' upper <- c(1, 1)
-#'
-#' dZOIB_4p(
-#'   z = 0.5,
-#'   Y_mc = Y_mc,
-#'   phi_mc = phi_mc,
-#'   zoi_mc = zoi_mc,
-#'   coi_mc = coi_mc,
-#'   upper = upper
-#' )
+#' weighted_samps  <- array(runif(n_mc * n_draws * n_nodes, 0.2, 0.8), dim=c(n_mc, n_draws, n_nodes))
+#' alpha_point <- runif(n_nodes, 2, 5)
+#' beta_point  <- runif(n_nodes, 2, 5)
+#' zi_point <- runif(n_nodes, 0, 0.05)
+#' coi_point <- runif(n_nodes, 0, 0.02)
+#' # Evaluation points
+#' z <- seq(0, 1, length.out = 50)
+#' weights <- 0.5
+#' dens <- dZOIB_4p(z[25], alpha_point[2], beta_point[2], zi_point[2], coi_point[2], weights)
+#' dens
 #'
 #' @export
 
-dZOIB_4p <- function(z, Y_mc, phi_mc, zoi_mc, coi_mc, upper, lower = 0) {
-
-  n_nodes <- ncol(Y_mc)
-  n_mc <- nrow(phi_mc)
-
-  # Determine parent node and child sum
-  if (n_nodes > 1) {
-    parent   <- n_nodes
-    child_sum <- rowSums(Y_mc[, -parent, drop = FALSE]) # all nodes except the last
-    mu <- Y_mc[, parent]
-    zoi_vec <- zoi_mc[, parent]
-    coi_vec <- coi_mc[, parent]
-    upper_vec <- upper[parent]
-  } else {
-    child_sum <- 0 # no other nodes
-    parent <- 1
-    mu <- Y_mc[, 1]
-    zoi_vec <- zoi_mc[, 1]
-    coi_vec <- coi_mc[, 1]
-    upper_vec <- upper
-  }
-
-  # Remaining x value for parent
-  x_vals <- z - child_sum
-
-  # Beta parameters
-  alpha <- pmax(mu * phi_mc[, parent], 1e-4)
-  beta  <- pmax((1 - mu) * phi_mc[, parent], 1e-4)
+dZOIB_4p <- function(x, alpha_point, beta_point, zi_point, coi_point, weight) {
 
   # Scale to [0,1] interval
-  x_scaled <- x_vals / upper_vec
+  x_scaled <- x / weight
 
   # Initialize density to 0
-  dens <- numeric(n_mc)
+  dens <- vector()
 
   # Boundary handling
   at0 <- x_scaled == 0 # handles values == 0
@@ -92,14 +53,13 @@ dZOIB_4p <- function(z, Y_mc, phi_mc, zoi_mc, coi_mc, upper, lower = 0) {
   outside <- x_scaled < 0 | x_scaled > 1 # handles values outside range
 
   dens[outside] <- 0
-  dens[at0] <- zoi_vec[at0] * (1 - coi_vec[at0])
-  dens[at1] <- zoi_vec[at1] * coi_vec[at1]
-  dens[inside] <- (1 - zoi_vec[inside]) *
-    ExtDist::dBeta_ab(x_vals[inside],
-                      alpha[inside],
-                      beta[inside],
-                      lower,
-                      upper_vec)
+  dens[at0] <- zi_point * (1-coi_point)
+  dens[at1] <- zi_point * coi_point
+  dens[inside] <- (1 - zi_point) * ExtDist::dBeta_ab(x[inside],
+                                                     alpha_point,
+                                                     beta_point,
+                                                     0, weight)
 
   return(dens)
+
 }

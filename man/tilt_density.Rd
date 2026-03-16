@@ -65,4 +65,5 @@ xlab = "y", ylab = "Density")
 lines(y, res$f_tilted, col = "red", lwd = 2)
 legend("topright", legend = c("Original", "Tilted"),
         col = c("blue", "red"), lwd = 2)
+
 }

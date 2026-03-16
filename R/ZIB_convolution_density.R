@@ -1,15 +1,15 @@
 #' Monte Carlo Estimate of Aggregated Zero-Inflated Four-Parameter Beta (ZIB) Density
 #'
-#' @param Y_mc Numeric matrix; Monte Carlo draws of weighted bottom-series samples (n_draws x n_nodes).
-#' @param phi_array Numeric matrix; Monte Carlo draws of the Beta precision parameter (n_draws x n_nodes).
-#' @param zi_array Numeric matrix; Monte Carlo draws of zero-inflation probability (n_draws x n_nodes).
-#' @param weights Numeric vector; node-specific upper bounds for the Beta distribution (length = n_nodes).
-#' @param z_values Numeric vector; evaluation points over which the density is calculated.
-#' @param n_mc Integer; number of Monte Carlo samples to use for aggregation.
+#' @param z Numeric evaluation point for the aggregated density.
+#' @param alpha_matrix matrix of shape parameters for each element (b) in the aggregate over each of the N observations (N rows x n_nodes)
+#' @param beta_matrix matrix of shape parameters for each element in the aggregate (N rows x n_nodes)
+#' @param zi_matrix Numeric matrix; Monte Carlo draws of zero-inflation probability (n_draws x n_nodes).
+#' @param weighted_samps matrix of weighted samples for each element in the aggregate (N rows x n_nodes)
+#' @param weights vector of weights that are used to combine to form the aggregated density Z. (length n_nodes)
 #'
 #' @details
 #' For each evaluation point `z`, a Monte Carlo estimate of the aggregated zero-inflated Beta
-#' density is computed by resampling posterior draws from `phi_array` and `zi_array` and
+#' density is computed by resampling posterior draws from `alpha_matrix`, `beta_matrix,` and `zi_matrix` and
 #' averaging `dZIB_4p` across the selected draws. The resulting density is normalized
 #' using the trapezoidal rule (`pracma::trapz`) to ensure integration to 1.
 #'
@@ -24,48 +24,40 @@
 #' n_mc <- 10
 #' n_z <- 50
 #'
-#' Y_mc <- matrix(runif(n_draws * n_nodes), nrow = n_draws)
+#' weighted_samps <- matrix(runif(n_draws * n_nodes), nrow = n_draws)
 #' phi_array <- matrix(rexp(n_draws * n_nodes, 1), nrow = n_draws)
 #' zi_array <- matrix(runif(n_draws * n_nodes, 0, 0.2), nrow = n_draws)
 #' weights <- rep(1, n_nodes)
 #' z_values <- seq(0, sum(weights), length.out = n_z)
 #'
-#' density <- ZIB_convolution_density(Y_mc, phi_array, zi_array, weights, z_values, n_mc)
+#' density <- ZIB_convolution_density(weighted_samps, phi_array, zi_array, weights, z_values, n_mc)
 #' plot(z_values, density, type = "l")
 #'
 #' @export
 
-ZIB_convolution_density <- function(Y_mc,
-                                phi_array,
-                                zi_array,
-                                weights,
-                                z_values,
-                                n_mc) {
+ZIB_convolution_density <- function(z, alpha_matrix, beta_matrix,
+                                    zi_matrix, weighted_samps, weights) {
 
-  n_draws <- dim(Y_mc)[1]
+  n_draws <- dim(weighted_samps)[1]
+  n_mc <- dim(weighted_samps)[2]
+  N <- dim(weighted_samps)[3]
 
-  # Resample posterior draws ONCE
-  draw_id <- sample(seq_len(n_draws), n_mc, replace = TRUE)
+  conv_pdf <- matrix(0, nrow = n_mc, ncol=n_draws)
 
-  phi_mc <- phi_array[draw_id, , drop=FALSE]
-  zi_mc <- zi_array[draw_id, , drop=FALSE]
+  for(m in 1:n_draws) {
+    for(s in 1:n_mc) {
+      conv_pdf[s,m] <- dZIB_4p(x = z - sum(weighted_samps[s,m, 1:(N-1)]),
+                               alpha_point = alpha_matrix[s,N],
+                               beta_point = beta_matrix[s,N],
+                               zi_point = zi_matrix[s,N],
+                               weight = weights[N])
+    }
+  }
+  avg_over_sims <- apply(conv_pdf, 2, mean)
 
-  future::plan(future::sequential)
+  # Compute final result
+  avg_over_draws <- mean(avg_over_sims, na.rm=TRUE)
 
-  Density <- future.apply::future_sapply(
-    z_values,
-    function(z) {
-      mean(dZIB_4p(z = z,
-                   Y_mc = Y_mc,
-                   phi_mc = phi_mc,
-                   zi_mc = zi_mc,
-                   upper = weights), na.rm = TRUE)
-    },
-    future.seed = TRUE
-  )
-
-  norm_dens <- Density / pracma::trapz(z_values, Density)
-
-  return(norm_dens)
+  return(avg_over_draws)
 
 }

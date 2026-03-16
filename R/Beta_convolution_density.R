@@ -46,7 +46,8 @@
 #'
 #' @export
 
-Beta_convolution_density <- function(z, alpha_matrix, beta_matrix, weighted_samps, weights) {
+Beta_convolution_density <- function(z, alpha_matrix, beta_matrix,
+                                     weighted_samps, weights) {
   N <- dim(weighted_samps)[3]
   n_sims <- dim(weighted_samps)[1]
   n_draws <- dim(weighted_samps)[2]

@@ -6,19 +6,17 @@
 \usage{
 ZOIB_convolution_density_point(
   weighted_samps,
-  phi_point,
+  alpha_point,
+  beta_point,
   zoi_point,
   coi_point,
   weights,
-  z_values,
-  n_mc
+  z_values
 )
 }
 \arguments{
 \item{weighted_samps}{Monte Carlo draws of weighted bottom-series samples
 (matrix: n_draws x n_nodes).}
-
-\item{phi_point}{Beta precision parameter (vector: length n_nodes).}
 
 \item{zoi_point}{Zero-one inflation probability (vector: length n_nodes).}
 
@@ -27,6 +25,8 @@ ZOIB_convolution_density_point(
 \item{weights}{Node weights defining the aggregation structure (vector: length n_nodes).}
 
 \item{z_values}{Numeric vector of evaluation points for the aggregate density.}
+
+\item{phi_point}{Beta precision parameter (vector: length n_nodes).}
 
 \item{n_mc}{Number of Monte Carlo samples used in the convolution estimate.}
 }
@@ -64,8 +64,7 @@ dens <- ZOIB_convolution_density_point(
   zoi_point = zoi_point,
   coi_point = coi_point,
   weights = weights,
-  z_values = z_values,
-  n_mc = 100
+  z_values = z_values
 )
 
 head(dens)

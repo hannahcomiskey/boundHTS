@@ -40,38 +40,32 @@
 #'   zoi_point = zoi_point,
 #'   coi_point = coi_point,
 #'   weights = weights,
-#'   z_values = z_values,
-#'   n_mc = 100
+#'   z_values = z_values
 #' )
 #'
 #' head(dens)
 #'
 #' @export
 
-ZOIB_convolution_density_point <- function(weighted_samps, phi_point, zoi_point,
-                                           coi_point, weights, z_values, n_mc) {
+ZOIB_convolution_density_point <- function(weighted_samps, alpha_point, beta_point,
+                                           zoi_point, coi_point, weights, z_values) {
 
-  n_draws <- dim(weighted_samps)[1]
 
-  future::plan(future::sequential)
+  # Dims
+  N <- dim(weighted_samps)[3]
 
-  Density <- future.apply::future_sapply(
-    z_values,
-    function(z) {
-      library(boundHTS)
-      mean(
-        dZOIB_4p(z = z,
-                 Y_mc = weighted_samps,
-                 phi_mc = phi_point,
-                 zoi_mc = zoi_point,
-                 coi_mc = coi_point,
-                 upper = weights), na.rm = TRUE)
-    },
-    future.seed = TRUE
-  )
+  partial_sum <- rowSums(weighted_samps[, , 1:(N-1), drop = FALSE], dims = 2)
 
-  norm_dens <- Density / pracma::trapz(z_values, Density)
+  # Remaining x value for parent
+  x <- z - partial_sum
 
-  return(norm_dens)
+  Density <- mean(dZOIB_4p(x = x,
+                          alpha_point = alpha_point[N],
+                          beta_point = beta_point[N],
+                          zi_point = zoi_point[N],
+                          coi_point = coi_point[N],
+                          weight = weights[N]), na.rm = TRUE)
+
+  return(Density)
 
 }

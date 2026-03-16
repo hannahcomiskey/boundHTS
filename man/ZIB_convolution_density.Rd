@@ -4,20 +4,27 @@
 \alias{ZIB_convolution_density}
 \title{Monte Carlo Estimate of Aggregated Zero-Inflated Four-Parameter Beta (ZIB) Density}
 \usage{
-ZIB_convolution_density(Y_mc, phi_array, zi_array, weights, z_values, n_mc)
+ZIB_convolution_density(
+  z,
+  alpha_matrix,
+  beta_matrix,
+  zi_matrix,
+  weighted_samps,
+  weights
+)
 }
 \arguments{
-\item{Y_mc}{Numeric matrix; Monte Carlo draws of weighted bottom-series samples (n_draws x n_nodes).}
+\item{z}{Numeric evaluation point for the aggregated density.}
 
-\item{phi_array}{Numeric matrix; Monte Carlo draws of the Beta precision parameter (n_draws x n_nodes).}
+\item{alpha_matrix}{matrix of shape parameters for each element (b) in the aggregate over each of the N observations (N rows x n_nodes)}
 
-\item{zi_array}{Numeric matrix; Monte Carlo draws of zero-inflation probability (n_draws x n_nodes).}
+\item{beta_matrix}{matrix of shape parameters for each element in the aggregate (N rows x n_nodes)}
 
-\item{weights}{Numeric vector; node-specific upper bounds for the Beta distribution (length = n_nodes).}
+\item{zi_matrix}{Numeric matrix; Monte Carlo draws of zero-inflation probability (n_draws x n_nodes).}
 
-\item{z_values}{Numeric vector; evaluation points over which the density is calculated.}
+\item{weighted_samps}{matrix of weighted samples for each element in the aggregate (N rows x n_nodes)}
 
-\item{n_mc}{Integer; number of Monte Carlo samples to use for aggregation.}
+\item{weights}{vector of weights that are used to combine to form the aggregated density Z. (length n_nodes)}
 }
 \value{
 Numeric vector of the same length as \code{z_values} representing the normalized
@@ -28,7 +35,7 @@ Monte Carlo Estimate of Aggregated Zero-Inflated Four-Parameter Beta (ZIB) Densi
 }
 \details{
 For each evaluation point \code{z}, a Monte Carlo estimate of the aggregated zero-inflated Beta
-density is computed by resampling posterior draws from \code{phi_array} and \code{zi_array} and
+density is computed by resampling posterior draws from \code{alpha_matrix}, \verb{beta_matrix,} and \code{zi_matrix} and
 averaging \code{dZIB_4p} across the selected draws. The resulting density is normalized
 using the trapezoidal rule (\code{pracma::trapz}) to ensure integration to 1.
 }
@@ -40,13 +47,13 @@ n_nodes <- 2
 n_mc <- 10
 n_z <- 50
 
-Y_mc <- matrix(runif(n_draws * n_nodes), nrow = n_draws)
+weighted_samps <- matrix(runif(n_draws * n_nodes), nrow = n_draws)
 phi_array <- matrix(rexp(n_draws * n_nodes, 1), nrow = n_draws)
 zi_array <- matrix(runif(n_draws * n_nodes, 0, 0.2), nrow = n_draws)
 weights <- rep(1, n_nodes)
 z_values <- seq(0, sum(weights), length.out = n_z)
 
-density <- ZIB_convolution_density(Y_mc, phi_array, zi_array, weights, z_values, n_mc)
+density <- ZIB_convolution_density(weighted_samps, phi_array, zi_array, weights, z_values, n_mc)
 plot(z_values, density, type = "l")
 
 }
