@@ -2,62 +2,69 @@
 % Please edit documentation in R/rZOIB_4p.R
 \name{rZOIB_4p}
 \alias{rZOIB_4p}
-\title{Vectorized Zero-One-Inflated Four-Parameter Beta Density Sampler}
+\title{Random Generator for a Zero-One-Inflated Four-Parameter Beta Distribution}
 \usage{
-rZOIB_4p(n_mc, sub_obs_data, phi_array, zoi_array, coi_array, weights)
+rZOIB_4p(
+  n_mc,
+  alpha_point,
+  beta_point,
+  zoi_point,
+  coi_point,
+  lower = 0,
+  weight = 1
+)
 }
 \arguments{
 \item{n_mc}{Integer; number of Monte Carlo samples to generate.}
 
-\item{sub_obs_data}{Numeric matrix of observed bottom-level series to use as
-the mean parameter in the sampler (dimensions: n_years x n_nodes).}
+\item{lower}{Numeric; lower bound of the Beta distribution (default = 0).}
 
-\item{phi_array}{Numeric array of posterior draws for the Beta precision
-parameter (dimensions: n_draws x n_nodes x n_years).}
+\item{weight}{Numeric; upper bound of the Beta distribution (default = 1).}
 
-\item{zoi_array}{Numeric array of posterior draws for the zero-one inflation
-probability (dimensions: n_draws x n_nodes x n_years).}
+\item{alpha}{Numeric; first shape parameter of the Beta distribution.}
 
-\item{coi_array}{Numeric array of posterior draws for the conditional-one
-inflation probability (dimensions: n_draws x n_nodes x n_years).}
+\item{beta}{Numeric; second shape parameter of the Beta distribution.}
 
-\item{weights}{Numeric vector of node-specific upper bounds for the Beta
-distribution (length = n_nodes).}
+\item{zoi}{Numeric; probability of zero/one inflation.}
+
+\item{coi}{Numeric; conditional probability of one given inflation.}
 }
 \value{
-A numeric array of dimension \code{n_mc x n_nodes x n_years} containing
-the Monte Carlo samples of the zero-one-inflated Beta distribution.
+A numeric vector of length \code{n_mc} containing random draws from
+the zero-one-inflated Beta distribution.
 }
 \description{
-Vectorized Zero-One-Inflated Four-Parameter Beta Density Sampler
+Random Generator for a Zero-One-Inflated Four-Parameter Beta Distribution
 }
 \details{
-For each Monte Carlo sample, a posterior draw is selected from \code{phi_array},
-\code{zoi_array}, and \code{coi_array}. Zero-one inflation is applied according to
-\code{zoi_r} and \code{coi_r}: for nodes selected by the zero-one inflation, the
-value is 0 or 1 according to a Bernoulli draw with probability \code{coi_r}.
-For nodes not inflated, samples are drawn from a Beta distribution scaled
-to \verb{[0, weight]} using \code{ExtDist::rBeta_ab}.
+This function generates random samples from a zero-one-inflated Beta
+distribution defined on the interval \eqn{[0, weight]}. For each draw:
+
+\itemize{
+\item With probability \code{zoi}, the observation is drawn from a
+zero-one inflation process.
+\item Conditional on inflation, the value is \eqn{weight} with probability
+\code{coi} and \eqn{0} otherwise.
+\item With probability \eqn{1 - zoi}, the observation is drawn from a
+Beta distribution with parameters \code{alpha} and \code{beta},
+scaled to the interval \eqn{[0, weight]} using
+\code{ExtDist::rBeta_ab()}.
+}
+
+The implementation is vectorised for efficient Monte Carlo simulation.
 }
 \examples{
 set.seed(1)
 
-n_mc <- 10
-n_years <- 3
-n_nodes <- 2
-n_draws <- 5
+draws <- rZOIB_4p(
+  n_mc = 1000,
+  alpha = 2,
+  beta = 10,
+  zoi = 0.1,
+  coi = 0.2,
+  weight = 1
+)
 
-sub_obs_data <- matrix(runif(n_years * n_nodes, 0.2, 0.8),
-                       nrow = n_years, ncol = n_nodes)
-phi_array <- array(rexp(n_draws * n_nodes * n_years, 1),
-                   dim = c(n_draws, n_nodes, n_years))
-zoi_array <- array(runif(n_draws * n_nodes * n_years, 0, 0.2),
-                   dim = c(n_draws, n_nodes, n_years))
-coi_array <- array(runif(n_draws * n_nodes * n_years, 0, 0.5),
-                   dim = c(n_draws, n_nodes, n_years))
-weights <- rep(1, n_nodes)
-
-samples <- rZOIB_4p(n_mc, sub_obs_data, phi_array, zoi_array, coi_array, weights)
-dim(samples)
+hist(draws, breaks = 40)
 
 }

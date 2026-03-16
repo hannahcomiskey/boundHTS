@@ -15,11 +15,18 @@ vignette: >
 set.seed(123)
 library(gamlss)
 library(gamlss.dist)
+library(tidyverse)
 
 n_obs   <- 400
 burn_in <- 150
 time    <- seq_len(n_obs)
 nodes <- c("A", "AA", "AB")
+
+beta_params <- function(mean, prec) {
+  alpha <- prec*mean
+  beta  <-  prec*(1-mean)
+  return(c(alpha, beta))
+}
 
 ```
 
@@ -219,11 +226,11 @@ for(t in seq_along(n_testyears)) {
                   data = training_data)
 
   if(t==1) {
-    pred_A <- tibble(mean_prop = predict(zib_AA, type = "response")) %>% 
+    pred_A <- tibble(`Point Forecast` = predict(zib_AA, type = "response")) %>% 
       mutate(Node = "A", Time = 2:length(train_idx))
-    pred_AA <- tibble(mean_prop =  predict(zib_AA, type = "response")) %>% 
+    pred_AA <- tibble(`Point Forecast` =  predict(zib_AA, type = "response")) %>% 
       mutate(Node = "AA", Time = 2:length(train_idx))
-    pred_AB <- tibble(mean_prop =  predict(zib_AA, type = "response")) %>% 
+    pred_AB <- tibble(`Point Forecast` =  predict(zib_AA, type = "response")) %>% 
       mutate(Node = "AB", Time = 2:length(train_idx))
     
     forecasts <- bind_rows(forecasts, pred_A, pred_AA, pred_AB) # training data estimates
@@ -238,13 +245,13 @@ for(t in seq_along(n_testyears)) {
   mu_pred_AB <- predict(zib_AA, newdata = sim_data[n_testyears[t], ],
                         what = "mu", type = "response")
   
-  # Get variance of one-step ahead forecast
-  var_beta_A  <- predict(zib_A, newdata = sim_data[n_testyears[t], ],
-                        what = "sigma", type = "response")^2
-  var_beta_AA  <- predict(zib_AA, newdata = sim_data[n_testyears[t], ],
-                        what = "sigma", type = "response")^2
-  var_beta_AB  <- predict(zib_AB, newdata = sim_data[n_testyears[t], ],
-                        what = "sigma", type = "response")^2
+  # Get precision of one-step ahead forecast
+  prec_beta_A  <- predict(zib_A, newdata = sim_data[n_testyears[t], ],
+                        what = "sigma", type = "response")
+  prec_beta_AA  <- predict(zib_AA, newdata = sim_data[n_testyears[t], ],
+                        what = "sigma", type = "response")
+  prec_beta_AB  <- predict(zib_AB, newdata = sim_data[n_testyears[t], ],
+                        what = "sigma", type = "response")
   
   # Get zero-inflation probability of one-step ahead forecast
   zi_beta_A  <- predict(zib_A, newdata = sim_data[n_testyears[t], ],
@@ -256,26 +263,26 @@ for(t in seq_along(n_testyears)) {
   
   # Generate samples of predictions
   sim_pred_A <- rBEZI(n = 100, mu = mu_pred_A,
-                      sigma = sqrt(var_beta_A), nu = zi_beta_A)
+                      sigma = sqrt(prec_beta_A), nu = zi_beta_A)
   sim_pred_AA <- rBEZI(n = 100, mu = mu_pred_AA,
-                      sigma = sqrt(var_beta_AA), nu = zi_beta_AA)
+                      sigma = sqrt(prec_beta_AA), nu = zi_beta_AA)
   sim_pred_AB <- rBEZI(n = 100, mu = mu_pred_AB,
-                      sigma = sqrt(var_beta_AB), nu = zi_beta_AB)
+                      sigma = sqrt(prec_beta_AB), nu = zi_beta_AB)
   
   # Create results dataframes
   fc_A <- tibble(Node = "A",
                  Time = n_testyears[t],
-                 `Forecast variance`= var_beta_A,
+                 `Forecast precision`= prec_beta_A,
                  `Forecast zero` = zi_beta_A,
                  `Point Forecast` = mu_pred_A)
   fc_AA <- tibble(Node = "AA",
                  Time = n_testyears[t],
-                 `Forecast variance`= var_beta_AA,
+                 `Forecast precision`= prec_beta_AA,
                  `Forecast zero` = zi_beta_AA,
                  `Point Forecast` = mu_pred_AA)
   fc_AB <- tibble(Node = "AB",
                  Time = n_testyears[t],
-                 `Forecast variance`= var_beta_AB,
+                 `Forecast precision`= prec_beta_AB,
                  `Forecast zero` = zi_beta_AB,
                  `Point Forecast` = mu_pred_AB)
   
@@ -298,7 +305,7 @@ for(t in seq_along(n_testyears)) {
 
 ```
 
-HERE
+
 ## Step 3: Coherent hierarchical forecasting
 
 We estimate a coherent top-series probability density function (PDF) using a convolution and weighted Beta distributions. As inputs into this process we use:
@@ -330,27 +337,27 @@ rec_list <- lapply(seq_along(n_testyears), function(i) {
   ## Get predictions
   P_top <- forecasts %>% 
     filter(Time == t_i, Node == top_node) %>% 
-    pull(proportion)
+    pull(`Point Forecast`)
 
   P_bottom <- forecasts %>% 
     filter(Time == t_i, Node %in% bottom_nodes) %>% 
-    pull(proportion)
+    pull(`Point Forecast`)
 
-  ## Get variance
-  var_top <- forecasts %>% 
+  ## Get precision
+  prec_top <- forecasts %>% 
     filter(Time == t_i, Node == top_node) %>% 
-    pull(prop_var)
+    pull(`Forecast precision`)
 
-  var_bottom <- forecasts %>% 
+  prec_bottom <- forecasts %>% 
     filter(Time == t_i, Node %in% bottom_nodes) %>% 
-    pull(prop_var)
+    pull(`Forecast precision`)
 
   ## Get Beta parameters
-  top_params <- beta_params(P_top, var_top)
+  top_params <- beta_params(P_top, prec_top)
 
   bottom_params <- list(
-    beta_params(P_bottom[1], var_bottom[1]),
-    beta_params(P_bottom[2], var_bottom[2])
+    beta_params(P_bottom[1], prec_bottom[1]),
+    beta_params(P_bottom[2], prec_bottom[2])
   )
 
   weighted_samps <- array(NA, dim = c(n_sims, n_draws, n_bottom))
@@ -358,7 +365,7 @@ rec_list <- lapply(seq_along(n_testyears), function(i) {
   for (b in 1:n_bottom) {
 
     weighted_samps[, , b] <- matrix(
-      ExtDist::rBeta_ab(
+      rZIB_4p(
         n_sims * n_draws,
         bottom_params[[b]][1],
         bottom_params[[b]][2],
@@ -435,7 +442,7 @@ for (t in seq_along(n_testyears)) {
   # Get predictions
   mu_theory <- forecasts %>% 
     filter(Time == t_i, Node %in% c(top_node, bottom_nodes)) %>% 
-    pull(proportion)
+    pull(`Point Forecast`)
 
   # y grid
   y_vals <- sort(unique(rec_dens_df$Z))
@@ -483,8 +490,8 @@ t_point <- 250
 
 forecasts_mean <- forecasts %>% 
   dplyr::filter(Time == t_point) %>%
-  dplyr::select(Time, Node, proportion) %>%
-  tidyr::pivot_wider(names_from = Node, values_from = proportion) %>%
+  dplyr::select(Time, Node, `Point Forecast`) %>%
+  tidyr::pivot_wider(names_from = Node, values_from = `Point Forecast`) %>%
   dplyr::mutate(Method = 'Predicted mean')
 
 conv_dens <- rec_df %>%
