@@ -55,13 +55,11 @@ ZIB_convolution_density <- function(Y_mc,
   Density <- future.apply::future_sapply(
     z_values,
     function(z) {
-      library(boundHTS)
-      mean(
-        dZIB_4p(z = z,
-                Y_mc = Y_mc,
-                phi_mc = phi_mc,
-                zi_mc = zi_mc,
-                upper = weights), na.rm = TRUE)
+      mean(dZIB_4p(z = z,
+                   Y_mc = Y_mc,
+                   phi_mc = phi_mc,
+                   zi_mc = zi_mc,
+                   upper = weights), na.rm = TRUE)
     },
     future.seed = TRUE
   )

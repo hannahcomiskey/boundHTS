@@ -48,12 +48,6 @@ ZIB_convolution_density_point <- function(weighted_samps,
 
   n_draws <- dim(weighted_samps)[1]
 
-  # Resample posterior draws ONCE
-  draw_id <- sample(seq_len(n_draws), n_mc, replace = TRUE)
-
-  phi_mc <- phi_point[draw_id, , drop=FALSE]
-  zi_mc <- zi_point[draw_id, , drop=FALSE]
-
   future::plan(future::sequential)
 
   Density <- future.apply::future_sapply(
@@ -63,8 +57,8 @@ ZIB_convolution_density_point <- function(weighted_samps,
       mean(
         dZIB_4p(z = z,
                 weighted_samps = weighted_samps,
-                phi_mc = phi_mc,
-                zi_mc = zi_mc,
+                phi_mc = phi_point,
+                zi_mc = zi_point,
                 upper = weights), na.rm = TRUE)
     },
     future.seed = TRUE
