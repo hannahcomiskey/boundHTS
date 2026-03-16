@@ -197,7 +197,7 @@ We estimate a coherent top-series probability density function (PDF) using a con
 - A fine grid over which the density exists
 - Bottom-series weights
 
-#### Step 4.1: Generate probability density function via convolution
+### Step 3.1: Generate probability density function via convolution
 We will generate PDFs for the withheld data points to validate our method. You can loop over all years of you wish by updating the code to do so.
 
 ```{r}
@@ -301,7 +301,7 @@ rec_df <- dplyr::bind_rows(rec_list)
 
 ```
 
-#### Step 4.2: Tilt the convoluted PDF towards the predictive mean
+### Step 3.2: Tilt the convoluted PDF towards the predictive mean
 
 ```{r}
 # Define node set for A-group
@@ -352,9 +352,7 @@ for (t in seq_along(n_testyears)) {
     f_tilted[, i] <- tilted_dens$f_tilted
 
     tilted_samps[, i] <- tilted_dens$tilted_samps
-
-    cat("Tilted mean:", pracma::trapz(y_vals, y_vals * tilted_dens$f_tilted), "\n")
-  }
+    }
 
   # Save per-t results
   nu_exp[[t]]      <- nu_star_vec
@@ -365,12 +363,12 @@ for (t in seq_along(n_testyears)) {
 
 ```
 
-#### Step 4.3: Visualise the tilted convoluted PDF and compare against the predictive mean
+## Step 4: Visualise the tilted convoluted PDF and compare against the predictive mean
 
 The figure presents the predictive density formed by convolving the estimated bottom-level weighted Beta distributions. The resulting density is subsequently tilted so that its expectation matches the corresponding one-step-ahead predictive mean, ensuring coherence between the full predictive distribution and the point forecast.
 
 For a single time point:
-```{r, echo=FALSE, out.width = "100%",  fig.align = "center"}
+```{r, echo=FALSE, fig.width=9, fig.height=5, dpi=150}
 t_point <- 250
 
 forecasts_mean <- forecasts %>% 
@@ -388,7 +386,7 @@ exp_plot_df <- dplyr::bind_rows(lapply(seq_along(f_tilde_exp), function(t) {
   tibble::tibble(
     x = z_values,
     Density = as.vector(f_tilde_exp[[t]]),
-    Method = "Independent exponentially \n tilted density",
+    Method = "Exp. tilted density",
     Time = n_testyears[t])})) %>%
   dplyr::mutate(Density = ifelse(is.na(Density)==TRUE, 0, Density)) %>%
   dplyr::filter(Time==t_point)
@@ -401,9 +399,12 @@ ggplot2::ggplot() +
                 ggplot2::aes(x = Z, y = A, colour = Method), linewidth = 1) +
   ggplot2::geom_vline(data = forecasts_mean,
                 ggplot2::aes(xintercept = A, colour = Method), linewidth = 1) +
-  ggplot2::facet_wrap(~Time) +
+  ggplot2::scale_colour_manual( values = c(
+    "Exp. tilted density" = "#1b9e77",
+    "Convolution" = "#d95f02",
+    "Predicted mean" = "#7570b3"))+
   ggplot2::labs(x = "Proportion", y = "Density") +
-  ggplot2::theme_minimal()
+  ggplot2::theme_minimal(base_size = 14)
 
 ```
 
