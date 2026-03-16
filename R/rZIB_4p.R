@@ -28,7 +28,7 @@
 #' @examples
 #' set.seed(1)
 #'
-#' draws <- rZOIB_4p(
+#' draws <- rZIB_4p(
 #'   n_mc = 1000,
 #'   alpha = 2,
 #'   beta = 10,
