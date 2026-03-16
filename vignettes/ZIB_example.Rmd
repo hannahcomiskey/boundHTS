@@ -242,7 +242,7 @@ for(t in seq_along(n_testyears)) {
                        what = "mu", type = "response")
   mu_pred_AA <- predict(zib_AA, newdata = sim_data[n_testyears[t], ],
                         what = "mu", type = "response")
-  mu_pred_AB <- predict(zib_AA, newdata = sim_data[n_testyears[t], ],
+  mu_pred_AB <- predict(zib_AB, newdata = sim_data[n_testyears[t], ],
                         what = "mu", type = "response")
   
   # Get precision of one-step ahead forecast
@@ -352,6 +352,15 @@ rec_list <- lapply(seq_along(n_testyears), function(i) {
     filter(Time == t_i, Node %in% bottom_nodes) %>% 
     pull(`Forecast precision`)
 
+    ## Get precision
+  zoi_top <- forecasts %>% 
+    filter(Time == t_i, Node == top_node) %>% 
+    pull(`Forecast zero`)
+  
+  zoi_bottom <- forecasts %>% 
+    filter(Time == t_i, Node %in% bottom_nodes) %>% 
+    pull(`Forecast zero`)
+  
   ## Get Beta parameters
   top_params <- beta_params(P_top, prec_top)
 
@@ -366,9 +375,10 @@ rec_list <- lapply(seq_along(n_testyears), function(i) {
 
     weighted_samps[, , b] <- matrix(
       rZIB_4p(
-        n_sims * n_draws,
-        bottom_params[[b]][1],
-        bottom_params[[b]][2],
+        n_mc = n_sims * n_draws,
+        alpha_point = bottom_params[[b]][1],
+        beta_point = bottom_params[[b]][2],
+        zoi_point = zoi_top,
         0,
         weights_bottom[b]
       ),
@@ -393,10 +403,11 @@ rec_list <- lapply(seq_along(n_testyears), function(i) {
   }
 
   ## Convolution
-  Density_top <- Beta_convolution_density_point_parallel(
+  Density_top <- ZIB_convolution_density_point_parallel(
     z_values = z_values,
     alpha_point = bottom_params[[n_bottom]][1],
     beta_point  = bottom_params[[n_bottom]][2],
+    zi_point = zoi_bottom[2],
     weighted_samps = weighted_samps,
     weights = weights_bottom[n_bottom]
   )
