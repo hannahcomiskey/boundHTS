@@ -50,7 +50,7 @@
 #' lines(y, res$f_tilted, col = "red", lwd = 2)
 #' legend("topright", legend = c("Original", "Tilted"),
 #'         col = c("blue", "red"), lwd = 2)
-
+#'
 #' @export
 
 tilt_density <- function(mu_theory, y_vals, f_y, discrete=FALSE) {
@@ -85,7 +85,7 @@ tilt_density <- function(mu_theory, y_vals, f_y, discrete=FALSE) {
                               mu_theory = mu_theory)$root
   }
 
-  # Tilted density + samples
+  # Tilted density
   if(discrete==FALSE){
     f_tilt_i <- tilted_density_cont(nu_star, f_y, y_vals) # tilt for continuous RV
     f_tilt_i <- f_tilt_i / pracma::trapz(y_vals, f_tilt_i) # normalise
@@ -95,6 +95,7 @@ tilt_density <- function(mu_theory, y_vals, f_y, discrete=FALSE) {
     f_tilted <- f_tilt_i / sum(f_tilt_i) # normalise
   }
 
+  # Sample from tilted density
   tilted_samps <- sample(y_vals, 5000, replace = TRUE, prob = f_tilted)
 
   return(list(nu_star = nu_star,
