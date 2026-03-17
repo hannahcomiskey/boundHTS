@@ -22,7 +22,7 @@
 #' lambda_vector <- rnorm(n_bottom)
 #'
 #' Poisson_convolution_density_point(x = 5, lambda_vector = lambda_vector)
-#' @import stats dpois
+#' @importFrom stats dpois
 #' @export
 
 Poisson_convolution_density_point <- function(x, lambda_vector) {

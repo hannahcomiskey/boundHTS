@@ -35,7 +35,7 @@
 #' weights <- 0.5
 #' dens <- dZOIB_4p(z[25], alpha_point[2], beta_point[2], zi_point[2], coi_point[2], weights)
 #' dens
-#'
+#' @importFrom ExtDist dBeta_ab
 #' @export
 
 dZOIB_4p <- function(x, alpha_point, beta_point, zi_point, coi_point, weight) {

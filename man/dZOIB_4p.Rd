@@ -51,5 +51,4 @@ z <- seq(0, 1, length.out = 50)
 weights <- 0.5
 dens <- dZOIB_4p(z[25], alpha_point[2], beta_point[2], zi_point[2], coi_point[2], weights)
 dens
-
 }

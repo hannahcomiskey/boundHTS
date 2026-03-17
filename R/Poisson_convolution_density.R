@@ -24,7 +24,7 @@
 #' lambda_matrix <- matrix(rnorm(n_sims * n_bottom), nrow = n_sims)
 #'
 #' Poisson_convolution_density(x = 5, lambda_matrix = lambda_matrix)
-#' @import stats dpois
+#' @importFrom stats dpois
 #' @export
 
 Poisson_convolution_density <- function(x, lambda_matrix) {
