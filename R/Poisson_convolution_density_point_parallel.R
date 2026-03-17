@@ -9,9 +9,9 @@
 #' @return The aggregate density Z over a grid of values.
 #' @export
 
-Poisson_convolution_density_point_parallel <- function(z_values, lambda_point) {
+Poisson_convolution_density_point_parallel <- function(z_values, lambda_vector) {
   Density <- future.apply::future_sapply(z_values,
                                          Poisson_convolution_density_point,
-                                         lambda_point = lambda_point)
+                                         lambda_vector = lambda_vector)
   return(Density / sum(Density)) # normalised
 }

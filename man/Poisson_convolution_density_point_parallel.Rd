@@ -4,7 +4,7 @@
 \alias{Poisson_convolution_density_point_parallel}
 \title{Parallelized normalised predictive Poisson density over vector z}
 \usage{
-Poisson_convolution_density_point_parallel(z_values, lambda_point)
+Poisson_convolution_density_point_parallel(z_values, lambda_vector)
 }
 \arguments{
 \item{z_values}{evaluation points}
