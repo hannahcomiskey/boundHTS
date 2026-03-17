@@ -174,8 +174,8 @@ for(t in 1:length(test_indices)) {
   mu_theory <- as.vector(unlist(lambda_vals[test_indices[t], ])) # predictive mean
   
   lambda_bseries <- lambda_vals[test_indices[t],bottom_sum]
-  lambda_conv <- sum(lambda_bseries) # sum poissons
-  lambda_vec <- c(lambda_conv, as.numeric(lambda_bseries)) # convolution and bottom series lambda
+  # lambda_conv <- sum(lambda_bseries) # sum poissons
+  # lambda_vec <- c(lambda_conv, as.numeric(lambda_bseries)) # convolution and bottom series lambda
   
   # fitted values
   fitted_vals <- tibble::as_tibble(fitted_list[[t]])
