@@ -48,7 +48,8 @@ dZIB_4p <- function(x, alpha_point, beta_point, zi_point, weight) {
   x_scaled <- x / weight
 
   # Initialize density to 0
-  dens <- vector()
+  dens <- x
+  dens[] <- 0
 
   # Boundary handling
   at0 <- x_scaled == 0 # handles values == 0

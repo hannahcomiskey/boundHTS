@@ -55,10 +55,10 @@ ZIB_convolution_density_point <- function(z, weighted_samps,
   x <- z - partial_sum
 
   Density <- mean(dZIB_4p(x = x,
-                          alpha_point = alpha_point[N],
-                          beta_point = beta_point[N],
-                          zi_point = zi_point[N],
-                          weight = weights[N]), na.rm = TRUE)
+                          alpha_point = alpha_point,
+                          beta_point = beta_point,
+                          zi_point = zi_point,
+                          weight = weights), na.rm = TRUE)
 
   return(Density)
 

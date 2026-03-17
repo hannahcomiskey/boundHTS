@@ -13,9 +13,11 @@ vignette: >
 
 ```{r, setup, message = FALSE, warning = FALSE}
 set.seed(123)
+
 library(gamlss)
 library(gamlss.dist)
 library(tidyverse)
+library(boundHTS)
 
 n_obs   <- 400
 burn_in <- 150
@@ -407,7 +409,7 @@ rec_list <- lapply(seq_along(n_testyears), function(i) {
     z_values = z_values,
     alpha_point = bottom_params[[n_bottom]][1],
     beta_point  = bottom_params[[n_bottom]][2],
-    zi_point = zoi_bottom[2],
+    zi_point = zoi_bottom[n_bottom],
     weighted_samps = weighted_samps,
     weights = weights_bottom[n_bottom]
   )
@@ -534,8 +536,7 @@ ggplot2::ggplot() +
   ggplot2::labs(x = "Proportion", y = "Density") +
   ggplot2::theme_minimal(base_size = 14)
 
-``
-
+```
 
 
 
