@@ -11,7 +11,7 @@
 #' @return The aggregate density Z over a grid of values.
 #' @export
 
-ZIB_convolution_density_parallel <- function(z_values, alpha_matrix, beta_matrix, weighted_samps, weights) {
+Beta_convolution_density_parallel <- function(z_values, alpha_matrix, beta_matrix, weighted_samps, weights) {
   Density <- future.apply::future_sapply(z_values,
                                          Beta_convolution_density,
                                          alpha_matrix=alpha_matrix,

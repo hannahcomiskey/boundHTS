@@ -40,7 +40,6 @@ library(ggplot2)
 library(boundHTS)
 library(kableExtra)
 
-devtools::load_all()
 ```
 
 # Introduction
@@ -63,7 +62,7 @@ To address these challenges, we present the \pkg{boundHTS} package which generat
 
 # Using \pkg{boundHTS}
 ## The functions of \pkg{boundHTS}
-
+The package has pre-defined convolution functions for Beta, zero-inflated Beta and zero-one inflated Beta distributions. These functions consider both point estimates and Monte-Carlo samples as inputs. ``
 
 
 ## Case 1: Aggregating count forecasts
