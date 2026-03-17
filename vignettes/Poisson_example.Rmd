@@ -184,20 +184,22 @@ for(t in 1:length(test_indices)) {
   f_tilt <- matrix(NA, nrow = length(top_y_vals), ncol = length(mu_theory))
   nu_star <- vector()
   
+  # Construct densities
   for(k in 1:length(lambda_bseries)) {
     # Bottom series
    f_y_bottom[,k] <- sapply(top_y_vals, function(x) {
       mean(stats::dpois(x = x, lambda = as.numeric(lambda_bseries[k])))})
    }
   f_y_top <- Poisson_convolution_density_point_parallel(z_values = top_y_vals,
-                                                        lambda_point = as.numeric(lambda_bseries))
+                                                        lambda_vector = as.numeric(lambda_bseries))
+  f_y <- cbind(f_y_top, f_y_bottom)
   
   # Tilt density
-  tilted_dens <- tilt_density(mu_theory[k], top_y_vals, f_y, discrete=TRUE) # tilt density
-  f_tilt[,k] <- tilted_dens$f_tilted
+  for(k in 1:length(mu_theory)) {
+    tilted_dens <- tilt_density(mu_theory[k], top_y_vals, f_y[,k], discrete=TRUE) # tilt density
+    f_tilt[,k] <- tilted_dens$f_tilted
+  }
   nu_star <- c(tilted_dens$nu_star, nu_star)
-
-  
   colnames(f_tilt) <- colnames(fitted_vals)
   
   nu_exp[[t]] <- nu_star
