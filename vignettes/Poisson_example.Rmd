@@ -174,26 +174,30 @@ for(t in 1:length(test_indices)) {
   mu_theory <- as.vector(unlist(lambda_vals[test_indices[t], ])) # predictive mean
   
   lambda_bseries <- lambda_vals[test_indices[t],bottom_sum]
-  # lambda_conv <- sum(lambda_bseries) # sum poissons
-  # lambda_vec <- c(lambda_conv, as.numeric(lambda_bseries)) # convolution and bottom series lambda
   
   # fitted values
   fitted_vals <- tibble::as_tibble(fitted_list[[t]])
   fitted_bseries <- fitted_vals[test_indices[t],bottom_sum]
   
   # Construct tilted pmf for top and bottom series
-  f_tilt <- matrix(NA, nrow = length(top_y_vals), ncol = length(lambda_vec))
+  f_y_bottom <- matrix(NA, nrow = length(top_y_vals), ncol = length(lambda_bseries))
+  f_tilt <- matrix(NA, nrow = length(top_y_vals), ncol = length(mu_theory))
   nu_star <- vector()
-  for(k in 1:length(lambda_vec)) {
-    # Convolution step
-    f_y <- stats::dpois(top_y_vals, lambda_vec[k]) # density of convolution
-    
-    # Tilt density
-    tilted_dens <- tilt_density(mu_theory[k], top_y_vals, f_y, discrete=TRUE) # tilt density
   
-    f_tilt[,k] <- tilted_dens$f_tilted
-    nu_star <- c(tilted_dens$nu_star, nu_star)
-  }
+  for(k in 1:length(lambda_bseries)) {
+    # Bottom series
+   f_y_bottom[,k] <- sapply(top_y_vals, function(x) {
+      mean(stats::dpois(x = x, lambda = as.numeric(lambda_bseries[k])))})
+   }
+  f_y_top <- Poisson_convolution_density_point_parallel(z_values = top_y_vals,
+                                                        lambda_point = as.numeric(lambda_bseries))
+  
+  # Tilt density
+  tilted_dens <- tilt_density(mu_theory[k], top_y_vals, f_y, discrete=TRUE) # tilt density
+  f_tilt[,k] <- tilted_dens$f_tilted
+  nu_star <- c(tilted_dens$nu_star, nu_star)
+
+  
   colnames(f_tilt) <- colnames(fitted_vals)
   
   nu_exp[[t]] <- nu_star

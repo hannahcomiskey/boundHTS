@@ -11,7 +11,7 @@
 
 Poisson_convolution_density_point_parallel <- function(z_values, lambda_point) {
   Density <- future.apply::future_sapply(z_values,
-                                         Beta_convolution_density_point,
+                                         Poisson_convolution_density_point,
                                          lambda_point = lambda_point)
   return(Density / sum(Density)) # normalised
 }

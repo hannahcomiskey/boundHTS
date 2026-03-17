@@ -21,11 +21,11 @@
 #' # Simulated lambda samples
 #' lambda_vector <- rnorm(n_bottom)
 #'
-#' Poisson_convolution_density(x = 5, lambda_vector = lambda_vector)
+#' Poisson_convolution_density_point(x = 5, lambda_vector = lambda_vector)
 #' @import stats dpois
 #' @export
 
-Poisson_convolution_density <- function(x, lambda_vector) {
+Poisson_convolution_density_point <- function(x, lambda_vector) {
 
   # Compute convoluted sum
   convolution_lambda <- sum(lambda_vector)
