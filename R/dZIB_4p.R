@@ -16,29 +16,18 @@
 #'
 #' @examples
 #' set.seed(1)
-#'
-#' # Monte Carlo size
-#' n_mc <- 100
+#' n_draws <- 5
 #' n_nodes <- 2
-#' n_draws <- 100
-#'
-#' # Simulated Monte Carlo draws
-#' weighted_samps  <- array(runif(n_mc*n_draws*n_nodes, 0.2, 0.8),
-#' dim=c(n_mc,n_draws,n_nodes))
+#' n_mc <- 10
+#' weighted_samps <- array(runif(n_mc*n_draws* n_nodes), dim = c(n_mc, n_draws, n_nodes))
+#' zi_point <- runif(n_nodes, 0, 0.2)
 #' alpha_point <- runif(n_nodes, 2, 5)
 #' beta_point  <- runif(n_nodes, 2, 5)
-#' zi_point <- runif(n_nodes, 0, 0.2)
+#' weights <- rep(1, n_nodes)
+#' dZIB_4p(0.5, alpha_point[n_nodes], beta_point[n_nodes],
+#'  zi_point[n_nodes], weights[n_nodes])
 #'
-#' # Evaluation points
-#' z <- seq(0, 1, length.out = 50)
-#'
-#' # Bounds
-#' weights <- rep(0.5, 2)
-#'
-#' dens <- dZIB_4p(z[25], weighted_samps, alpha_point, beta_point,
-#'  zi_point, weights)
-#' head(dens)
-#'
+#' @export
 #' @importFrom ExtDist dBeta_ab
 #' @export
 

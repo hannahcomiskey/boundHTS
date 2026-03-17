@@ -33,15 +33,15 @@
 #'
 #' draws <- rZOIB_4p(
 #'   n_mc = 1000,
-#'   alpha = 2,
-#'   beta = 10,
-#'   zoi = 0.1,
-#'   coi = 0.2,
+#'   alpha_point = 2,
+#'   beta_point = 10,
+#'   zoi_point = 0.1,
+#'   coi_point = 0.2,
 #'   weight = 1
 #' )
 #'
 #' hist(draws, breaks = 40)
-#'
+#' @importFrom ExtDist rBeta_ab
 #' @export
 
 rZOIB_4p <- function(n_mc, alpha_point, beta_point, zoi_point, coi_point, lower=0, weight = 1) {

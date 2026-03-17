@@ -58,13 +58,12 @@ set.seed(1)
 
 draws <- rZOIB_4p(
   n_mc = 1000,
-  alpha = 2,
-  beta = 10,
-  zoi = 0.1,
-  coi = 0.2,
+  alpha_point = 2,
+  beta_point = 10,
+  zoi_point = 0.1,
+  coi_point = 0.2,
   weight = 1
 )
 
 hist(draws, breaks = 40)
-
 }

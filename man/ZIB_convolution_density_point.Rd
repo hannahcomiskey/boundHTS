@@ -46,20 +46,20 @@ The resulting density is normalized using the trapezoidal rule
 }
 \examples{
 set.seed(1)
-
 n_draws <- 5
 n_nodes <- 2
 n_mc <- 10
-n_z <- 50
-
-weighted_samps <- matrix(runif(n_draws * n_nodes), nrow = n_draws)
+weighted_samps <- array(runif(n_mc*n_draws* n_nodes), dim = c(n_mc, n_draws, n_nodes))
+z_values <- seq(0, 1, out.length=100)
 zi_point <- runif(n_nodes, 0, 0.2)
 alpha_point <- runif(n_nodes, 2, 5)
 beta_point  <- runif(n_nodes, 2, 5)
 weights <- rep(1, n_nodes)
-partial_sum <- rowSums(weighted_samps[, , 1:(N-1), drop = FALSE], dims = n_nodes)
-x <- 0.25 - partial_sum
-density <- ZIB_convolution_density_point(x, zi_point, weights, z_values, n_mc)
-plot(z_values, density, type = "l")
-
+for(z in 1:length(z_values)) {
+  denisty <- vector()
+  density[z] <- ZIB_convolution_density_point(z_values[z],
+  weighted_samps = weighted_samps, alpha_point[n_nodes], beta_point[n_nodes],
+   zi_point[n_nodes], weights[n_nodes])
+  }
+  plot(z_values, density, type = "l")
 }
