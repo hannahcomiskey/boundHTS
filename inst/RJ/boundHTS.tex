@@ -26,6 +26,35 @@ To address these challenges, we present the \pkg{boundHTS} package which generat
 
 \section{\texorpdfstring{Using \pkg{boundHTS}}{Using }}\label{using}
 
+\subsection{\texorpdfstring{The functions of \pkg{boundHTS}}{The functions of }}\label{the-functions-of}
+
+The package provides pre-defined convolution functions for Poisson, Beta, zero-inflated Beta (ZIB), and zero-one inflated Beta (ZOIB) distributions. These functions can operate on either point estimates or Monte Carlo samples of the bottom-level series.
+- \textbf{Point estimate inputs}\\
+- \texttt{Poisson\_convolution\_density\_point\_parallel}\\
+- \texttt{Beta\_convolution\_density\_point\_parallel}\\
+- \texttt{ZIB\_convolution\_density\_point\_parallel}\\
+- \texttt{ZOIB\_convolution\_density\_point\_parallel}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Sample-based inputs}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \texttt{Poisson\_convolution\_density\_parallel}\strut \\
+  \item
+    \texttt{Beta\_convolution\_density\_parallel}\strut \\
+  \item
+    \texttt{ZIB\_convolution\_density\_parallel}\strut \\
+  \item
+    \texttt{ZOIB\_convolution\_density\_parallel}
+  \end{itemize}
+\end{itemize}
+
+Additionally, the package includes the \texttt{tilt\_density} function, which exponentially tilts a density toward a specified target mean. This function supports both discrete and continuous distributions, providing a flexible tool for adjusting predictive densities.
+
 \subsection{Case 1: Aggregating count forecasts}\label{case-1-aggregating-count-forecasts}
 
 \subsubsection{The data}\label{the-data}
@@ -110,10 +139,10 @@ for (i in seq_along(test_indices)) {
     f_y <- stats::dpois(top_y_vals, lambda_vec[k]) # density of convolution
     
     # Tilt density
-    tilted_dens <- tilt_density(lambda_t[k], top_y_vals, f_y, discrete=TRUE) # tilt density
+    tilted_dens <- tilt_density(lambda_t[k], top_y_vals, f_y, discrete=TRUE) 
   
-    f_tilt[,k] <- tilted_dens$f_tilted
-    nu_star <- c(tilted_dens$nu_star, nu_star)
+    f_tilt[,k] <- tilted_dens$f_tilted # tilted density
+    nu_star <- c(tilted_dens$nu_star, nu_star) # tilting parameter
   }
   colnames(f_tilt) <- colnames(lambda_mat)
   f_tilde_exp[[i]] <- f_tilt

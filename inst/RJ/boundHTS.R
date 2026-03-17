@@ -8,7 +8,6 @@ library(ggplot2)
 library(boundHTS)
 library(kableExtra)
 
-devtools::load_all()
 
 
 ## ----sim_poisson_setup, fig.cap="The two-level hierarchical set up of the Poisson simulation. The four child nodes (A, B, C, D) aggregate to the parent node, Total."----
@@ -116,10 +115,10 @@ for (i in seq_along(test_indices)) {
     f_y <- stats::dpois(top_y_vals, lambda_vec[k]) # density of convolution
     
     # Tilt density
-    tilted_dens <- tilt_density(lambda_t[k], top_y_vals, f_y, discrete=TRUE) # tilt density
+    tilted_dens <- tilt_density(lambda_t[k], top_y_vals, f_y, discrete=TRUE) 
   
-    f_tilt[,k] <- tilted_dens$f_tilted
-    nu_star <- c(tilted_dens$nu_star, nu_star)
+    f_tilt[,k] <- tilted_dens$f_tilted # tilted density
+    nu_star <- c(tilted_dens$nu_star, nu_star) # tilting parameter
   }
   colnames(f_tilt) <- colnames(lambda_mat)
   f_tilde_exp[[i]] <- f_tilt
@@ -150,8 +149,8 @@ conv_plot <- data.frame(
 df_plot <- data.frame(
   y = rep(top_y_vals, ncol(f_tilde_exp[[t]])),
   pmf = as.vector(f_tilde_exp[[t]]),
-  node = rep(colnames(f_tilde_exp[[t]]), each = length(top_y_vals))
-)
+  node = rep(colnames(f_tilde_exp[[t]]), each = length(top_y_vals))) %>% 
+  mutate(node = ifelse(node=="Tot", "Total", node))
 
 means_df <- data.frame(
   node = names(lambda_t),
