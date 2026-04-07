@@ -93,7 +93,7 @@ logit_sim_data <- beta_sim_data %>%
 forecasts_sims <- forecasts <- data.frame()
 nsim <- 1000
 
-n_testyears <- tail(logit_sim_data$Time)
+n_testyears <- 250 # tail(logit_sim_data$Time)
 
 # Top model
 for(t in seq_along(n_testyears)) {

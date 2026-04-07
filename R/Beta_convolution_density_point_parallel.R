@@ -12,7 +12,7 @@
 #' @details
 #' A wrapper function for calculating Monte Carlo estimates for the aggregate density Z using point estimates.
 #'
-#' @return The aggregate density Z over a grid of values.
+#' @return The aggregate density Z over a grid of values using a convolution of Beta distributions.
 #' @export
 
 Beta_convolution_density_point_parallel <- function(z_values, alpha_point, beta_point, weighted_samps, weights) {

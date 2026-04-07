@@ -24,7 +24,7 @@ Beta_convolution_density_parallel(
 \item{weights}{vector of weights that are used to combine to form the aggregated density Z. (length b)}
 }
 \value{
-The aggregate density Z over a grid of values.
+The aggregate density Z over a grid of values using a convolution of Beta distributions.
 }
 \description{
 Parallelized normalised predictive density over vector z

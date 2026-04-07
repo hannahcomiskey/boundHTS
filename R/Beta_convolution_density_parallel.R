@@ -8,7 +8,7 @@
 #' @details
 #' A wrapper function for calculating Monte Carlo estimates for the aggregate density Z.
 #'
-#' @return The aggregate density Z over a grid of values.
+#' @return The aggregate density Z over a grid of values using a convolution of Beta distributions.
 #' @export
 
 Beta_convolution_density_parallel <- function(z_values, alpha_matrix, beta_matrix, weighted_samps, weights) {

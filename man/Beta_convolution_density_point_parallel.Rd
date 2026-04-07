@@ -28,7 +28,7 @@ aggregate (dimensions: n_sims x n_draws x b).}
 into the aggregated density \eqn{Z} (length b).}
 }
 \value{
-The aggregate density Z over a grid of values.
+The aggregate density Z over a grid of values using a convolution of Beta distributions.
 }
 \description{
 Parallelized normalised predictive density over vector z
