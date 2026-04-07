@@ -5,7 +5,7 @@ test_that("Beta_convolution_density returns a finite scalar", {
   # dimensions
   n_sims  <- 30
   n_draws <- 10
-  N       <- 3
+  N <- 3
 
   # inputs
   z <- 0.5
@@ -30,12 +30,12 @@ test_that("Beta_convolution_density returns a finite scalar", {
   weights <- runif(N, min = 0.5, max = 2)
 
   # run function
-  dens <- Beta_convolution_density(
-    z = z,
-    alpha_matrix = alpha_matrix,
-    beta_matrix = beta_matrix,
+  dens <- Beta_convolution(z_values =  z,
+    alpha_input = alpha_matrix,
+    beta_input = beta_matrix,
     weighted_samps = weighted_samps,
-    weights = weights
+    weights = weights,
+    point=FALSE
   )
 
   # ---- expectations ----
@@ -65,13 +65,12 @@ test_that("Beta_convolution_density is stable when z is out of support", {
 
   weights <- rep(1, N)
 
-  dens <- Beta_convolution_density(
-    z = z,
-    alpha_matrix = alpha_matrix,
-    beta_matrix = beta_matrix,
-    weighted_samps = weighted_samps,
-    weights = weights
-  )
+  dens <- Beta_convolution(z_values =  z,
+                           alpha_input = alpha_matrix,
+                           beta_input = beta_matrix,
+                           weighted_samps = weighted_samps,
+                           weights = weights,
+                           point=FALSE)
 
   expect_true(is.finite(dens))
   expect_equal(dens, 0, tolerance = 1e-12)
@@ -90,12 +89,12 @@ test_that("Beta_convolution_density errors on incompatible dimensions", {
   weights <- c(1, 1, 1)
 
   expect_error(
-    Beta_convolution_density(
-      z = z,
-      alpha_matrix = alpha_matrix,
-      beta_matrix = beta_matrix,
-      weighted_samps = weighted_samps,
-      weights = weights
+    Beta_convolution(z_values =  z,
+                     alpha_input = alpha_matrix,
+                     beta_input = beta_matrix,
+                     weighted_samps = weighted_samps,
+                     weights = weights,
+                     point=FALSE
     ),
     regexp = NA
   )
