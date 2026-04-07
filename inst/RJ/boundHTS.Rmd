@@ -1,4 +1,4 @@
-
+---
 title: "boundHTS: A R package for coherent hierarchical forecasting of bounded outcomes"
 date: "2026-03-04"
 abstract: >
@@ -31,6 +31,8 @@ output:
 bibliography: RJreferences.bib
 header-includes:
   - \providecommand{\pandocbounded}[1]{#1}
+  
+---
 
 
 ```{r setup, include=FALSE}
@@ -44,39 +46,54 @@ library(kableExtra)
 
 # Introduction
 
-A hierarchical time series is a multivariate time series subject to linear aggregation constraints \citep{Hyndman2022}. Forecasts for such series are considered coherent when lower-level predictions aggregate exactly to higher levels, satisfying the system’s aggregation constraints. In practice, base forecasts are often produced independently at each level, which can lead to incoherence. Forecast reconciliation provides a principled post-processing framework that adjusts these base forecasts to produce aggregate-consistent predictions while retaining as much of the original information as possible \citep{Hyndman2021}. Forecasts may be either point forecasts, representing single most-likely future values, or probabilistic forecasts, representing a distribution over possible future outcomes. A comprehensive review of point and probabilistic reconciliation methods is provided by \citet{Athanasopoulos2024}.
+A hierarchical time series is a multivariate time series subject to linear aggregation constraints \citep{Hyndman2022}. Forecasts for such series are considered coherent when lower-level predictions aggregate exactly to higher levels, satisfying the system’s aggregation constraints. In practice, base forecasts are often produced independently at each level, which can lead to incoherence. Forecast reconciliation provides a principled post-processing framework that adjusts these base forecasts to produce aggregate-consistent predictions while retaining as much of the original information as possible \citep{Hyndman2021}. Forecasts may be either point forecasts, representing single most-likely future values, or probabilistic forecasts, representing a distribution over possible future outcomes. A comprehensive review of point and probabilistic reconciliation methods is provided by \cite{Athanasopoulos2024}.
 
 Several R packages on CRAN implement forecast reconciliation across diverse scenarios, including point versus probabilistic forecasts, discrete versus continuous data, and different hierarchical structures (e.g., temporal or cross-sectional). While forecast reconciliation has been studied extensively for discrete and continuous-valued time series, comparatively little attention has been given to hierarchical forecasting under bounded constraints.
 
-One of the most widely used packages for point-forecast reconciliation of hierarchical and grouped time series is \CRANpkg{hts} \citep{htspackage}. This package implements classical methods such as bottom-up (BU), where bottom-level forecasts are aggregated to form higher-level predictions, and top-down (TD), where parent-level forecasts are disaggregated to child nodes. It also provides more advanced methods, including the Optimal Combination (OC) approach of \citet{Hyndman2011} and the Minimum Trace (MinT) method of \citet{Wickramasuriya2019}. OC uses a regression-based framework to adjust forecasts at the bottom level so that they aggregate coherently, while MinT formulates reconciliation as a constrained optimization problem that minimizes the trace of the reconciled forecast error covariance matrix. The \CRANpkg{fabletools} package extends hierarchical reconciliation to the tidyverse ecosystem, providing BU, TD, middle-out (MO), and MinT methods \citep{fabletools}. Both \CRANpkg{hts} and \CRANpkg{fabletools} focus on point forecasts for cross-sectional hierarchies, assuming underlying Gaussian distributions. For more complex or non-standard structures, including temporal hierarchies, \CRANpkg{FoReco} offers flexible reconciliation methods with efficient sparse matrix handling, though it also targets point forecasts only \citep{FoReco}.
+One of the most widely used packages for point-forecast reconciliation of hierarchical and grouped time series is \CRANpkg{hts} \citep{htspackage}. This package implements classical methods such as bottom-up (BU), where bottom-level forecasts are aggregated to form higher-level predictions, and top-down (TD), where parent-level forecasts are disaggregated to child nodes. It also provides more advanced methods, including the Optimal Combination (OC) approach of \cite{Hyndman2011} and the Minimum Trace (MinT) method of \cite{Wickramasuriya2019}. OC uses a regression-based framework to adjust forecasts at the bottom level so that they aggregate coherently, while MinT formulates reconciliation as a constrained optimization problem that minimizes the trace of the reconciled forecast error covariance matrix. The \CRANpkg{fabletools} package extends hierarchical reconciliation to the tidyverse ecosystem, providing BU, TD, middle-out (MO), and MinT methods \citep{fabletools}. Both \CRANpkg{hts} and \CRANpkg{fabletools} focus on point forecasts for cross-sectional hierarchies, assuming underlying Gaussian distributions. For more complex or non-standard structures, including temporal hierarchies, \CRANpkg{FoReco} offers flexible reconciliation methods with efficient sparse matrix handling, though it also targets point forecasts only \citep{FoReco}.
 
-For probabilistic reconciliation, the works of \citet{Taieb2017} and \citet{Panagiotelis2023} have been foundational. The \CRANpkg{ProbReco} package explicitly frames reconciliation as an optimization problem based on proper scoring rules, generating coherent probabilistic samples by minimizing the Energy Score \citep{gneiting2007, Panagiotelis2023, ProbReco}. However like the aforementioned packages, this method also only considers reconciliation of data generated from Gaussian distributions. Many empirical applications further involve discrete or bounded supports, introducing additional challenges that are not adequately addressed by these standard Gaussian-based reconciliation methods. \CRANpkg{bayesRecon} enforces coherence through conditioning under aggregation constraints. It supports Gaussian data as well as count data, employing Bottom-Up Importance Sampling (BUIS) to produce lower-bounded, aggregate-consistent probabilistic forecasts \citep{Corani2023, bayesRecon}. However, this package does not deal with fully-bounded distributions like the Beta distribution for the reconciliation of proportions.
+For probabilistic reconciliation, the works of \cite{Taieb2017} and \cite{Panagiotelis2023} have been foundational. The \CRANpkg{ProbReco} package explicitly frames reconciliation as an optimization problem based on proper scoring rules, generating coherent probabilistic samples by minimizing the Energy Score \citep{gneiting2007, Panagiotelis2023, ProbReco}. However like the aforementioned packages, this method also only considers reconciliation of data generated from Gaussian distributions. Many empirical applications further involve discrete or bounded supports, introducing additional challenges that are not adequately addressed by these standard Gaussian-based reconciliation methods. \CRANpkg{bayesRecon} enforces coherence through conditioning under aggregation constraints. It supports Gaussian data as well as count data, employing Bottom-Up Importance Sampling (BUIS) to produce lower-bounded, aggregate-consistent probabilistic forecasts \citep{Corani2023, bayesRecon}. However, this package does not deal with fully-bounded distributions like the Beta distribution for the reconciliation of proportions.
 
 To address these challenges, we present the \pkg{boundHTS} package which generates coherent hierarchical forecasts for bounded continuous and lower-bounded discrete variables. Our contribution lies in providing a method to obtain coherent and accurate forecast densities for both bounded and lower-bounded densities. The approach respects the natural bounds of parent distributions. We demonstrate its performance using simulated Beta and Poisson hierarchical data structures.
 
-# Theory and Methods unpinning \pkg{boundHTS}
-
-
-
-
+# Theory and methods unpinning \pkg{boundHTS}
+To begin, let $m$ be the number of series at the bottom level, and $n$ be the total number of series in the hierarchical set. We denote the bottom series by $\boldsymbol{b}_t$, such that $\boldsymbol{b}_t = [b_{1,t}, b_{2,t}, \dots, b_{m,t}]$ which take values in the probability space ($\mathcal{B}, \mathcal{F}_{m}, \mu_{m}$) where $\mathcal{B} = \prod_{i=1}^{m} \mathcal{Y}_{i}$. Similarly, let $\boldsymbol{u}_t$ denote the $m'$-dimensional vector of upper-level series observations. Here, $\boldsymbol{u}_{t} = [u_{1,t}, u_{2,t}, \dots, u_{m',t}]$, with $m' \leq m$ and $m' + m = n$. The vector $\boldsymbol{u}_{t}$ take values in the probability space ($\mathcal{A}, \mathcal{F}_{u}, \mu_{u}$). Let $\boldsymbol{y}_{t}$ denote the vector of series at time $t$, and $y_{i,t}$ the value at series $i$ and time $t$, $i = 1,\cdots,n,$ and $t \leq T$. Therefore, 
+\begin{align}
+    y_{t} = (b_t',  u_t')' \in \mathcal{Y}:= \mathcal{B} \times \mathcal{A},
+\end{align}
+We assume that the relationship between $\boldsymbol{b}_t$ and $\boldsymbol{u}_t$ can be described using n equality constraints. We define the reconciliation function as $g(\cdot)$ with known parameters $\gamma \in \Gamma$ in $g: \mathcal{Y} \times \Gamma \mapsto \mathcal{Y}$ such that for any given $t$,
+\begin{align}
+    g( (b_t',  u_t')', \gamma) = 0.
+\end{align} 
+Let the series in the hierarchical structure be mutually independent. Under this assumption, aggregation via convolution is directly analogous to a bottom-up reconciliation strategy. Let the forecast distribution of bottom-level series $m$ at time $t$ be given by,
+\begin{equation*}
+    b_{m,t} \sim f_{m,t}(\cdot).
+\end{equation*} 
+Under a bottom-up aggregation scheme, the forecast density of $u_{m', t}$ may be obtained via convolution where, 
+\begin{align}
+    \label{eqn_contconv}
+    f_{n, t}(u_{m', t}) & = f_{1}*f_{2}\dots * f_{m,t}(u_{m', t}), \\ \nonumber
+    &= \int \dots \int \prod_{i=1}^{m-1}f_{i,t}(b_{i,t})f_{m,t}(u_{m', t} - \sum_{i=1}^{m-1}b_{i,t})db
+\end{align}
+In practice, \eqref{eqn_contconv} may be approximated using Monte Carlo integration making it computationally simple to evaluate. \newline
+Tilting is a well-established process that allows for the incorporation of additional information into the convoluted density to change the shape of the density, while preserving its support \citep{GiacominiRagusa2014, KruegerClarkRavazzolo2017, West2024}. It incorporates a set of theoretical restrictions, expressed as $k$ moment conditions, to modify the probability distribution via re-weighting the density or mass function. For example, let $u_{m',t} \sim f_{m', t}(m', t)$ be the base forecast, with the mean of this forecast given by $\hat{u}_{m',t}$. Then, a coherent mean prediction that minimises the bias resulting from the bottom-up convolution of lower series, can be generated by tilting the base density towards a updated density, $f^{*}_{m', t}(m', t)$, with the first moment matching $\hat{u}_{m',t}$. Therefore,
+\begin{align}
+    f_{n, t}^{*}(u_{m', t}) &= \frac{ \text{exp}(\gamma_{m',t} u_{m',t}) f_{n,t}(u_{m',t})}
+    {\int \text{exp}(\gamma_{m',t} u_{m',t}) f_{n,t}(u_{m',t}) du}, 
+\end{align}
+where $\gamma_{m',t}$ is the tilting parameter that minimises the residual between the target mean and the mean of the tilted density for series $m'$ at time $t$. This tilted density is approximated by numerical integration \citep{BurdenFaires2015}. 
 
 # Using \pkg{boundHTS}
 ## The functions of \pkg{boundHTS}
 The package provides pre-defined convolution functions for Poisson, Beta, zero-inflated Beta (ZIB), and zero-one inflated Beta (ZOIB) distributions. These functions can operate on either point estimates or Monte Carlo samples of the bottom-level series. They are parallelised to run efficiently across the full range of evaluation inputs.
 
-- **Point estimate inputs**  
-  - `Poisson_convolution_density_point_parallel`  
-  - `Beta_convolution_density_point_parallel`  
-  - `ZIB_convolution_density_point_parallel`  
-  - `ZOIB_convolution_density_point_parallel`  
-
-- **Sample-based inputs**  
-  - `Poisson_convolution_density_parallel`  
-  - `Beta_convolution_density_parallel`  
-  - `ZIB_convolution_density_parallel`  
-  - `ZOIB_convolution_density_parallel` 
-
-Additionally, the package includes the `tilt_density` function, which exponentially tilts a density toward a specified target mean. This function supports both discrete and continuous distributions, providing a flexible tool for adjusting predictive densities.
+- **Functions for convolution generation**  
+  - `Poisson_convolution`  
+  - `Beta_convolution`  
+  - `ZIB_convolution`  
+  - `ZOIB_convolution`  
+ 
+Additionally, the package includes the `tilt_density()` function, which exponentially tilts a density toward a specified target mean. This function supports both discrete and continuous distributions, providing a flexible tool for adjusting predictive densities.
 
 
 ## Case 1: Aggregating count forecasts
@@ -84,32 +101,36 @@ Additionally, the package includes the `tilt_density` function, which exponentia
 To begin, we consider a two-tier cross-sectional hierarchical time series where the observations are simulated from low-count Poisson distributions. The hierarchical structure is given by Figure \@ref(fig:sim_poisson_setup). We consider a scenario where four bottom series (M=4) and 2000 observations (N=2000). The rate parameters of the bottom series are generated using generalised linear models with a log-link. These rate parameters then generate low-value counts via the Poisson distribution. Additional variability is introduced to the bottom series counts using integer values shocks to each series to perturb these series subject to a strict non-negativity constraint. To generate the top-level series, the rate parameters of the bottom series are aggregated. The complete procedure for the data simulation procedure can be found in the Supplementary Materials. This simulated data is stored as `poisson_sim_data` within \pkg{boundHTS}. To evaluate the utility of our method, we split the data into 1750 training observations and 250 test observations. 
 
 
-```{r sim_poisson_setup, fig.cap="The two-level hierarchical set up of the Poisson simulation. The four child nodes (A, B, C, D) aggregate to the parent node, Total."}
+```{r sim_poisson_setup, echo=FALSE, fig.cap="The two-level hierarchical set up of the Poisson simulation. The four child nodes (A, B, C, D) aggregate to the parent node, Total."}
 knitr::include_graphics("figures/sim_node_hierarchy.pdf")
 ```
 
-
 ### Modelling the base forecasts
-To obtain base forecasts, we fit standard generalized linear models (GLMs) independently to each node in the hierarchy using `glm()` from the \pkg{stats} package. These models serve as a simple and reproducible forecasting baseline; our primary contribution lies in the reconciliation methodology applied to the resulting forecasts. For each node, we generate a series of rolling one-step-ahead forecasts. At each step, we record both the in-sample fitted values and the one-step-ahead predictive mean for the rate parameter of each observation. These values are subsequently used to construct a predictive point forecast for each series. These predictions form the base point forecasts that are subsequently reconciled.
+To obtain base forecasts, we fit standard autoregressive order(1) models independently to each node in the hierarchy using `tsglm()` from the \pkg{tscount} package. These models serve as a simple and reproducible forecasting baseline; our primary contribution lies in the reconciliation methodology applied to the resulting forecasts. For each node, we generate a series of rolling one-step-ahead forecasts. At each step, we record both the in-sample fitted values and the one-step-ahead predictive mean for the rate parameter of each observation. These values are subsequently used to construct a predictive point forecast for each series. These predictions form the base point forecasts that are subsequently reconciled. The implementation is provided for reproducibility, but the reconciliation framework is model-agnostic and can be applied to any suitable base forecasts.
+
+The procedure requires:
+
+- For all nodes in the series, 
+    - estimates of the rate parameter of the Poisson distribution.
+- A discrete support grid over which the PDFs are evaluated 
+
 
 ### Coherent hierarchical forecasting
 
 We construct a coherent probabilistic forecast for the top-level series by combining bottom-level Poisson forecasts through convolution and subsequently enforcing moment consistency via exponential tilting. As the sum of independent Poisson random variables is also Poisson, we may use a stepwise procedure in which lower-level tilted densities are convolved to form the starting density of their parent node. This ensures that the resulting probability mass function (PMF) respects aggregation constraints while aligning with the predictive means obtained from the base models.
 
-The procedure requires:
+<!-- To begin, we assume the bottom series is given by $b_{m, t} \sim \mathrm{Poisson}(\lambda_{m,t})$ and let the mean of these forecasts be given by $\hat{\lambda}_{m,t}$. Taking advantage of the summation property of Poisson distributed variables, the expected value of the convoluted top series density is given by $\sum_{i=1}^{j}\lambda_{i,t}$. Thus via convolution, the estimated PMF of the top series node is given by, -->
+<!-- \begin{align} -->
+<!--     f_{m+1,t}(u_{t}) &= -->
+<!--     \frac{ (\sum_{i=1}^{j}\lambda_{i,t})^{u_{t}} e^{-(\sum_{i=1}^{j}\lambda_{i,t})}}{u_{t}!}, -->
+<!--     \qquad u_{t} \in \mathbb{N}_0. -->
+<!-- \end{align} -->
 
-- Predictive mean estimates for the top-level series (`A`)
-- Predictive mean estimates for the bottom-level series (`AA`, `AB`, `BA`, `BB`)
-- A discrete support grid over which the PMFs are evaluated  
+```{r, echo=FALSE}
+pois_data <- readRDS("data/poisson_2000_AR.RDS") 
+```
 
-To begin, we assume the bottom series is given by $b_{m, t} \sim \mathrm{Poisson}(\lambda_{m,t})$ and let the mean of these forecasts be given by $\hat{\lambda}_{m,t}$. Taking advantage of the summation property of Poisson distributed variables, the expected value of the convoluted top series density is given by $\sum_{i=1}^{j}\lambda_{i,t}$. Thus via convolution, the estimated PMF of the top series node is given by,
-\begin{align}
-    f_{m+1,t}(u_{t}) &=
-    \frac{ (\sum_{i=1}^{j}\lambda_{i,t})^{u_{t}} e^{-(\sum_{i=1}^{j}\lambda_{i,t})}}{u_{t}!},
-    \qquad u_{t} \in \mathbb{N}_0.
-\end{align}
 
-For illustration, base forecasts are generated using a rolling Poisson GLM. The implementation is provided in a helper function within the article for reproducibility, but the reconciliation framework is model-agnostic and can be applied to any suitable base forecasts.
 
 ```{r, poisson-tilt-example, echo=TRUE}
 
@@ -117,53 +138,63 @@ library(ggplot2)
 library(boundHTS)
 
 # Forecast origin 
-t <- 50
+t_idx <- 2000
 all_series <- c("Tot","AA", "AB", "BA", "BB")
 bottom_series <- c("AA", "AB", "BA", "BB")
-top_y_vals <- 0:10  # support for PMF
+z_values <- seq(from = 0, to = c(max(pois_data$Tot)+10))  # support for PMF
 
 # Example: one-step-ahead Poisson predictive means 
 # Fit GLM to bottom-level series
 fit_list <- lapply(all_series, function(series) {
-  glm(as.formula(paste(series, "~ X + I(X^2)")),
-      data = poisson_sim_data[1:(t-1), ],
-      family = poisson)
+  tscount::tsglm(as.vector(unlist(pois_data[seq_len(t_idx-1), series])), model = list(past_obs = 1), link = "log")
 })
 
 # Predictive means at time t
 lambda_pred <- sapply(fit_list, function(fit) {
-  predict(fit, newdata = poisson_sim_data[t, ])
+   predict(fit, n.ahead = 1)$pred
 })
+```
 
+The next step is to generate the aggregated series density using convolution. This is accomplished with the `Poisson_convolution_density_point_parallel()` function, which takes the grid of discrete values (`z_values`) and the predictive rate estimates of the bottom-level series (`lambda_vector`). Once the convolution density is computed, it is adjusted, or "tilted", to align with the predictive mean of the top-level series. The `tilt_density()` function performs this adjustment, taking as inputs the predictive mean, the grid of discrete values, and the convoluted density.
+
+
+```{r poisson convolution,  echo=TRUE}
 # Convolution density for total-level series 
-conv_density <- Poisson_convolution_density_point_parallel(z_values = top_y_vals,
+conv_density <- Poisson_convolution_density_point_parallel(z_values = z_values,
                                                            lambda_vector = lambda_pred[-1])
 
 # Construct tilted density to match predictive mean 
 f_tilted <- tilt_density(mu_theory = lambda_pred[1],
-                         y_vals = top_y_vals,
+                         y_vals = z_values,
                          f_y = conv_density,
                          discrete = TRUE)
 
-# Prepare data for plotting 
-df_plot <- data.frame(
-  y = rep(top_y_vals, 2),
-  pmf = c(f_tilted$f_tilted, conv_density),
-  Density = rep(c("Tilted density", "Convoluted density"),
-                each = length(top_y_vals))
-)
 ```
 
 
-Figure @ref(fig:poisson-tilted-plot) displays the exponentially tilted predictive mass functions for the top and bottom level series at a representative forecast origin. The unadjusted Poisson distribution implied by aggregation is shifted via exponential tilting so that its expected value coincides with the predictive mean from the base model. As expected, the adjustment primarily alters the tail behaviour of the distribution while maintaining the aggregation constraint.
+Figure \@ref(fig:poisson-tilted-plot) displays the exponentially tilted predictive mass functions for the top and bottom level series at a representative forecast origin. The unadjusted Poisson distribution implied by aggregation is shifted via exponential tilting so that its expected value coincides with the predictive mean from the base model. As expected, the adjustment primarily alters the tail behaviour of the distribution while maintaining the aggregation constraint.
 
-```{r, fig:poisson-tilted-plot, fig.cap="The tilted and convoluted denisties of the top series for a given time point."}
+```{r poisson-tilted-plot, fig.cap="The tilted and convoluted density of the top series using Poisson distributed bottom series for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted denisty and the dashed black line indicates the predictive mean of the top series."}
+
+# Prepare data for plotting 
+df_plot <- data.frame(
+  y = rep(z_values, 2),
+  pmf = c(f_tilted$f_tilted, conv_density),
+  Density = rep(c("Tilted density", "Convoluted density"),
+                each = length(z_values))
+)
+
+
 # Plot PMFs 
 ggplot(df_plot, aes(x = y, y = pmf, fill = Density)) +
   geom_col(position = position_dodge(width = 0.7), width = 0.6, alpha = 0.7) +
-  geom_vline(aes(xintercept = lambda_pred[1], linetype = "Predictive mean"), color = "black") +
-  labs(x = "Counts", y = "Probability", fill = "Density type") +
-  theme_minimal()
+  geom_vline(aes(xintercept = lambda_pred[1], linetype = "Predictive mean"), color = "black", lwd=1.2) +
+  geom_vline(aes(xintercept = pois_data$Tot[t_idx], linetype = "Observation"), color = "black", lwd = 1.2) +
+  labs(x = "Counts", y = "Probability mass", fill = "Mass type", linetype = "Line type") +
+  scale_linetype_manual(values = c("Predictive mean" = "dotted", "Observation" = "solid")) +
+  theme_minimal() + 
+  theme( legend.position = "bottom") +
+  scale_fill_brewer(palette = "Set1")
 
 ```
 
@@ -171,10 +202,10 @@ ggplot(df_plot, aes(x = y, y = pmf, fill = Density)) +
 ## Case 2: Aggregating proportional forecasts
 
 ### The data
-To begin, we consider a simulated hierarchical Beta dataset with a two-level structure. The hierarchical structure is given by Figure \@ref(fig:sim_beta_setup). Due to the compositional nature of the data, the values across nodes are deterministically linked. As a result, only half of the full hierarchical tree must be explicitly simulated, since the remaining nodes can be obtained through deterministic aggregation. The bottom-level series (AA, AB) are constructed from autoregressive latent processes on the logit scale with correlated Gaussian noise terms. A full decription of this data generating process can be found in the Appendix. In this instance, the number of bottom-series is $M=2$ and the number of observation is $N=250$.
+To begin, we consider a simulated hierarchical Beta dataset with a two-level structure. The hierarchical structure is given by Figure \@ref(fig:sim_beta_setup). Due to the compositional nature of the data, the values across nodes are deterministically linked. As a result, only half of the full hierarchical tree must be explicitly simulated, since the remaining nodes can be obtained through deterministic aggregation. The bottom-level series (AA, AB) are constructed from auto-regressive latent processes on the logit scale with correlated Gaussian noise terms. A full description of this data generating process can be found in the Appendix. In this instance, the number of bottom-series is $M=2$ and the number of observation is $N=250$.
 
 
-```{r sim_beta_setup, fig.cap="The two-level hierarchical set up of the Beta simulation. The two child nodes (AA, AB) aggregate to the parent node, A."}
+```{r sim_beta_setup, fig.height=5, fig.width=10, fig.cap="The two-level hierarchical set up of the Beta simulation. The two child nodes (AA, AB) aggregate to the parent node, A."}
 knitr::include_graphics("figures/beta_sim_hierarchy.pdf")
 ```
 
@@ -182,19 +213,16 @@ knitr::include_graphics("figures/beta_sim_hierarchy.pdf")
 ### Modelling the base forecasts
 To obtain base forecasts, we fit standard linear regression models independently to each logit-transformed node in the hierarchy using `auto.arima()` from the \pkg{forecast} package. For each node, we generate a series of rolling one-step-ahead forecasts. At each step, we record both the in-sample fitted values and the one-step-ahead predictive mean for the mean and variance parameters of each observation. These values are subsequently used to construct a predictive point forecast for each series. These predictions form the base point forecasts that are subsequently reconciled.
 
+The procedure requires,
+- For all nodes in the series:
+    - mean and variance estimates if using the Normal distribution
+    - shape estimates if using the Beta distribution
+- A continuous fine support grid over which the PDFs are evaluated  
+
+
 ### Coherent hierarchical forecasting
 
-Like before, we construct a coherent probabilistic forecast for the top-level series by combining bottom-level weighted Beta forecasts through convolution and subsequently enforcing moment consistency via exponential tilting. 
-
-The procedure requires:
-
-- Predictive mean estimates for the top-level series (`A`).
-- Predictive mean estimates for the bottom-level series (`AA`, `AB`).
-- An fine and evenly spaced grid of support over which the PDFs are approximated.  
-
-To begin, we assume the bottom series is given by $b_{m, t} \sim \mathrm{Beta}(\mu_{m,t}*\phi_{m}, (1 - \mu_{m,t})*\phi_{m})$ and let the mean of these forecasts be given by $\hat{\mu}_{m,t}$ which is bounded by [0,1]. 
-
-Conditional on $b_{m,t}$, the density of the aggregated top series proportion, $u_{A,t}$, is then approximated via convolutions. A closed form solution for the convolution of Beta distributions does not exist, as such it is necessary to estimate the integral via Monte-Carlo integration. Specifically, the density of $u_{A,t}$ is defined as,
+Like before, we construct a coherent probabilistic forecast for the top-level series by combining bottom-level weighted Beta forecasts through convolution and subsequently enforcing moment consistency via exponential tilting. To begin, we assume the bottom series is given by $b_{m, t} \sim \mathrm{Beta}(\mu_{m,t}*\phi_{m}, (1 - \mu_{m,t})*\phi_{m})$ and let the mean of these forecasts be given by $\hat{\mu}_{m,t}$ which is bounded by [0,1]. Conditional on $b_{m,t}$, the density of the aggregated top series proportion, $u_{A,t}$, is then approximated via convolutions. A closed form solution for the convolution of Beta distributions does not exist, as such it is necessary to estimate the integral via Monte-Carlo integration. Specifically, the density of $u_{A,t}$ is defined as,
 \begin{align}
 f_{A,t}(u_{A,t})
   &= \int \dots \int
@@ -209,37 +237,32 @@ library(dplyr)
 library(boundHTS)
 library(ExtDist)
 
-inv_logit <- function(x) {
- p <- 1 / (1 + exp(-x))
- return(p)
-}
-
-inv_logit_delta <- function(mu, var) {
-  prop_var <- (mu * (1 - mu))^2 * var
-  return(prop_var)
-} 
-
 t_idx <- 250
+weights_bottom <- c(0.75,0.25)
 all_series <- c("A","AA","AB")
 bottom_series <- c("AA","AB")
-weights_bottom <- c(0.75,0.25)
-
-top_y_vals <- seq(0,1,length.out=1000)
 
 beta_sim_data <- boundHTS::beta_sim_data %>%
   arrange(Time) %>%
   mutate(across(all_of(all_series), ~ log(.x/(1-.x)), .names="logit_{.col}"))
+
 ```
 
-We begin by fitting regression models to each series independently.
+We begin by fitting independent regression models on the logit transformed proportions of each series and storing each series fit in a list. 
+
 ```{r fit-models, echo=TRUE}
+all_series <- c("A","AA","AB")
+bottom_series <- c("AA","AB")
+n_bottom <- 2
+
 fit_list <- lapply(all_series, function(s) {
   forecast::auto.arima(beta_sim_data[1:(t_idx-1), paste0("logit_", s)])
 })
 
 ```
 
-Using the model fit, we estimate the mean logit-transformed proportion and variance and use the Delta method to back-transform these estimates onto [0,1]. The 
+Using the fitted models, we obtain one-step-ahead forecasts on the logit scale. The predictive mean is extracted directly, while the predictive variance is approximated via Monte Carlo simulation. These moments are then back-transformed to the unit interval using the Delta method. Finally, the parameters of the Beta distribution are recovered from the estimated mean and standard deviation using the `beta_params()` function.
+
 ```{r beta-params, echo=TRUE}
 logit_mu_pred <- sapply(fit_list, predict, h=1)
 logit_mu_pred <- as.vector(unlist(logit_mu_pred[1,]))
@@ -253,90 +276,100 @@ logit_var_pred <- sapply(logit_sim_pred, function(x) var(x))
 # Back transform via the Delta method
 prop_pred <- 1 / (1 + exp(-logit_mu_pred))
 prop_var <- (prop_pred * (1 - prop_pred))^2 * logit_var_pred
-phi_pred <- (1/prop_var)-1
 
 # Calculate the beta distribution parameters
-alpha <- prop_pred * phi_pred
-beta  <- (1-prop_pred) * phi_pred
+top_params <- beta_params(prop_pred[1], sqrt(prop_var[1]))
+
+bottom_params <- list()
+for(b in 1:n_bottom) {
+  bottom_params[[b]] <- beta_params(prop_pred[b+1], sqrt(prop_var[b+1]))
+}
 
 ```
 
 
+The bottom series are rescaled to the interval [0, $w_{m}$] using the `rBeta_ab()` from \pkg{ExtDist}, where where $w_{m}$ denotes the aggregation weight for bottom series $m$. This rescaling facilitates aggregation through convolution. A set of weighted samples is generated for each bottom-level series and stored in a three-dimensional array. The convolution-based density of the aggregated series is then evaluated over a fine grid on [0,1] using the `Beta_convolution_density_point_parallel()` function. This function takes as inputs the evaluation grid, the parameters of the final bottom-level series, the array of weighted samples, and the corresponding aggregation weight. Finally, the resulting density is tilted toward the predictive mean to ensure coherence with the marginal forecast. This is achieved using the `tilt_density()` function.
+
 ```{r beta convolution, echo=TRUE}
-weighted_samps <- array(NA, dim=c(100,100,length(bottom_series)))
+
+z_values <- seq(0,1,length.out=1000)
+
+weighted_samps <- array(NA, dim=c(100,100,n_bottom))
 
 for(b in seq_along(bottom_series)) {
   weighted_samps[,,b] <- matrix(ExtDist::rBeta_ab(100*100,
-                                    alpha[b+1], beta[b+1],
-                                    a=0, b=weights_bottom[b]), 100, 100)
+                                    shape1 = bottom_params[[b]][1], 
+                                    shape2 = bottom_params[[b]][2],
+                                    a=0,
+                                    b=weights_bottom[b]), 100, 100)
 }
 
-conv_density <- Beta_convolution_density_point_parallel(z_values = top_y_vals,
-                                                        alpha_point = alpha[2:3],
-                                                        beta_point = beta[2:3],
-                                                        weighted_samps = weighted_samps, 
-                                                        weights = weights_bottom)
+Density_top <- Beta_convolution_density_point_parallel(z_values = z_values,
+                                                       alpha_point = bottom_params[[n_bottom]][1],
+                                                       beta_point  = bottom_params[[n_bottom]][2],
+                                                       weighted_samps = weighted_samps,
+                                                       weights = weights_bottom[n_bottom]
+                                                       )
 
 f_tilted <- tilt_density(mu_theory = prop_pred[1],
-                         y_vals = top_y_vals,
-                         f_y = conv_density,
+                         y_vals = z_values,
+                         f_y = Density_top,
                          discrete=FALSE)
 
 ```
 
 
-Figure @ref(fig:beta-tilted-plot) displays the exponentially tilted probability denisty functions for the top and bottom level series at a representative forecast origin. The unadjusted convoluted Beta distribution implied by aggregation is shifted via exponential tilting so that its expected value coincides with the predictive mean from the base model. 
+Figure \@ref(fig:beta-tilted-plot) displays the exponentially tilted probability density functions for the top and bottom level series at a representative forecast origin. The unadjusted convoluted Beta distribution implied by aggregation is shifted via exponential tilting so that its expected value coincides with the predictive mean from the base model. 
 
-```{r, fig:beta-tilted-plot, fig.cap="The tilted and convoluted denisties of the top series for a given time point."}
+```{r beta-tilted-plot, fig.cap="The tilted and convoluted density of the top series using Beta distributed bottom series nodes for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted denisty and the dashed black line indicates the predictive mean of the top series."}
 df_plot <- data.frame(
-  y = rep(top_y_vals,2),
-  pdf = c(f_tilted$f_tilted, conv_density),
-  Density = rep(c("Tilted density","Convoluted density"), each=length(top_y_vals))
+  y = rep(z_values,2),
+  pdf = c(f_tilted$f_tilted, Density_top),
+  Density = rep(c("Tilted density","Convoluted density"), each=length(z_values))
 )
 
 ggplot(df_plot, aes(x=y, y=pdf, colour=Density)) +
   geom_line(size=1) +
-  geom_vline(aes(xintercept=prop_pred[1], linetype="Predictive mean"), color="black") +
-  labs(x="Proportion", y="Probability", colour="Density type") +
-  scale_linetype_manual(name="", values=c("Predictive mean"="dashed")) +
-  theme_minimal()
+  geom_vline(aes(xintercept=prop_pred[1], linetype="Predictive mean"), color = "black", lwd=1.2) +
+  geom_vline(aes(xintercept = beta_sim_data$A[t_idx], linetype = "Observation"), color = "black", lwd = 1.2) +
+    labs(x = "Counts", y = "Probability mass", fill = "Density type", linetype = "Line type") +
+  scale_linetype_manual(values = c("Predictive mean" = "dotted", "Observation" = "solid")) +
+  theme_minimal() + 
+  theme(legend.position = "bottom") +
+  scale_colour_brewer(palette = "Set1")
+
 
 ```
 
 
-
-
+# Conclusions 
+The \pkg{boundHTS} is an R package that leverages convolution methods combined with exponential tilting to generate coherent hierarchical forecasts for both discrete and continuous bounded distributions. 
+To the best of our knowledge, it is the first package to address coherent estimation for bounded hierarchical series within a unified framework. The development and dissemination of \pkg{boundHTS} as an R package aligns with the findability, accessibility, interoperability, and reusability (FAIR) principles of scientific data \citep{gofair_fair_principles}. In particular, the package includes well-documented data sources, clearly structured and annotated code, and modular functionality that facilitates reuse and extension by other researchers and practitioners.
 
 
 # Appendix
 ## Data generating process for Case 1: Hierarchical Poisson distributions.
-
-The bottom-level series are constructed using a generalized linear model with a quadratic log-link. For each bottom series $m=1,\dots,M$, regression coefficients are drawn independently from a uniform distribution,
+The bottom-level series are constructed using a generalized linear model with an auto-regressive term and quadratic log-link. For each series $m=1,\dots,M$, regression coefficients are given by,
 \begin{align*}
-(\theta_{0,m}, \theta_{1,m}, \theta_{2,m}) \sim \text{Uniform}(0.4,\,0.5).
-\end{align*}
-A common covariate $x_{t}$ is drawn for each observation $t=1,\dots,N$ from a uniform distribution on $[0,1]$,
-\begin{align*}
-x_{t} \sim \text{Uniform}(0, 1).
+\theta_{m} \sim \text{Uniform}(0.4,\,0.5), \quad \nu_{m,t} \sim N(0, 0.1^2)
 \end{align*}
 The Poisson rate parameter is then defined as
 \begin{align*}
-\lambda_{m,t} &= \exp\!\big( \theta_{0,m} + \theta_{1,m}x_t + \theta_{2,m} x_t^2 \big),
+\lambda_{m,t} &= \exp\!\big( \theta_{m} + 0.7*\text{log}(\lambda_{m,t-1}) + \nu_{m,t} \big),
 \end{align*}
-with observed bottom series counts generated according to
+with observed counts generated according to
 \begin{align*}
 b_{m,t} &\sim \text{Poisson}(\lambda_{m,t}).
 \end{align*}
-where, $b_{m,t}$ is the count of bottom series $m$ at time $t$. \\
 To introduce additional variability, integer-valued shocks 
 $\varepsilon_{m,t} \in \{-1,0,1\}$ are added independently to each $b_{m,t}$. 
 The distribution of $\varepsilon_{i,m}$ is series-specific to ensure that noise does not systematically cancel out when aggregating across series:
 \begin{align*}
 \begin{aligned}
-\varepsilon_{1,t} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.3,0.4,0.3), \\
-\varepsilon_{2,t} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.5,0.4,0.1), \\
-\varepsilon_{3,} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.33,0.33,0.34), \\
-\varepsilon_{4,t} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.2,0.3,0.5).
+\varepsilon_{1,t} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.4, 0.4, 0.2), \\
+\varepsilon_{2,t} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.2, 0.7, 0.1), \\
+\varepsilon_{3,t} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.33, 0.34, 0.33), \\
+\varepsilon_{4,t} &\sim \{-1,0,1\} \;\; \text{with probabilities } (0.2, 0.5, 0.3).
 \end{aligned}
 \end{align*}
 To ensuring non-negativity, the perturbed bottom-level series are then given by
@@ -345,38 +378,36 @@ b^{*}_{m,t} = \max\!\big(0,\, b_{m,t} + \varepsilon_{m,t}\big).
 \end{align*}  
 At the aggregate level, the series is obtained by summing across the unperturbed bottom-level counts:
 \begin{align*}
-u_{t}  = \sum_{m=1}^M b_{m,t}.
+u_t  = \sum_{m=1}^M b_{m,t}.
 \end{align*}
-where, $u_{t}$ is the count of top-level series at time $t$. \\
-
-The final noisy dataset consists of 2000 draws of the covariate $x$, the aggregate top series $u_{t}$, and the four perturbed bottom-level series $(b^{\ast}_{1},\dots,b^{\ast}_{4})$.
+The final noisy dataset consists of the covariate $x$, the aggregate series $u$, and the four perturbed bottom-level series $(b^{\ast}_{1},\dots,b^{\ast}_{4})$.
 
 ## Data generating process for Case 2: Hierarchical Beta distributions.
-
 The bottom-level series $(b_{AA, t}, b_{AB, t})$ are constructed from autoregressive latent processes on the logit scale with correlated Gaussian noise terms. Specifically, for $m = \{AA,AB\}$, $t = 1,\dots,N^\star$ where $N^\star = 400$ and burn-in $T_0 = 150$, we define
 \begin{equation}
     \begin{aligned}
-    \text{logit}(b_{m,1}) &\sim \text{Normal}(0,1),\\
-    \text{logit}(b_{m,t}) &= \beta_{0,m} + \beta_{1,m}\,b_{m,t-1} + \epsilon_{m, t}, \\
+    \text{logit}(b_{m,1}) &\sim \text{Normal}(0,1),\newline
+    \text{logit}(b_{m,t}) &= \beta_{0,m} + \beta_{1,m}\,b_{m,t-1} + \epsilon_{m, t}, \newline
     \end{aligned}
 \end{equation}
-where, $b_{m, t}$ is the proportion of bottom-level series $m$ at time $t$. \\
+where, $b_{m, t}$ is the proportion of bottom-level series $m$ at time $t$. \newline
 
 We set the coefficients of the data generating process to be,
 \begin{align}
-\beta_{0,AA} &=0.85,\quad \beta_{1,AA}=0.50,\quad \beta_{0,AB} =0.50, \quad \beta_{1,AB}=0.40, \nonumber \\
+\beta_{0,AA} &=0.85,\quad \beta_{1,AA}=0.50, \nonumber \newline
+\beta_{0,AB} =0.50, \quad \beta_{1,AB}=0.40, \nonumber \newline
 \boldsymbol{\epsilon}_{t}
 & \sim
 \text{Normal}_2\!\left(
 \begin{pmatrix}
-0\\
+0\newline
 0
 \end{pmatrix},
 \Sigma
 \right), \quad
 \Sigma =
 \begin{pmatrix}
-(0.15)^2 & -0.6(0.15)^2 \\
+(0.15)^2 & -0.6(0.15)^2 \newline
 -0.6(0.15)^2 & (0.15)^2
 \end{pmatrix}. \nonumber
 \end{align}
@@ -384,6 +415,6 @@ The bottom-level proportions are obtained by the inverse-logit transform. We dis
 \begin{equation}
     u_{A,t} \sim \text{Beta}\big(\phi_A \bar{y}_{A,t},\; \phi_A(1 - \bar{u}_{A,t})\big).
 \end{equation}
-where, $u_{A, t}$ is the observed proportion of top-level series $A$ at time $t$. \\
+where, $u_{A, t}$ is the observed proportion of top-level series $A$ at time $t$. \newline
 The complementary proportion for category $B$ is defined as $u_{B,t} = 1 - u_{A,t}$. The final simulated dataset consists of $250$ observations of the hierarchical composition $\{u_{A,t}, u_{B,t}, b_{AA,t}, b_{AB,t}\}$.
 

@@ -10,164 +10,174 @@ library(kableExtra)
 
 
 
-## ----sim_poisson_setup, fig.cap="The two-level hierarchical set up of the Poisson simulation. The four child nodes (A, B, C, D) aggregate to the parent node, Total."----
+## ----sim_poisson_setup, echo=FALSE, fig.cap="The two-level hierarchical set up of the Poisson simulation. The four child nodes (A, B, C, D) aggregate to the parent node, Total."----
 knitr::include_graphics("figures/sim_node_hierarchy.pdf")
 
 
-## ----glm-helper, include=FALSE------------------------------------------------
-rolling_poisson_glm <- function(sim_data, test_indices, series_names) {
-  
-  lambda_list  <- vector("list", length(test_indices))
-  fitted_list  <- vector("list", length(test_indices))
-  model_list   <- vector("list", length(test_indices))
-  
-  for (t in seq_along(test_indices)) {
-    
-    train_idx <- seq_len(test_indices[t] - 1)
-    
-    fits <- lambda_est <- matrix(NA, nrow = test_indices[t], ncol = length(series_names))
-    colnames(fits) <- colnames(lambda_est) <- series_names
-    
-    models_t <- list()
-    
-    for (series in series_names) {
-      
-      fit <- stats::glm(
-        stats::as.formula(paste(series, "~ X + I(X^2)")),
-        data   = sim_data[train_idx, c("X", series)],
-        family = "poisson"
-      )
-      # In-sample fitted Poisson means
-      lambda_est[train_idx, series] <- fit$fitted.values
-      
-      # One-step-ahead Poisson mean
-      lambda_est[test_indices[t], series] <-
-      stats::predict(fit, newdata = sim_data[test_indices[t], c("X", series)])
-
-    # Draw predictive samples from Poisson distribution
-    fits[, series] <- stats::rpois(
-      n = test_indices[t],
-      lambda = lambda_est[, series]
-    )
-      
-      fits[, series] <- stats::rpois(
-        n = test_indices[t],
-        lambda = lambda_est[, series]
-      )
-      
-      models_t[[series]] <- fit
-    }
-    
-    lambda_list[[t]] <- lambda_est
-    fitted_list[[t]] <- fits
-    model_list[[t]] <- models_t
-  }
-  
-  list(
-    models  = model_list,
-    lambda  = lambda_list,
-    fitted  = fitted_list
-  )
-}
+## ----echo=FALSE---------------------------------------------------------------
+pois_data <- readRDS("data/poisson_2000_AR.RDS") 
 
 
+## ----poisson-tilt-example, echo=TRUE------------------------------------------
 
-## ----set up, echo=TRUE--------------------------------------------------------
-N <- nrow(boundHTS::poisson_sim_data) 
-test_indices  <- seq(from = N - 49, to = N)
+library(ggplot2)
+library(boundHTS)
 
-glm_results <- rolling_poisson_glm(sim_data = poisson_sim_data,
-                                   test_indices =  c(N-49):N,
-                                   series_names = c("Tot", "AA", "AB", "BA", "BB"))
-
-
-
-## ----pois_tilt, echo=TRUE-----------------------------------------------------
-
+# Forecast origin 
+t_idx <- 2000
+all_series <- c("Tot","AA", "AB", "BA", "BB")
 bottom_series <- c("AA", "AB", "BA", "BB")
-top_y_vals <- seq(from = 0, to = max(poisson_sim_data$Tot)+10)
-n_support <- length(top_y_vals)
-n_series  <- length(bottom_series) + 1  # top + bottom
+z_values <- seq(from = 0, to = c(max(pois_data$Tot)+10))  # support for PMF
 
-f_tilde_exp <- vector("list", length(test_indices))
-nu_exp <- vector("list", length(test_indices))
+# Example: one-step-ahead Poisson predictive means 
+# Fit GLM to bottom-level series
+fit_list <- lapply(all_series, function(series) {
+  tscount::tsglm(as.vector(unlist(pois_data[seq_len(t_idx-1), series])), model = list(past_obs = 1), link = "log")
+})
 
-for (i in seq_along(test_indices)) {
+# Predictive means at time t
+lambda_pred <- sapply(fit_list, function(fit) {
+   predict(fit, n.ahead = 1)$pred
+})
 
-  t_idx <- test_indices[i]
 
-  # Extract predictive means at time t
-  lambda_mat <- glm_results$lambda[[i]]
-  lambda_t   <- lambda_mat[t_idx, ]
+## ----poisson convolution,  echo=TRUE------------------------------------------
+# Convolution density for total-level series 
+conv_density <- Poisson_convolution_density_point_parallel(z_values = z_values,
+                                                           lambda_vector = lambda_pred[-1])
 
-  lambda_bottom <- lambda_t[bottom_series]
-  
-  # convolution of bottom series
-  lambda_top <- sum(lambda_bottom) 
-  lambda_vec <- c(Total = lambda_top, lambda_bottom)
-
-  ## Allocate storage
-  f_tilt <- matrix(0, nrow = n_support, ncol = n_series)
-  nu_star <- numeric(n_series)
-
-  for(k in 1:length(lambda_vec)) {
-    # Convolution step
-    f_y <- stats::dpois(top_y_vals, lambda_vec[k]) # density of convolution
-    
-    # Tilt density
-    tilted_dens <- tilt_density(lambda_t[k], top_y_vals, f_y, discrete=TRUE) 
-  
-    f_tilt[,k] <- tilted_dens$f_tilted # tilted density
-    nu_star <- c(tilted_dens$nu_star, nu_star) # tilting parameter
-  }
-  colnames(f_tilt) <- colnames(lambda_mat)
-  f_tilde_exp[[i]] <- f_tilt
-  nu_exp[[i]] <- nu_star
-}
+# Construct tilted density to match predictive mean 
+f_tilted <- tilt_density(mu_theory = lambda_pred[1],
+                         y_vals = z_values,
+                         f_y = conv_density,
+                         discrete = TRUE)
 
 
 
-## ----poisson-tilted-plot------------------------------------------------------
-t=50
+## ----poisson-tilted-plot, fig.cap="The tilted and convoluted density of the top series using Poisson distributed bottom series for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted denisty and the dashed black line indicates the predictive mean of the top series."----
 
-# Extract predictive means at time t
-lambda_mat <- glm_results$lambda[[t]]
-lambda_t   <- lambda_mat[nrow(lambda_mat), ]
-
-lambda_bottom <- lambda_t[bottom_series]
-  
-# density of convolution 
-conv_top_dens <- dpois(top_y_vals, sum(lambda_bottom))
-
-conv_plot <- data.frame(
-   y = top_y_vals,
-   pmf = conv_top_dens,
-   node = "Total"
+# Prepare data for plotting 
+df_plot <- data.frame(
+  y = rep(z_values, 2),
+  pmf = c(f_tilted$f_tilted, conv_density),
+  Density = rep(c("Tilted density", "Convoluted density"),
+                each = length(z_values))
 )
 
-# tilted density
+
+# Plot PMFs 
+ggplot(df_plot, aes(x = y, y = pmf, fill = Density)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6, alpha = 0.7) +
+  geom_vline(aes(xintercept = lambda_pred[1], linetype = "Predictive mean"), color = "black", lwd=1.2) +
+  geom_vline(aes(xintercept = pois_data$Tot[t_idx], linetype = "Observation"), color = "black", lwd = 1.2) +
+  labs(x = "Counts", y = "Probability mass", fill = "Mass type", linetype = "Line type") +
+  scale_linetype_manual(values = c("Predictive mean" = "dotted", "Observation" = "solid")) +
+  theme_minimal() + 
+  theme( legend.position = "bottom") +
+  scale_fill_brewer(palette = "Set1")
+
+
+
+## ----sim_beta_setup, fig.height=5, fig.width=10, fig.cap="The two-level hierarchical set up of the Beta simulation. The two child nodes (AA, AB) aggregate to the parent node, A."----
+knitr::include_graphics("figures/beta_sim_hierarchy.pdf")
+
+
+## ----beta setup, include=FALSE------------------------------------------------
+library(ggplot2)
+library(dplyr)
+library(boundHTS)
+library(ExtDist)
+
+t_idx <- 250
+weights_bottom <- c(0.75,0.25)
+all_series <- c("A","AA","AB")
+bottom_series <- c("AA","AB")
+
+beta_sim_data <- boundHTS::beta_sim_data %>%
+  arrange(Time) %>%
+  mutate(across(all_of(all_series), ~ log(.x/(1-.x)), .names="logit_{.col}"))
+
+
+
+## ----fit-models, echo=TRUE----------------------------------------------------
+all_series <- c("A","AA","AB")
+bottom_series <- c("AA","AB")
+n_bottom <- 2
+
+fit_list <- lapply(all_series, function(s) {
+  forecast::auto.arima(beta_sim_data[1:(t_idx-1), paste0("logit_", s)])
+})
+
+
+
+## ----beta-params, echo=TRUE---------------------------------------------------
+logit_mu_pred <- sapply(fit_list, predict, h=1)
+logit_mu_pred <- as.vector(unlist(logit_mu_pred[1,]))
+
+logit_sim_pred <- lapply(fit_list, function(fit) {
+  replicate(5000, simulate(fit, nsim=1, future=TRUE)[[1]])
+})
+
+logit_var_pred <- sapply(logit_sim_pred, function(x) var(x))
+
+# Back transform via the Delta method
+prop_pred <- 1 / (1 + exp(-logit_mu_pred))
+prop_var <- (prop_pred * (1 - prop_pred))^2 * logit_var_pred
+
+# Calculate the beta distribution parameters
+top_params <- beta_params(prop_pred[1], sqrt(prop_var[1]))
+
+bottom_params <- list()
+for(b in 1:n_bottom) {
+  bottom_params[[b]] <- beta_params(prop_pred[b+1], sqrt(prop_var[b+1]))
+}
+
+
+
+## ----beta convolution, echo=TRUE----------------------------------------------
+
+z_values <- seq(0,1,length.out=1000)
+
+weighted_samps <- array(NA, dim=c(100,100,n_bottom))
+
+for(b in seq_along(bottom_series)) {
+  weighted_samps[,,b] <- matrix(ExtDist::rBeta_ab(100*100,
+                                    shape1 = bottom_params[[b]][1], 
+                                    shape2 = bottom_params[[b]][2],
+                                    a=0,
+                                    b=weights_bottom[b]), 100, 100)
+}
+
+Density_top <- Beta_convolution_density_point_parallel(z_values = z_values,
+                                                       alpha_point = bottom_params[[n_bottom]][1],
+                                                       beta_point  = bottom_params[[n_bottom]][2],
+                                                       weighted_samps = weighted_samps,
+                                                       weights = weights_bottom[n_bottom]
+                                                       )
+
+f_tilted <- tilt_density(mu_theory = prop_pred[1],
+                         y_vals = z_values,
+                         f_y = Density_top,
+                         discrete=FALSE)
+
+
+
+## ----beta-tilted-plot, fig.cap="The tilted and convoluted density of the top series using Beta distributed bottom series nodes for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted denisty and the dashed black line indicates the predictive mean of the top series."----
 df_plot <- data.frame(
-  y = rep(top_y_vals, ncol(f_tilde_exp[[t]])),
-  pmf = as.vector(f_tilde_exp[[t]]),
-  node = rep(colnames(f_tilde_exp[[t]]), each = length(top_y_vals))) %>% 
-  mutate(node = ifelse(node=="Tot", "Total", node))
+  y = rep(z_values,2),
+  pdf = c(f_tilted$f_tilted, Density_top),
+  Density = rep(c("Tilted density","Convoluted density"), each=length(z_values))
+)
 
-means_df <- data.frame(
-  node = names(lambda_t),
-  mean = lambda_t
-  ) %>% mutate(node = ifelse(node=="Tot", "Total", node))
-  
-
-ggplot() +
-  geom_line(data = df_plot, aes(x = y, y = pmf, col='Tilted density')) +
-  geom_line(data = conv_plot, aes(x = y, y = pmf, col='Convoluted denisty')) +
-  geom_vline(data = means_df,
-             aes(xintercept = mean, linetype = "Predicitive mean")) +
-  facet_wrap(~ node, nrow=5) +
-  scale_colour_brewer(palette="Set1") +
-  labs(x = "Counts",
-       y = "Tilted probability mass")
-
+ggplot(df_plot, aes(x=y, y=pdf, colour=Density)) +
+  geom_line(size=1) +
+  geom_vline(aes(xintercept=prop_pred[1], linetype="Predictive mean"), color = "black", lwd=1.2) +
+  geom_vline(aes(xintercept = beta_sim_data$A[t_idx], linetype = "Observation"), color = "black", lwd = 1.2) +
+    labs(x = "Counts", y = "Probability mass", fill = "Density type", linetype = "Line type") +
+  scale_linetype_manual(values = c("Predictive mean" = "dotted", "Observation" = "solid")) +
+  theme_minimal() + 
+  theme(legend.position = "bottom") +
+  scale_colour_brewer(palette = "Set1")
 
 
 
