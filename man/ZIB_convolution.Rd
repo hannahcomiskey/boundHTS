@@ -10,7 +10,8 @@ ZIB_convolution(
   beta_input,
   zi_input,
   weighted_samps,
-  weights
+  weights,
+  point
 )
 }
 \arguments{

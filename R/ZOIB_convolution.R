@@ -16,7 +16,7 @@
 #' @return The aggregate density Z over a grid of values using a convolution of zero-one inflated Beta (ZOIB) distributions.
 #' @export
 
-ZOIB_convolution <- function(z_values, alpha_input, beta_input, zi_input, weighted_samps, weights) {
+ZOIB_convolution <- function(z_values, alpha_input, beta_input, zi_input, weighted_samps, weights, point) {
   if(point==TRUE & is.vector(alpha_input)==TRUE & is.vector(beta_input)==TRUE & is.vector(zoi_input)==TRUE & is.vector(coi_input)==TRUE) {
     dens <- ZOIB_convolution_density_point_parallel(z_values = z_values,
                                                    alpha_point = alpha_input,

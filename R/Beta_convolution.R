@@ -14,7 +14,7 @@
 #' @return The aggregate density Z over a grid of values using a convolution of Beta distributions.
 #' @export
 
-Beta_convolution <- function(z_values, alpha_input, beta_input, weighted_samps, weights) {
+Beta_convolution <- function(z_values, alpha_input, beta_input, weighted_samps, weights, point) {
   if(point==TRUE & is.vector(alpha_input)==TRUE & is.vector(beta_input)==TRUE) {
     dens <- Beta_convolution_density_point_parallel(z_values = z_values,
                                                     alpha_point = alpha_input,

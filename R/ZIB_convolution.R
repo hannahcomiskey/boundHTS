@@ -15,7 +15,7 @@
 #' @return The aggregate density Z over a grid of values using a convolution of zero-inflated Beta distributions.
 #' @export
 
-ZIB_convolution <- function(z_values, alpha_input, beta_input, zi_input, weighted_samps, weights) {
+ZIB_convolution <- function(z_values, alpha_input, beta_input, zi_input, weighted_samps, weights, point) {
   if(point==TRUE & is.vector(alpha_input)==TRUE & is.vector(beta_input)==TRUE & is.vector(zi_input)==TRUE) {
     dens <- ZIB_convolution_density_point_parallel(z_values = z_values,
                                                    alpha_point = alpha_input,

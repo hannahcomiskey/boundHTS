@@ -4,7 +4,14 @@
 \alias{Beta_convolution}
 \title{Parallelized normalised predictive density over vector z}
 \usage{
-Beta_convolution(z_values, alpha_input, beta_input, weighted_samps, weights)
+Beta_convolution(
+  z_values,
+  alpha_input,
+  beta_input,
+  weighted_samps,
+  weights,
+  point
+)
 }
 \arguments{
 \item{z_values}{evaluation points}
