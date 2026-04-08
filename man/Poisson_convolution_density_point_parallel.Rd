@@ -9,7 +9,7 @@ Poisson_convolution_density_point_parallel(z_values, lambda_vector)
 \arguments{
 \item{z_values}{evaluation points}
 
-\item{lambda_point}{Point estimates of lambda parameters for the Poisson
+\item{lambda_vector}{Point estimates of lambda parameters for the Poisson
 distribution for each bottom series observation.}
 }
 \value{

@@ -89,3 +89,4 @@ test_that("tilted_density_cont remains finite for small base densities", {
   expect_true(all(is.finite(f_tilt)))
   expect_true(all(f_tilt >= 0))
 })
+

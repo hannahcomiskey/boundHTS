@@ -1,6 +1,6 @@
 #' Calculate alpha and beta params for beta distribution from mean and variance
 #'
-#' @param mu estimated mean
+#' @param mean estimated mean
 #' @param sd estimated standard deviation
 #' @details
 #' The corresponding alpha and beta shape parameters

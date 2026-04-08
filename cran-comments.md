@@ -9,6 +9,7 @@ Updates following CRAN submission 10-03-2026
 4. The package uses functions from the ExtDist package via Imports and explicit namespace calls (ExtDist::).
 The function `dBeta_4p` has been removed. Therefore, no code has been copied or modified from ExtDist, and its authors are not listed in Authors@R.
 
+
 Version 1.0.1 -------------------------------------------------------------------
 This is a new submission.
 

@@ -3,7 +3,6 @@
 #' @param mu_theory Numeric. The target mean to match with the tilted density.
 #' @param y_vals Numeric vector. Support points of the base density.
 #' @param f_y Numeric vector. Base density values corresponding to `y_vals`.
-#' @param z_values Numeric vector. Points at which the tilted density is interpolated. Defaults to `y_vals`.
 #' @param discrete Logical. If TRUE, calculate density of discrete random variable. Defaults to FALSE.
 #'
 #' @return A list with components:
@@ -22,7 +21,7 @@
 #' probabilistic forecasting.
 #'
 #' @examples
-#' Example: tilt a simple discrete density
+#' # Example: tilt a simple discrete density
 #' y <- 0:5
 #' f <- dbinom(y, size = 5, prob = 0.3) # E(Y) = 5*0.3 = 1.5
 #' mu_target <- 2.5
@@ -36,7 +35,7 @@
 #' legend("topright", legend = c("Original", "Tilted"),
 #' col = c("blue", "red"), lwd = 2)
 #'
-#' Example: tilt a simple continuous density
+#' # Example: tilt a simple continuous density
 #' y <- seq(0, 1, length.out = 200)
 #' f <- dbeta(y, shape1 = 2, shape2 = 5)   # E(Y) = 2/(2+5) = 0.2857
 #' mu_target <- 0.5
@@ -72,7 +71,7 @@ tilt_density <- function(mu_theory, y_vals, f_y, discrete=FALSE) {
   idx <- which(diff(sign(vals)) != 0)
 
   if (length(idx) == 0) {
-    warning("No sign change for node — using no tilting (nu=0).")
+    warning("No sign change for node - using no tilting (nu=0).")
     nu_star <- 0
   } else {
     lower <- nu_grid[idx[1]]

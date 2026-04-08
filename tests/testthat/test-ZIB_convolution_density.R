@@ -89,7 +89,7 @@ test_that("ZIB convolution returns a valid density over z_values", {
   dens <- ZIB_convolution(z_values = z_values,
                            alpha_input = alpha_matrix,
                            beta_input = beta_matrix,
-                           zi_input = zoi_matrix,
+                           zi_input = zi_matrix,
                            weighted_samps = weighted_samps,
                            weights = weights,
                            point=FALSE)

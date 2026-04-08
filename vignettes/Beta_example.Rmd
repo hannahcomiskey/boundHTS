@@ -15,6 +15,7 @@ vignette: >
 
 library(tidyverse)
 library(boundHTS)
+library(forecast)
 
 set.seed(123)
 n_obs   <- 400

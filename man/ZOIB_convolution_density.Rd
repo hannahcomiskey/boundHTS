@@ -9,7 +9,7 @@ ZOIB_convolution_density(
   alpha_matrix,
   beta_matrix,
   coi_matrix,
-  zi_matrix,
+  zoi_matrix,
   weighted_samps,
   weights
 )
@@ -23,11 +23,11 @@ ZOIB_convolution_density(
 
 \item{coi_matrix}{Numeric matrix; Monte Carlo draws of conditional one-inflation probability (n_draws x n_nodes).}
 
+\item{zoi_matrix}{Numeric matrix; Monte Carlo draws of zero-inflation probability (n_draws x n_nodes).}
+
 \item{weighted_samps}{matrix of weighted samples for each element in the aggregate (N rows x n_nodes)}
 
 \item{weights}{vector of weights that are used to combine to form the aggregated density Z. (length n_nodes)}
-
-\item{zoi_matrix}{Numeric matrix; Monte Carlo draws of zero-inflation probability (n_draws x n_nodes).}
 }
 \value{
 A numeric vector containing the estimated aggregate density evaluated at \code{z_values}.
@@ -45,27 +45,26 @@ The resulting density is normalised using numerical integration.
 set.seed(1)
 
 # Simulation setup
+n_sims <- 10
 n_draws <- 200
-n_nodes <- 2
+N <- 2
 
 # Simulated posterior draws
-Y_mc <- matrix(runif(n_draws * n_nodes, 0.1, 0.9), nrow = n_draws)
-phi_array <- matrix(rexp(n_draws * n_nodes, 1), nrow = n_draws)
-zoi_array <- matrix(runif(n_draws * n_nodes, 0, 0.2), nrow = n_draws)
-coi_array <- matrix(runif(n_draws * n_nodes, 0, 0.2), nrow = n_draws)
+ weighted_samps <- array(runif(n_sims * n_draws * N, min = 0, max = 0.2),
+ dim = c(n_sims, n_draws, N))
+ alpha_matrix <- matrix(runif(n_draws * N, min = 2, max = 10),
+ nrow = n_draws, ncol = N)
+ beta_matrix <- matrix(runif(n_draws * N, min = 2, max = 10),
+ nrow = n_draws, ncol = N)
+ zoi_matrix <- matrix(runif(n_draws * N, 0.1, 0.4), nrow = n_draws, ncol = N)
+ coi_matrix <- matrix(runif(n_draws * N, 0.2, 0.8), nrow = n_draws, ncol = N)
 
 weights <- c(1, 1)
 z_values <- seq(0, 2, length.out = 50)
 
-dens <- ZOIB_convolution_density(
-  Y_mc = Y_mc,
-  phi_array = phi_array,
-  zoi_array = zoi_array,
-  coi_array = coi_array,
-  weights = weights,
-  z_values = z_values,
-  n_draws = 100
-)
+dens <- ZOIB_convolution_density(z=0.5, alpha_matrix=alpha_matrix,
+beta_matrix = beta_matrix, zoi_matrix = zoi_matrix, coi_matrix = coi_matrix,
+weights = weights)
 
 head(dens)
 

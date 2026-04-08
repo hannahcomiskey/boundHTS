@@ -34,11 +34,13 @@ Suggests:
     rjags,
     brms,
     tibble,
-    MASS
+    MASS,
+    forecast,
+    gamlss,
+    gamlss.dist
 Config/testthat/edition: 3
 Imports:
     ExtDist,
-    future,
     future.apply,
     stats,
     pracma

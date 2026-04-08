@@ -1,7 +1,7 @@
 #' Parallelized normalised predictive Poisson density over vector z
 #'
 #' @param z_values evaluation points
-#' @param lambda_point Point estimates of lambda parameters for the Poisson
+#' @param lambda_vector Point estimates of lambda parameters for the Poisson
 #'   distribution for each bottom series observation.
 #' @details
 #' A wrapper function for calculating Monte Carlo estimates for the aggregate density Z using point estimates.

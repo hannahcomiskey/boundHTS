@@ -6,7 +6,7 @@
 #' @param beta_point Point estimates of beta (shape2) parameters for the Beta
 #'   distribution for each observation.
 #' @param zi_point Point estimates of zero inflation
-#' @param weights Numeric vector of weights used to combine the components
+#' @param weight Numeric vector of weights used to combine the components
 #'   into the aggregated density \eqn{Z} (length b).
 #' @details
 #' Computes the density of a zero-inflated four-parameter Beta distribution using Monte Carlo draws.

@@ -7,9 +7,9 @@
 beta_params(mean, sd)
 }
 \arguments{
-\item{sd}{estimated standard deviation}
+\item{mean}{estimated mean}
 
-\item{mu}{estimated mean}
+\item{sd}{estimated standard deviation}
 }
 \value{
 A vector of shape parameters

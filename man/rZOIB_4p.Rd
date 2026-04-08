@@ -17,17 +17,17 @@ rZOIB_4p(
 \arguments{
 \item{n_mc}{Integer; number of Monte Carlo samples to generate.}
 
+\item{alpha_point}{Numeric; first shape parameter of the Beta distribution.}
+
+\item{beta_point}{Numeric; second shape parameter of the Beta distribution.}
+
+\item{zoi_point}{Numeric; probability of zero/one inflation.}
+
+\item{coi_point}{Numeric; conditional probability of one given inflation.}
+
 \item{lower}{Numeric; lower bound of the Beta distribution (default = 0).}
 
 \item{weight}{Numeric; upper bound of the Beta distribution (default = 1).}
-
-\item{alpha}{Numeric; first shape parameter of the Beta distribution.}
-
-\item{beta}{Numeric; second shape parameter of the Beta distribution.}
-
-\item{zoi}{Numeric; probability of zero/one inflation.}
-
-\item{coi}{Numeric; conditional probability of one given inflation.}
 }
 \value{
 A numeric vector of length \code{n_mc} containing random draws from

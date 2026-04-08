@@ -1,7 +1,7 @@
 #' Convolution Density for Poisson
 #'
 #' @param x Numeric evaluation point for the aggregated density.
-#' @param lambda_point Vector of lambda parameters for the Poisson
+#' @param lambda_vector Vector of lambda parameters for the Poisson
 #' distribution for each bottom level observation.
 #'
 #' @details

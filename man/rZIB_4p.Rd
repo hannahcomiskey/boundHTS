@@ -9,15 +9,15 @@ rZIB_4p(n_mc, alpha_point, beta_point, zoi_point, lower = 0, weight = 1)
 \arguments{
 \item{n_mc}{Integer; number of Monte Carlo samples to generate.}
 
+\item{alpha_point}{Numeric; first shape parameter of the Beta distribution.}
+
+\item{beta_point}{Numeric; second shape parameter of the Beta distribution.}
+
+\item{zoi_point}{Numeric; probability of zero/one inflation.}
+
 \item{lower}{Numeric; lower bound of the Beta distribution (default = 0).}
 
 \item{weight}{Numeric; upper bound of the Beta distribution (default = 1).}
-
-\item{alpha}{Numeric; first shape parameter of the Beta distribution.}
-
-\item{beta}{Numeric; second shape parameter of the Beta distribution.}
-
-\item{zoi}{Numeric; probability of zero/one inflation.}
 }
 \value{
 A numeric vector of length \code{n_mc} containing random draws from
@@ -46,9 +46,9 @@ set.seed(1)
 
 draws <- rZIB_4p(
   n_mc = 1000,
-  alpha = 2,
-  beta = 10,
-  zoi = 0.1,
+  alpha_point = 2,
+  beta_point = 10,
+  zoi_point = 0.1,
   weight = 1
 )
 

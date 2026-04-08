@@ -9,7 +9,7 @@ Poisson_convolution_density_point(x, lambda_vector)
 \arguments{
 \item{x}{Numeric evaluation point for the aggregated density.}
 
-\item{lambda_point}{Vector of lambda parameters for the Poisson
+\item{lambda_vector}{Vector of lambda parameters for the Poisson
 distribution for each bottom level observation.}
 }
 \value{

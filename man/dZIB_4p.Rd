@@ -17,7 +17,7 @@ distribution for each observation.}
 
 \item{zi_point}{Point estimates of zero inflation}
 
-\item{weights}{Numeric vector of weights used to combine the components
+\item{weight}{Numeric vector of weights used to combine the components
 into the aggregated density \eqn{Z} (length b).}
 }
 \value{

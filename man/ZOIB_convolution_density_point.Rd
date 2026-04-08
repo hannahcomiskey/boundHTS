@@ -18,6 +18,12 @@ ZOIB_convolution_density_point(
 \item{weighted_samps}{Monte Carlo draws of weighted bottom-series samples
 (matrix: n_draws x n_nodes).}
 
+\item{alpha_point}{Point estimates of alpha (shape1) parameters for the Beta
+distribution for each observation.}
+
+\item{beta_point}{Point estimates of beta (shape2) parameters for the Beta
+distribution for each observation.}
+
 \item{zoi_point}{Zero-one inflation probability (vector: length n_nodes).}
 
 \item{coi_point}{Conditional one inflation probability (vector: length n_nodes).}
@@ -25,10 +31,6 @@ ZOIB_convolution_density_point(
 \item{weights}{Node weights defining the aggregation structure (vector: length n_nodes).}
 
 \item{z_values}{Numeric vector of evaluation points for the aggregate density.}
-
-\item{phi_point}{Beta precision parameter (vector: length n_nodes).}
-
-\item{n_mc}{Number of Monte Carlo samples used in the convolution estimate.}
 }
 \value{
 A numeric vector containing the estimated aggregate density evaluated at \code{z_values}.
@@ -51,7 +53,8 @@ n_nodes <- 2
 
 # Simulated data
 weighted_samps <- matrix(runif(n_draws * n_nodes, 0.1, 0.9), nrow = n_draws)
-phi_point <- rexp(n_nodes, 1)
+alpha_point <- runif(n_nodes, 2, 5)
+beta_point  <- runif(n_nodes, 2, 5)
 zoi_point <- runif(n_nodes, 0, 0.2)
 coi_point <- runif(n_nodes, 0, 0.2)
 
@@ -60,7 +63,8 @@ z_values <- seq(0, 2, length.out = 50)
 
 dens <- ZOIB_convolution_density_point(
   weighted_samps = weighted_samps,
-  phi_point = phi_point,
+  alpha_point = alpha_point,
+  beta_point = beta_point,
   zoi_point = zoi_point,
   coi_point = coi_point,
   weights = weights,

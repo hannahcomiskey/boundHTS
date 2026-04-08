@@ -3,12 +3,14 @@
 #'
 #' @param weighted_samps Monte Carlo draws of weighted bottom-series samples
 #'   (matrix: n_draws x n_nodes).
-#' @param phi_point Beta precision parameter (vector: length n_nodes).
+#' @param alpha_point Point estimates of alpha (shape1) parameters for the Beta
+#'   distribution for each observation.
+#' @param beta_point Point estimates of beta (shape2) parameters for the Beta
+#'   distribution for each observation.
 #' @param zoi_point Zero-one inflation probability (vector: length n_nodes).
 #' @param coi_point Conditional one inflation probability (vector: length n_nodes).
 #' @param weights Node weights defining the aggregation structure (vector: length n_nodes).
 #' @param z_values Numeric vector of evaluation points for the aggregate density.
-#' @param n_mc Number of Monte Carlo samples used in the convolution estimate.
 #'
 #' @details
 #' This function computes a Monte Carlo approximation of the density of an
@@ -27,7 +29,8 @@
 #'
 #' # Simulated data
 #' weighted_samps <- matrix(runif(n_draws * n_nodes, 0.1, 0.9), nrow = n_draws)
-#' phi_point <- rexp(n_nodes, 1)
+#' alpha_point <- runif(n_nodes, 2, 5)
+#' beta_point  <- runif(n_nodes, 2, 5)
 #' zoi_point <- runif(n_nodes, 0, 0.2)
 #' coi_point <- runif(n_nodes, 0, 0.2)
 #'
@@ -36,7 +39,8 @@
 #'
 #' dens <- ZOIB_convolution_density_point(
 #'   weighted_samps = weighted_samps,
-#'   phi_point = phi_point,
+#'   alpha_point = alpha_point,
+#'   beta_point = beta_point,
 #'   zoi_point = zoi_point,
 #'   coi_point = coi_point,
 #'   weights = weights,
@@ -57,7 +61,7 @@ ZOIB_convolution_density_point <- function(weighted_samps, alpha_point, beta_poi
   partial_sum <- rowSums(weighted_samps[, , 1:(N-1), drop = FALSE], dims = 2)
 
   # Remaining x value for parent
-  x <- z - partial_sum
+  x <- z_values - partial_sum
 
   Density <- mean(dZOIB_4p(x = x,
                           alpha_point = alpha_point[N],

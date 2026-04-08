@@ -14,8 +14,6 @@ tilt_density(mu_theory, y_vals, f_y, discrete = FALSE)
 \item{f_y}{Numeric vector. Base density values corresponding to \code{y_vals}.}
 
 \item{discrete}{Logical. If TRUE, calculate density of discrete random variable. Defaults to FALSE.}
-
-\item{z_values}{Numeric vector. Points at which the tilted density is interpolated. Defaults to \code{y_vals}.}
 }
 \value{
 A list with components:
@@ -37,7 +35,7 @@ densities and can be used for post-hoc adjustment in hierarchical
 probabilistic forecasting.
 }
 \examples{
-Example: tilt a simple discrete density
+# Example: tilt a simple discrete density
 y <- 0:5
 f <- dbinom(y, size = 5, prob = 0.3) # E(Y) = 5*0.3 = 1.5
 mu_target <- 2.5
@@ -51,7 +49,7 @@ lines(y, res$f_tilted, col = "red", type='h')
 legend("topright", legend = c("Original", "Tilted"),
 col = c("blue", "red"), lwd = 2)
 
-Example: tilt a simple continuous density
+# Example: tilt a simple continuous density
 y <- seq(0, 1, length.out = 200)
 f <- dbeta(y, shape1 = 2, shape2 = 5)   # E(Y) = 2/(2+5) = 0.2857
 mu_target <- 0.5

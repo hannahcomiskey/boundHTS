@@ -1,10 +1,10 @@
 #' Random Generator for a Zero-One-Inflated Four-Parameter Beta Distribution
 #'
 #' @param n_mc Integer; number of Monte Carlo samples to generate.
-#' @param alpha Numeric; first shape parameter of the Beta distribution.
-#' @param beta Numeric; second shape parameter of the Beta distribution.
-#' @param zoi Numeric; probability of zero/one inflation.
-#' @param coi Numeric; conditional probability of one given inflation.
+#' @param alpha_point Numeric; first shape parameter of the Beta distribution.
+#' @param beta_point Numeric; second shape parameter of the Beta distribution.
+#' @param zoi_point Numeric; probability of zero/one inflation.
+#' @param coi_point Numeric; conditional probability of one given inflation.
 #' @param lower Numeric; lower bound of the Beta distribution (default = 0).
 #' @param weight Numeric; upper bound of the Beta distribution (default = 1).
 #'
