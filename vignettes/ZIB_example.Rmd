@@ -192,7 +192,7 @@ We estimate separate state–space models for:
 
 ### 2.1 Run the models
 
-```{r, echo=FALSE}
+```{r, echo=TRUE, results='hide'}
 forecasts_sims <- forecasts <- data.frame()
 nsim <- 1000
 n_testyears <- tail(sim_data$Time)
@@ -405,13 +405,14 @@ rec_list <- lapply(seq_along(n_testyears), function(i) {
   }
 
   ## Convolution
-  Density_top <- ZIB_convolution_density_point_parallel(
+  Density_top <- ZIB_convolution(
     z_values = z_values,
-    alpha_point = bottom_params[[n_bottom]][1],
-    beta_point  = bottom_params[[n_bottom]][2],
-    zi_point = zoi_bottom[n_bottom],
+    alpha_input = bottom_params[[n_bottom]][1],
+    beta_input = bottom_params[[n_bottom]][2],
+    zi_input = zoi_bottom[n_bottom],
     weighted_samps = weighted_samps,
-    weights = weights_bottom[n_bottom]
+    weights = weights_bottom[n_bottom],
+    point=TRUE
   )
 
   tmp <- tibble(

@@ -282,7 +282,7 @@ rec_list <- lapply(seq_along(n_testyears), function(i) {
     alpha_point = bottom_params[[n_bottom]][1],
     beta_point  = bottom_params[[n_bottom]][2],
     weighted_samps = weighted_samps,
-    weights = weights_bottom[n_bottom]
+    weights = weights_bottom
   )
 
   tmp <- tibble(

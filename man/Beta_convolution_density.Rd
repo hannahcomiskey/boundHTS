@@ -46,8 +46,8 @@ b <- 2
 weighted_samps <- array(runif(n_sims * n_draws * b),
                         dim = c(n_sims, n_draws, b))
 
-alpha_matrix <- matrix(runif(n_sims * b, 2, 5), nrow = n_sims)
-beta_matrix  <- matrix(runif(n_sims * b, 2, 5), nrow = n_sims)
+alpha_matrix <- matrix(runif(n_draws * b, 2, 5), nrow = n_draws)
+beta_matrix  <- matrix(runif(n_draws * b, 2, 5), nrow = n_draws)
 
 weights <- c(1, 1)
 

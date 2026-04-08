@@ -45,21 +45,23 @@ The resulting density is normalized using the trapezoidal rule
 (\code{pracma::trapz}) to ensure integration to 1.
 }
 \examples{
-set.seed(1)
-n_draws <- 5
-n_nodes <- 2
-n_mc <- 10
-weighted_samps <- array(runif(n_mc*n_draws* n_nodes), dim = c(n_mc, n_draws, n_nodes))
-z_values <- seq(0, 1, out.length=100)
-zi_point <- runif(n_nodes, 0, 0.2)
-alpha_point <- runif(n_nodes, 2, 5)
-beta_point  <- runif(n_nodes, 2, 5)
-weights <- rep(1, n_nodes)
-for(z in 1:length(z_values)) {
-  denisty <- vector()
-  density[z] <- ZIB_convolution_density_point(z_values[z],
-  weighted_samps = weighted_samps, alpha_point[n_nodes], beta_point[n_nodes],
-   zi_point[n_nodes], weights[n_nodes])
-  }
-  plot(z_values, density, type = "l")
+# Simulation setup
+n_sims <- 50
+n_draws <- 10
+b <- 2
+
+# Simulated weighted samples
+weighted_samps <- array(runif(n_sims * n_draws * b),
+                        dim = c(n_sims, n_draws, b))
+
+alpha_point <- runif(b, 2, 5)
+beta_point  <- runif(b, 2, 5)
+zi_point  <- runif(b, 0, 0.1)
+weights <- c(1, 1)
+
+density <- ZIB_convolution_density_point(z = 0.5, alpha_point = alpha_point,
+beta_point = beta_point, zi_point = zi_point,
+weighted_samps = weighted_samps, weights = weights)
+
+density
 }

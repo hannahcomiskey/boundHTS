@@ -20,12 +20,17 @@
 #' The Beta density is evaluated using \code{ExtDist::dBeta_ab()} for the
 #' interior of the support.
 #'
-#' @return A numeric vector of length \code{n_mc} containing the density
-#' evaluated at \code{z} for each Monte Carlo draw.
+#' @return A numeric vector containing the density evaluated at \code{z}
+#'  for each Monte Carlo draw.
 #'
 #' @examples
 #' set.seed(1)
-#' weighted_samps  <- array(runif(n_mc * n_draws * n_nodes, 0.2, 0.8), dim=c(n_mc, n_draws, n_nodes))
+#' # Simulation setup
+#' n_sims <- 10
+#' n_draws <- 200
+#' n_nodes <- 2
+#' weighted_samps  <- array(runif(n_sims * n_draws * n_nodes, 0.2, 0.8),
+#'  dim=c(n_sims, n_draws, n_nodes))
 #' alpha_point <- runif(n_nodes, 2, 5)
 #' beta_point  <- runif(n_nodes, 2, 5)
 #' zi_point <- runif(n_nodes, 0, 0.05)
@@ -33,7 +38,8 @@
 #' # Evaluation points
 #' z <- seq(0, 1, length.out = 50)
 #' weights <- 0.5
-#' dens <- dZOIB_4p(z[25], alpha_point[2], beta_point[2], zi_point[2], coi_point[2], weights)
+#' dens <- dZOIB_4p(z[25], alpha_point[2], beta_point[2], zi_point[2],
+#'  coi_point[2], weights)
 #' dens
 #' @importFrom ExtDist dBeta_ab
 #' @export

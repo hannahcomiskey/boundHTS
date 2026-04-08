@@ -21,7 +21,7 @@ ZOIB_convolution <- function(z_values, alpha_input, beta_input, zoi_input, coi_i
     dens <- ZOIB_convolution_density_point_parallel(z_values = z_values,
                                                    alpha_point = alpha_input,
                                                    beta_point = beta_input,
-                                                   zi_point = zoi_input,
+                                                   zoi_point = zoi_input,
                                                    coi_point = coi_input,
                                                    weighted_samps = weighted_samps,
                                                    weights = weights)
@@ -30,7 +30,7 @@ ZOIB_convolution <- function(z_values, alpha_input, beta_input, zoi_input, coi_i
     dens <- ZOIB_convolution_density_parallel(z_values = z_values,
                                              alpha_matrix = alpha_input,
                                              beta_matrix = beta_input,
-                                             zi_matrix = zoi_input,
+                                             zoi_matrix = zoi_input,
                                              coi_matrix = coi_input,
                                              weighted_samps = weighted_samps,
                                              weights = weights)

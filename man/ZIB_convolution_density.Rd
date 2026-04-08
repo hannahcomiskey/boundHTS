@@ -42,18 +42,24 @@ using the trapezoidal rule (\code{pracma::trapz}) to ensure integration to 1.
 \examples{
 set.seed(1)
 
-n_draws <- 5
-n_nodes <- 2
-n_mc <- 10
-n_z <- 50
+# Simulation setup
+n_sims <- 50
+n_draws <- 10
+b <- 2
 
-weighted_samps <- matrix(runif(n_draws * n_nodes), nrow = n_draws)
-phi_array <- matrix(rexp(n_draws * n_nodes, 1), nrow = n_draws)
-zi_array <- matrix(runif(n_draws * n_nodes, 0, 0.2), nrow = n_draws)
-weights <- rep(1, n_nodes)
-z_values <- seq(0, sum(weights), length.out = n_z)
+# Simulated weighted samples
+weighted_samps <- array(runif(n_sims * n_draws * b),
+                        dim = c(n_sims, n_draws, b))
 
-density <- ZIB_convolution_density(weighted_samps, phi_array, zi_array, weights, z_values, n_mc)
-plot(z_values, density, type = "l")
+alpha_matrix <- matrix(runif(n_draws * b, 2, 5), nrow = n_draws)
+beta_matrix  <- matrix(runif(n_draws * b, 2, 5), nrow = n_draws)
+zi_matrix  <- matrix(runif(n_draws * b, 0, 0.1), nrow = n_draws)
+weights <- c(1, 1)
+
+density <- ZIB_convolution_density(z = 0.5, alpha_matrix = alpha_matrix,
+beta_matrix = beta_matrix, zi_matrix = zi_matrix,
+weighted_samps = weighted_samps, weights = weights)
+
+density
 
 }

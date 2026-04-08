@@ -29,21 +29,23 @@ We consider a two-level hierarchy:
 
 ## Step 1: Load and visualise Poisson distributed data 
 
-```{r}
+```{r, echo=TRUE, results='hide'}
 set.seed(123)
 library(boundHTS)
+library(tidyverse)
 
 data("poisson_sim_data")         # load data
 head(poisson_sim_data)
+
 ```
 
-This shows the counts recorded over the covariate X for each node in the hierarchy.
+This shows the counts recorded over time for each node in the hierarchy.
 ```{r}
-hts_data_long <- tidyr::pivot_longer(poisson_sim_data, cols = -c(X), names_to = "Level", values_to = "Value")
+hts_data_long <- tidyr::pivot_longer(poisson_sim_data, cols = -c(Time), names_to = "Level", values_to = "Value")
 
-ggplot2::ggplot(hts_data_long, ggplot2::aes(x = X, y = Value, color = Level)) +
+ggplot2::ggplot(hts_data_long, ggplot2::aes(x = Time, y = Value, color = Level)) +
   ggplot2::geom_line() +
-  ggplot2::labs(title = "Simulated hierarchical count", x = "X", y = "Count") +
+  ggplot2::labs(title = "Simulated hierarchical count", x = "Time", y = "Count") +
   ggplot2::theme_minimal() + 
   ggplot2::theme(legend.position = "none") +
   ggplot2::facet_wrap(~Level, scales='free')
@@ -53,7 +55,7 @@ ggplot2::ggplot(hts_data_long, ggplot2::aes(x = X, y = Value, color = Level)) +
 
 ## Step 2: Generating model estimates
 
-We now fit **Poisson GLMs** to each bottom-level count series (`AA`, `AB`, `BA`, `BB`). Each model uses a quadratic function of the covariate `X` and is estimated in a **rolling one-step-ahead forecasting framework**.
+We now fit **Poisson GLMs** to each bottom-level count series (`AA`, `AB`, `BA`, `BB`). Each model uses an AR(1) model and is estimated in a **rolling one-step-ahead forecasting framework**.
 
 At each forecast origin:
 
@@ -70,6 +72,7 @@ n_series <- ncol(poisson_sim_data[,-1])
 n_train <- c(1:c(N-50)) # withhold the last 50 observations for validation
 test_indices <- c(length(n_train)+1):N
 n_samples <- length(test_indices)
+nodes <- c("Tot", "AA", "AB", "BA", "BB")
 sum_bottom <- c("AA", "AB", "BA", "BB")
 top_y_vals <- seq(from = 0, to = c(max(poisson_sim_data$Tot)+10))
 ally <- poisson_sim_data[,-c(1)] # remove covariates
@@ -81,61 +84,43 @@ ally <- poisson_sim_data[,-c(1)] # remove covariates
 
 ```{r, poisson-regression}
 # Containers for results
-poiss_reg <- list()   # fitted GLMs at each step
+lambda_list <- list()
+fitted_list <- list()
 poiss_GLM_reg <- list()
-lambda_list <- list()   # estimated Poisson rates (lambda)
-fitted_list <- list()   # predictive Poisson samples
 
-# Bottom-level series
-sum_bottom <- c("AA", "AB", "BA", "BB")
+for(t in seq_along(test_indices)) {
 
-for (t in seq_along(test_indices)) {
+  my_train <- seq_len(test_indices[t]-1)
 
-  # Training indices (up to time t-1)
-  train_idx <- seq_len(test_indices[t] - 1)
+  lambda_est <- matrix(NA, nrow = length(my_train) + 1, ncol = length(nodes))
+  fits <- matrix(NA, nrow = length(my_train) + 1, ncol = length(nodes))
+  colnames(lambda_est) <- colnames(fits) <- nodes
 
-  # Store estimated lambdas and predictive samples
-  lambda_est <- fits <- matrix(
-    NA,
-    nrow = length(train_idx) + 1,
-    ncol = n_series
-  )
+  poiss_reg <- list()
 
-  colnames(lambda_est) <- colnames(fits) <- colnames(ally)
+  for(i in nodes) {
 
-  # Fit Poisson GLM separately for each bottom-level series
-  for (series in colnames(ally)) {
+    y_train <- poisson_sim_data[my_train, ] %>% pull(all_of(i))
 
-    # Quadratic Poisson regression
-    formula_str <- paste(series, "~ X + I(X^2)")
-    fit <- stats::glm(
-      formula = stats::as.formula(formula_str),
-      data    = poisson_sim_data[train_idx, c("X", series)],
-      family = "poisson"
-    )
+    # Fit tsglm on training series
+    fit <- tscount::tsglm(y_train, model = list(past_obs = 1), link = "log")
+    poiss_reg[[i]] <- fit
 
-    # Store fitted model
-    poiss_reg[[series]] <- fit
+    # Fitted values for the training period
+    lambda_est[1:length(my_train), i] <- fitted(fit)
 
-    # In-sample fitted Poisson means
-    lambda_est[train_idx, series] <- fit$fitted.values
+    # One-step-ahead forecast
+    lambda_est[length(my_train)+1, i] <- predict(fit, n.ahead = 1)$pred
 
-    # One-step-ahead Poisson mean
-    lambda_est[test_indices[t], series] <-
-      stats::predict(fit, newdata = poisson_sim_data[test_indices[t], c("X", series)])
-
-    # Draw predictive samples from Poisson distribution
-    fits[, series] <- stats::rpois(
-      n = test_indices[t],
-      lambda = lambda_est[, series]
-    )
+    # Simulate Poisson counts based on lambda
+    fits[, i] <- rpois(length(lambda_est[, i]), lambda = lambda_est[, i])
   }
 
-  # Save results for this forecast origin
   lambda_list[[t]] <- lambda_est
   fitted_list[[t]] <- fits
   poiss_GLM_reg[[t]] <- poiss_reg
 }
+
 
 ```
 
@@ -160,7 +145,6 @@ We will generate PMFs for the withheld data points to validate of our method. Yo
 f_tilde_exp <- list()
 nu_exp <- list()
 f_y <- vector()
-bottom_sum <- c("AA", "AB", "BA", "BB")
 pmf_values <- vector()
 ```
 
@@ -173,11 +157,11 @@ for(t in 1:length(test_indices)) {
   lambda_vals <- as.data.frame(lambda_list[[t]])
   mu_theory <- as.vector(unlist(lambda_vals[test_indices[t], ])) # predictive mean
   
-  lambda_bseries <- lambda_vals[test_indices[t],bottom_sum]
+  lambda_bseries <- lambda_vals[test_indices[t],sum_bottom]
   
   # fitted values
   fitted_vals <- tibble::as_tibble(fitted_list[[t]])
-  fitted_bseries <- fitted_vals[test_indices[t],bottom_sum]
+  fitted_bseries <- fitted_vals[test_indices[t],sum_bottom]
   
   # Construct tilted pmf for top and bottom series
   f_y_bottom <- matrix(NA, nrow = length(top_y_vals), ncol = length(lambda_bseries))
@@ -190,8 +174,9 @@ for(t in 1:length(test_indices)) {
    f_y_bottom[,k] <- sapply(top_y_vals, function(x) {
       mean(stats::dpois(x = x, lambda = as.numeric(lambda_bseries[k])))})
    }
-  f_y_top <- Poisson_convolution_density_point_parallel(z_values = top_y_vals,
-                                                        lambda_vector = as.numeric(lambda_bseries))
+  f_y_top <- Poisson_convolution(z_values = top_y_vals,
+                                 lambda_input = as.numeric(lambda_bseries),
+                                 point=TRUE)
   f_y <- cbind(f_y_top, f_y_bottom)
   
   # Tilt density

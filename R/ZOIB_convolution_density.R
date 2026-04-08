@@ -39,7 +39,7 @@
 #'
 #' dens <- ZOIB_convolution_density(z=0.5, alpha_matrix=alpha_matrix,
 #' beta_matrix = beta_matrix, zoi_matrix = zoi_matrix, coi_matrix = coi_matrix,
-#' weights = weights)
+#' weighted_samps = weighted_samps, weights = weights)
 #'
 #' head(dens)
 #'

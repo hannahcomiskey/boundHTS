@@ -40,7 +40,7 @@ zi_point <- runif(n_nodes, 0, 0.2)
 alpha_point <- runif(n_nodes, 2, 5)
 beta_point  <- runif(n_nodes, 2, 5)
 weights <- rep(1, n_nodes)
-dZIB_4p(0.5, alpha_point[n_nodes], beta_point[n_nodes],
- zi_point[n_nodes], weights[n_nodes])
+dZIB_4p(0.5, alpha_point[n_nodes], beta_point[n_nodes], zi_point[n_nodes],
+ weights[n_nodes])
 
 }

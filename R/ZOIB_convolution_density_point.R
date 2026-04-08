@@ -24,11 +24,13 @@
 #' set.seed(1)
 #'
 #' # Simulation setup
+#' n_sims <- 10
 #' n_draws <- 200
 #' n_nodes <- 2
 #'
 #' # Simulated data
-#' weighted_samps <- matrix(runif(n_draws * n_nodes, 0.1, 0.9), nrow = n_draws)
+#'  weighted_samps <- array(runif(n_sims * n_draws * n_nodes, min = 0, max = 0.2),
+#'  dim = c(n_sims, n_draws, n_nodes))
 #' alpha_point <- runif(n_nodes, 2, 5)
 #' beta_point  <- runif(n_nodes, 2, 5)
 #' zoi_point <- runif(n_nodes, 0, 0.2)

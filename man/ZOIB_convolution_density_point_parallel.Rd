@@ -9,7 +9,7 @@ ZOIB_convolution_density_point_parallel(
   alpha_point,
   beta_point,
   coi_point,
-  zi_point,
+  zoi_point,
   weighted_samps,
   weights
 )
@@ -25,7 +25,7 @@ distribution for each observation.}
 
 \item{coi_point}{Numeric vector; conditional one-inflation probability (length = n_nodes).}
 
-\item{zi_point}{Numeric vector; zero-inflation probability (length = n_nodes).}
+\item{zoi_point}{Numeric vector; zero-inflation probability (length = n_nodes).}
 
 \item{weighted_samps}{Array of weighted samples for each element in the
 aggregate (dimensions: n_sims x n_draws x b).}

@@ -9,7 +9,7 @@ ZOIB_convolution_density_parallel(
   alpha_matrix,
   beta_matrix,
   coi_matrix,
-  zi_matrix,
+  zoi_matrix,
   weighted_samps,
   weights
 )
@@ -23,7 +23,7 @@ ZOIB_convolution_density_parallel(
 
 \item{coi_matrix}{Numeric matrix; Monte Carlo draws of conditional one-inflation probability (n_draws x n_nodes).}
 
-\item{zi_matrix}{matrix of zero-inflation probability parameters for each element in the aggregate (N rows x b columns)}
+\item{zoi_matrix}{matrix of zero-inflation probability parameters for each element in the aggregate (N rows x b columns)}
 
 \item{weighted_samps}{matrix of weighted samples for each element in the aggregate (N rows x b columns)}
 

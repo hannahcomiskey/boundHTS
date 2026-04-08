@@ -52,12 +52,12 @@ b <- 2
 weighted_samps <- array(runif(n_sims * n_draws * b),
                         dim = c(n_sims, n_draws, b))
 
-alpha_point <- matrix(runif(n_sims * b, 2, 5), nrow = n_sims)
-beta_point  <- matrix(runif(n_sims * b, 2, 5), nrow = n_sims)
+alpha_point <- runif(1, 2, 5)
+beta_point  <- runif(1, 2, 5)
 
 weights <- c(1, 1)
 
-Beta_convolution_density(
+Beta_convolution_density_point(
   z = 0.5,
   alpha_point = alpha_point,
   beta_point = beta_point,
