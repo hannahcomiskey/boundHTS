@@ -39,7 +39,7 @@
 #'   coi_array = coi_array,
 #'   weights = weights,
 #'   z_values = z_values,
-#'   n_mc = 100
+#'   n_draws = 100
 #' )
 #'
 #' head(dens)
@@ -48,19 +48,19 @@
 
 ZOIB_convolution_density <- function(z, alpha_matrix, beta_matrix, coi_matrix,
                                      zi_matrix, weighted_samps, weights) {
-  n_draws <- dim(weighted_samps)[1]
-  n_mc <- dim(weighted_samps)[2]
+  n_sims <- dim(weighted_samps)[1]
+  n_draws <- dim(weighted_samps)[2]
   N <- dim(weighted_samps)[3]
 
-  conv_pdf <- matrix(0, nrow = n_mc, ncol=n_draws)
+  conv_pdf <- matrix(0, nrow = n_sims, ncol=n_draws)
 
-  for(m in 1:n_draws) {
-    for(s in 1:n_mc) {
+  for(s in 1:n_sims) {
+    for(m in 1:n_draws) {
       conv_pdf[s,m] <- dZOIB_4p(x = z - sum(weighted_samps[s,m, 1:(N-1)]),
-                               alpha_point = alpha_matrix[s,N],
-                               beta_point = beta_matrix[s,N],
-                               zi_point = zi_matrix[s,N],
-                               coi_point = coi_matrix[s,N],
+                               alpha_point = alpha_matrix[m,N],
+                               beta_point = beta_matrix[m,N],
+                               zi_point = zi_matrix[m,N],
+                               coi_point = coi_matrix[m,N],
                                weight = weights[N])
     }
   }

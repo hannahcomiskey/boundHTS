@@ -8,7 +8,8 @@ ZOIB_convolution(
   z_values,
   alpha_input,
   beta_input,
-  zi_input,
+  zoi_input,
+  coi_input,
   weighted_samps,
   weights,
   point
@@ -22,6 +23,10 @@ shape parameters for each element (b) in the aggregate over each of the N observ
 
 \item{beta_input}{Point estimates (point=TRUE) or matrix (point=FALSE) of shape parameters for each element in the aggregate.}
 
+\item{zoi_input}{Point estimates (point=TRUE) or matrix (point=FALSE) of zero-inflation probability parameters for each element in the aggregate.}
+
+\item{coi_input}{Point estimates (point=TRUE) or matrix (point=FALSE) of conditional probability of getting exactly 1 for each element in the aggregate.}
+
 \item{weighted_samps}{Array of weighted samples for each element in the
 aggregate (dimensions: n_sims x n_draws x b).}
 
@@ -29,10 +34,6 @@ aggregate (dimensions: n_sims x n_draws x b).}
 
 \item{point}{A true/false indicator to denote whether you are using
 point estimates (point=TRUE) or posterior samples (point=FALSE) of the Beta parameters.}
-
-\item{zoi_input}{Point estimates (point=TRUE) or matrix (point=FALSE) of zero-inflation probability parameters for each element in the aggregate.}
-
-\item{coi_input}{Point estimates (point=TRUE) or matrix (point=FALSE) of conditional probability of getting exactly 1 for each element in the aggregate.}
 }
 \value{
 The aggregate density Z over a grid of values using a convolution of zero-one inflated Beta (ZOIB) distributions.

@@ -64,7 +64,7 @@ dens <- ZOIB_convolution_density(
   coi_array = coi_array,
   weights = weights,
   z_values = z_values,
-  n_mc = 100
+  n_draws = 100
 )
 
 head(dens)

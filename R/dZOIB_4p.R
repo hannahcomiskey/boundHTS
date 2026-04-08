@@ -39,27 +39,43 @@
 #' @export
 
 dZOIB_4p <- function(x, alpha_point, beta_point, zi_point, coi_point, weight) {
-
   # Scale to [0,1] interval
   x_scaled <- x / weight
 
-  # Initialize density to 0
-  dens <- vector()
+  if(length(x) > 1) {
+    # Initialize density to 0
+    dens <- vector()
 
-  # Boundary handling
-  at0 <- x_scaled == 0 # handles values == 0
-  at1 <- x_scaled == 1 # handles values == 1
-  inside <- x_scaled > 0 & x_scaled < 1 # handles values inside range
-  outside <- x_scaled < 0 | x_scaled > 1 # handles values outside range
+    # Boundary handling
+    at0 <- x_scaled == 0 # handles values == 0
+    at1 <- x_scaled == 1 # handles values == 1
+    inside <- x_scaled > 0 & x_scaled < 1 # handles values inside range
+    outside <- x_scaled < 0 | x_scaled > 1 # handles values outside range
 
-  dens[outside] <- 0
-  dens[at0] <- zi_point * (1-coi_point)
-  dens[at1] <- zi_point * coi_point
-  dens[inside] <- (1 - zi_point) * ExtDist::dBeta_ab(x[inside],
-                                                     alpha_point,
-                                                     beta_point,
-                                                     0, weight)
+    dens[outside] <- 0
+    dens[at0] <- zi_point * (1-coi_point)
+    dens[at1] <- zi_point * coi_point
+    dens[inside] <- (1 - zi_point) * ExtDist::dBeta_ab(x[inside],
+                                                       alpha_point,
+                                                       beta_point,
+                                                       0, weight)
+    } else {
+        # Outside support
+        if (x_scaled < 0 || x_scaled > 1) {
+          return(0)
+        }
 
+        # At boundaries
+        if (x_scaled == 0) {
+          return(zi_point * (1 - coi_point))
+        }
+
+        if (x_scaled == 1) {
+          return(zi_point * coi_point)
+        }
+
+        # Inside (0,1)
+        dens <- (1 - zi_point) * ExtDist::dBeta_ab(x, alpha_point, beta_point, 0, weight)
+      }
   return(dens)
-
 }
