@@ -1,7 +1,7 @@
 Package: boundHTS
 Type: Package
 Title: Building Hierarchical Coherent Densities for Bounded Variables
-Author: Hannah Comiskey [aut, cre], David Frazier [aut], Ole Maneesoonthorn [aut]
+Author: Hannah Comiskey [aut, cre, cph], David Frazier [aut], Ole Maneesoonthorn [aut]
 Maintainer: Hannah Comiskey <hannahcomiskey68@gmail.com>
 Authors@R: c(person(given = "Hannah",
                       family = "Comiskey",

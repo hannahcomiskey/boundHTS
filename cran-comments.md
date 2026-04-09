@@ -20,6 +20,14 @@ for generating convolutions.
 ── R CMD check results ──────────────────────────────────────────────────────────────────────── boundHTS 1.0.2 ────
 Duration: 1m 1.6s
 
+> devtools::check_mac_release()
+Status: OK
+
+> devtools::check_win_devel()
+Status: 1 NOTE
+
+Notes are with respect to potential mispelling, which are okay.
+
 Version 1.0.1 -------------------------------------------------------------------
 This is a new submission.
 
