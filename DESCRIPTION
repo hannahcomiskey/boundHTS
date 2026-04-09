@@ -37,7 +37,8 @@ Suggests:
     MASS,
     forecast,
     gamlss,
-    gamlss.dist
+    gamlss.dist,
+    tscount
 Config/testthat/edition: 3
 Imports:
     ExtDist,
