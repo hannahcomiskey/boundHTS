@@ -4,14 +4,14 @@
 \alias{tilt_density}
 \title{Tilt a Base Density to Match a Target Mean}
 \usage{
-tilt_density(mu_theory, y_vals, f_y, discrete = FALSE)
+tilt_density(mu_theory, z_vals, f_y, discrete = FALSE)
 }
 \arguments{
 \item{mu_theory}{Numeric. The target mean to match with the tilted density.}
 
-\item{y_vals}{Numeric vector. Support points of the base density.}
+\item{z_vals}{Numeric vector. Support points of the base density.}
 
-\item{f_y}{Numeric vector. Base density values corresponding to \code{y_vals}.}
+\item{f_y}{Numeric vector. Base density values corresponding to \code{z_vals}.}
 
 \item{discrete}{Logical. If TRUE, calculate density of discrete random variable. Defaults to FALSE.}
 }
@@ -40,7 +40,7 @@ y <- 0:5
 f <- dbinom(y, size = 5, prob = 0.3) # E(Y) = 5*0.3 = 1.5
 mu_target <- 2.5
 res <- tilt_density(mu_theory = mu_target,
-                    y_vals = y,
+                    z_vals = y,
                     f_y = f, discrete=TRUE)
 plot(y, f, col = "blue", type='h',
 main = "Original vs Tilted Density",
@@ -54,7 +54,7 @@ y <- seq(0, 1, length.out = 200)
 f <- dbeta(y, shape1 = 2, shape2 = 5)   # E(Y) = 2/(2+5) = 0.2857
 mu_target <- 0.5
 res <- tilt_density(mu_theory = mu_target,
-                    y_vals = y,
+                    z_vals = y,
                     f_y = f,
                     discrete = FALSE)
 plot(y, f, type = "l", col = "blue", lwd = 2,

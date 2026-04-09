@@ -1,8 +1,8 @@
 #' Tilt a Base Density to Match a Target Mean
 #'
 #' @param mu_theory Numeric. The target mean to match with the tilted density.
-#' @param y_vals Numeric vector. Support points of the base density.
-#' @param f_y Numeric vector. Base density values corresponding to `y_vals`.
+#' @param z_vals Numeric vector. Support points of the base density.
+#' @param f_y Numeric vector. Base density values corresponding to `z_vals`.
 #' @param discrete Logical. If TRUE, calculate density of discrete random variable. Defaults to FALSE.
 #'
 #' @return A list with components:
@@ -26,7 +26,7 @@
 #' f <- dbinom(y, size = 5, prob = 0.3) # E(Y) = 5*0.3 = 1.5
 #' mu_target <- 2.5
 #' res <- tilt_density(mu_theory = mu_target,
-#'                     y_vals = y,
+#'                     z_vals = y,
 #'                     f_y = f, discrete=TRUE)
 #' plot(y, f, col = "blue", type='h',
 #' main = "Original vs Tilted Density",
@@ -40,7 +40,7 @@
 #' f <- dbeta(y, shape1 = 2, shape2 = 5)   # E(Y) = 2/(2+5) = 0.2857
 #' mu_target <- 0.5
 #' res <- tilt_density(mu_theory = mu_target,
-#'                     y_vals = y,
+#'                     z_vals = y,
 #'                     f_y = f,
 #'                     discrete = FALSE)
 #' plot(y, f, type = "l", col = "blue", lwd = 2,
@@ -52,11 +52,11 @@
 #'
 #' @export
 
-tilt_density <- function(mu_theory, y_vals, f_y, discrete=FALSE) {
+tilt_density <- function(mu_theory, z_vals, f_y, discrete=FALSE) {
 
   # Extract and normalise convolution base density
   if(discrete==FALSE) {
-    f_y <- f_y / pracma::trapz(y_vals, f_y)
+    f_y <- f_y / pracma::trapz(z_vals, f_y)
   } else{
     f_y <- f_y / sum(f_y)
   }
@@ -65,7 +65,7 @@ tilt_density <- function(mu_theory, y_vals, f_y, discrete=FALSE) {
   nu_grid <- seq(-2000, 2000, length.out = 4000)
   vals <- sapply(nu_grid, moment_condition_tilting,
                  f_y = f_y,
-                 y_vals = y_vals,
+                 y_vals = z_vals,
                  mu_theory = mu_theory)
 
   idx <- which(diff(sign(vals)) != 0)
@@ -80,22 +80,22 @@ tilt_density <- function(mu_theory, y_vals, f_y, discrete=FALSE) {
                               lower = lower,
                               upper = upper,
                               f_y = f_y,
-                              y_vals = y_vals,
+                              y_vals = z_vals,
                               mu_theory = mu_theory)$root
   }
 
   # Tilted density
   if(discrete==FALSE){
-    f_tilt_i <- tilted_density_cont(nu_star, f_y, y_vals) # tilt for continuous RV
-    f_tilt_i <- f_tilt_i / pracma::trapz(y_vals, f_tilt_i) # normalise
-    f_tilted <- stats::approx(y_vals, f_tilt_i, xout = y_vals, rule = 2)$y
+    f_tilt_i <- tilted_density_cont(nu_star, f_y, z_vals) # tilt for continuous RV
+    f_tilt_i <- f_tilt_i / pracma::trapz(z_vals, f_tilt_i) # normalise
+    f_tilted <- stats::approx(z_vals, f_tilt_i, xout = z_vals, rule = 2)$y
   } else{
-    f_tilt_i <- tilted_density_discrete(nu_star, f_y, y_vals) # tilt for discrete RV
+    f_tilt_i <- tilted_density_discrete(nu_star, f_y, z_vals) # tilt for discrete RV
     f_tilted <- f_tilt_i / sum(f_tilt_i) # normalise
   }
 
   # Sample from tilted density
-  tilted_samps <- sample(y_vals, 5000, replace = TRUE, prob = f_tilted)
+  tilted_samps <- sample(z_vals, 5000, replace = TRUE, prob = f_tilted)
 
   return(list(nu_star = nu_star,
               f_tilted = f_tilted,
