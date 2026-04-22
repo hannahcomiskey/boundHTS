@@ -7,3 +7,20 @@ inst/doc
 *.rds
 /doc/
 /Meta/
+# macOS
+.DS_Store
+
+# logs
+*.log
+
+# rendered outputs
+*.html
+*.pdf
+
+# R Markdown outputs
+inst/RJ/*.html
+inst/RJ/*.pdf
+inst/RJ/*.log
+
+# optional: keep vignettes but not outputs
+inst/*.html
