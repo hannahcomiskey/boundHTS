@@ -52,8 +52,8 @@ b <- 2
 weighted_samps <- array(runif(n_sims * n_draws * b),
                         dim = c(n_sims, n_draws, b))
 
-alpha_point <- runif(1, 2, 5)
-beta_point  <- runif(1, 2, 5)
+alpha_point <- runif(2, 2, 5)
+beta_point  <- runif(2, 2, 5)
 
 weights <- c(1, 1)
 
