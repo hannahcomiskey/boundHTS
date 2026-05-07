@@ -17,7 +17,7 @@
 #' @return A list of aggregate densities Z over a grid of values using a convolution of Beta distributions for each of the aggregated nodes in the hierarchy.
 #' @examples
 #' ## ---------------------------------------------------------------
-#' ## Example: Point-estimate zero-inflated Beta convolution
+#' ## Example: Point-estimate Beta convolution
 #' ## ---------------------------------------------------------------
 #'
 #' set.seed(123)
@@ -60,7 +60,7 @@
 #' head(dens[[1]])
 #'
 #' ## ---------------------------------------------------------------
-#' ## Example: Posterior-sample zero-inflated Beta convolution
+#' ## Example: Posterior-sample Beta convolution
 #' ## ---------------------------------------------------------------
 #'  groups <- list(
 #'   bottom = c("A", "B"),   # bottom level

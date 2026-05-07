@@ -46,10 +46,10 @@
 #'   c(0.05)
 #' )
 #'
-#' ## Conditional one-inflation probabilities
+#' ## Conditional one inflation probabilities
 #' coi_list <- list(
-#'   c(0.05, 0.10),
-#'   c(0.02)
+#'   c(0.05, 0.05),
+#'   c(0.05)
 #' )
 #'
 #' ## Aggregation weights
@@ -59,12 +59,11 @@
 #' )
 #'
 #' ## Estimate densities
-#' dens <- ZOIB_convolution(
+#' dens <- ziB_convolution(
 #'   groups = groups,
 #'   alpha_list = alpha_list,
 #'   beta_list = beta_list,
-#'   zoi_list = zoi_list,
-#'   coi_list = coi_list,
+#'   zi_list = zi_list,
 #'   weights_list = weights_list,
 #'   point = TRUE,
 #'   n_draws = 500,
@@ -75,44 +74,40 @@
 #' head(dens[[1]])
 #'
 #' ## ---------------------------------------------------------------
-#' ## Example: Posterior-sample zero-inflated Beta convolution
+#' ## Example: Posterior-sample zero-one inflated Beta convolution
 #' ## ---------------------------------------------------------------
 #'
 #' J <- 100
 #'
-#' alpha_post <- cbind(
-#'   rgamma(J, shape = 2, rate = 1),
-#'   rgamma(J, shape = 5, rate = 1)
+#' alpha_list_post <- list(
+#' cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
+#' as.matrix(rgamma(J, shape = 2, rate = 1))
 #' )
 #'
-#' beta_post <- cbind(
-#'   rgamma(J, shape = 6, rate = 1),
-#'   rgamma(J, shape = 3, rate = 1)
+#' beta_list_post <- list(
+#' cbind(rgamma(J, shape = 6, rate = 1), rgamma(J, shape = 3, rate = 1)),
+#' as.matrix(rgamma(J, shape = 2, rate = 1))
 #' )
 #'
-#' zoi_post <- cbind(
-#'   rbeta(J, 2, 20),
-#'   rbeta(J, 3, 15)
+#' zoi_list_post <- list(
+#' cbind(rbeta(J, 2, 20), rbeta(J, 3, 15)),
+#' as.matrix(rbeta(J, 2, 20)))
+#'
+#' coi_list_post <- list(
+#' cbind(rbeta(J, 2, 2), rbeta(J, 1, 1)),
+#' as.matrix(rbeta(J, 1, 2)))
+#'
+#' weights_list <- list(
+#'   c(0.4, 0.6),
+#'   1
 #' )
 #'
-#' coi_post <- cbind(
-#'   rbeta(J, 1, 25),
-#'   rbeta(J, 2, 20)
-#' )
-#'
-#' alpha_list_post <- list(alpha_post)
-#' beta_list_post  <- list(beta_post)
-#' zoi_list_post   <- list(zoi_post)
-#' coi_list_post   <- list(coi_post)
-#' weights_post    <- list(c(0.4, 0.6))
-#'
-#' dens_post <- ZOIB_convolution(
+#' dens_post <- ZIB_convolution(
 #'   groups = list(c("A", "B")),
 #'   alpha_list = alpha_list_post,
 #'   beta_list = beta_list_post,
-#'   zoi_list = zoi_list_post,
-#'   coi_list = coi_list_post,
-#'   weights_list = weights_post,
+#'   zi_list = zi_list_post,
+#'   weights_list = weights_list,
 #'   point = FALSE,
 #'   n_draws = 500,
 #'   n_sims = 50

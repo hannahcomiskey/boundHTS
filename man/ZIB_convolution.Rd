@@ -104,32 +104,31 @@ head(dens[[1]])
 
 J <- 100
 
-alpha_post <- cbind(
-  rgamma(J, shape = 2, rate = 1),
-  rgamma(J, shape = 5, rate = 1)
+alpha_list_post <- list(
+cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
+as.matrix(rgamma(J, shape = 2, rate = 1))
 )
 
-beta_post <- cbind(
-  rgamma(J, shape = 6, rate = 1),
-  rgamma(J, shape = 3, rate = 1)
+beta_list_post <- list(
+cbind(rgamma(J, shape = 6, rate = 1), rgamma(J, shape = 3, rate = 1)),
+as.matrix(rgamma(J, shape = 2, rate = 1))
 )
 
-zi_post <- cbind(
-  rbeta(J, 2, 20),
-  rbeta(J, 3, 15)
-)
+zi_list_post <- list(
+cbind(rbeta(J, 2, 20), rbeta(J, 3, 15)),
+as.matrix(rbeta(J, 2, 20)))
 
-alpha_list_post <- list(alpha_post)
-beta_list_post  <- list(beta_post)
-zi_list_post   <- list(zi_post)
-weights_post    <- list(c(0.4, 0.6))
+weights_list <- list(
+  c(0.4, 0.6),
+  1
+)
 
 dens_post <- ZIB_convolution(
   groups = list(c("A", "B")),
   alpha_list = alpha_list_post,
   beta_list = beta_list_post,
   zi_list = zi_list_post,
-  weights_list = weights_post,
+  weights_list = weights_list,
   point = FALSE,
   n_draws = 500,
   n_sims = 50

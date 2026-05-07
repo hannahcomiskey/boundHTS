@@ -47,7 +47,7 @@ Convolution is only performed for hierarchy levels containing more than one node
 }
 \examples{
 ## ---------------------------------------------------------------
-## Example: Point-estimate zero-inflated Beta convolution
+## Example: Point-estimate Beta convolution
 ## ---------------------------------------------------------------
 
 set.seed(123)
@@ -90,7 +90,7 @@ dens <- Beta_convolution(
 head(dens[[1]])
 
 ## ---------------------------------------------------------------
-## Example: Posterior-sample zero-inflated Beta convolution
+## Example: Posterior-sample Beta convolution
 ## ---------------------------------------------------------------
  groups <- list(
   bottom = c("A", "B"),   # bottom level
@@ -101,12 +101,12 @@ J <- 100
 
 alpha_list_post <- list(
 cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
-rgamma(J, shape = 7, rate = 1)
+as.matrix(rgamma(J, shape = 2, rate = 1))
 )
 
 beta_list_post <- list(
 cbind(rgamma(J, shape = 6, rate = 1), rgamma(J, shape = 3, rate = 1)),
-rgamma(J, shape = 4, rate = 1)
+as.matrix(rgamma(J, shape = 2, rate = 1))
 )
 
 
