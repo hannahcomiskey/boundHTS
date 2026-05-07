@@ -5,36 +5,122 @@
 \title{Parallelized normalised predictive density over vector z}
 \usage{
 Beta_convolution(
-  z_values,
-  alpha_input,
-  beta_input,
-  weighted_samps,
-  weights,
-  point
+  groups,
+  alpha_list,
+  beta_list,
+  weights_list,
+  point,
+  n_draws = 2000,
+  n_sims = 100,
+  z_values = NULL
 )
 }
 \arguments{
-\item{z_values}{evaluation points}
+\item{groups}{List of nodes at each level in series. The list must go from bottom nodes to top nodes, and have each element of the list named. The length of the list is the number of tiers in the hierarchy.}
 
-\item{alpha_input}{Point estimates (point=TRUE) or matrix (point=FALSE) of
-shape parameters for each element (b) in the aggregate over each of the N observations (N rows x b columns)}
+\item{alpha_list}{A list of point estimates (point=TRUE) or matrix (point=FALSE) of
+Beta distribution shape1/alpha parameters for each element at the level over each of the J observations (J rows x  X columns). The length of the list is the number of tiers in the hierarchy.}
 
-\item{beta_input}{Point estimates (point=TRUE) or matrix (point=FALSE) of shape parameters for each element in the aggregate (N rows x b columns)}
+\item{beta_list}{A list of point estimates (point=TRUE) or matrix (point=FALSE) of
+Beta distribution shape2/beta parameters for each element at the level over each of the J observations (J rows x  X columns). The length of the list is the number of tiers in the hierarchy.}
 
-\item{weighted_samps}{Array of weighted samples for each element in the
-aggregate (dimensions: n_sims x n_draws x b).}
-
-\item{weights}{vector of weights that are used to combine to form the aggregated density Z. (length b)}
+\item{weights_list}{A list of weights that are used to combine to form the aggregated density Z. The length of the list is the number of tiers (excluding the top tier) in the hierarchy.}
 
 \item{point}{A true/false indicator to denote whether you are using
 point estimates (point=TRUE) or posterior samples (point=FALSE) of the Beta parameters.}
+
+\item{n_draws}{The number of draws to extract from the four-parameter Beta distribution. Default to 2000.}
+
+\item{n_sims}{The number of simulations to extract from the four-parameter Beta distribution per draw. Default to 100.}
+
+\item{z_values}{Evaluation points. Defaults to be NULL and in-built grid is (0,1) over 1000 evenly spaced points.}
 }
 \value{
-The aggregate density Z over a grid of values using a convolution of Beta distributions.
+A list of aggregate densities Z over a grid of values using a convolution of Beta distributions for each of the aggregated nodes in the hierarchy.
 }
 \description{
 Parallelized normalised predictive density over vector z
 }
 \details{
 A wrapper function for calculating Monte Carlo estimates for the aggregate density Z using the Beta distribution.
+Convolution is only performed for hierarchy levels containing more than one node. Levels with a single node are skipped, since no aggregation is required.
+}
+\examples{
+## ---------------------------------------------------------------
+## Example: Point-estimate zero-inflated Beta convolution
+## ---------------------------------------------------------------
+
+set.seed(123)
+
+## Define a simple two-level hierarchy
+ groups <- list(
+  bottom = c("A", "B"),   # bottom level
+  top = c("Total")     # aggregated level
+)
+
+## Point estimates for Beta parameters
+alpha_list <- list(
+  c(2, 5),
+  c(7)
+)
+
+beta_list <- list(
+  c(6, 3),
+  c(4)
+)
+
+## Aggregation weights
+weights_list <- list(
+  c(0.4, 0.6),
+  1
+)
+
+## Estimate densities
+dens <- Beta_convolution(
+  groups = groups,
+  alpha_list = alpha_list,
+  beta_list = beta_list,
+  weights_list = weights_list,
+  point = TRUE,
+  n_draws = 500,
+  n_sims = 50
+)
+
+## Inspect first density estimate
+head(dens[[1]])
+
+## ---------------------------------------------------------------
+## Example: Posterior-sample zero-inflated Beta convolution
+## ---------------------------------------------------------------
+ groups <- list(
+  bottom = c("A", "B"),   # bottom level
+  top = c("Total")     # aggregated level
+)
+
+J <- 100
+
+alpha_list_post <- list(
+cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
+rgamma(J, shape = 7, rate = 1)
+)
+
+beta_list_post <- list(
+cbind(rgamma(J, shape = 6, rate = 1), rgamma(J, shape = 3, rate = 1)),
+rgamma(J, shape = 4, rate = 1)
+)
+
+
+weights_post <- list(c(0.4, 0.6), 1)
+
+dens_post <- Beta_convolution(
+  groups = groups,
+  alpha_list = alpha_list_post,
+  beta_list = beta_list_post,
+  weights_list = weights_post,
+  point = FALSE,
+  n_draws = 500,
+  n_sims = 50
+)
+
+head(dens_post[[1]])
 }

@@ -4,7 +4,7 @@
 \alias{Poisson_convolution}
 \title{Parallelized normalised predictive Poisson density over vector z}
 \usage{
-Poisson_convolution(z_values, lambda_input, point)
+Poisson_convolution(groups, z_values, lambda_input, point)
 }
 \arguments{
 \item{z_values}{evaluation points}
@@ -23,5 +23,5 @@ Parallelized normalised predictive Poisson density over vector z
 }
 \details{
 A wrapper function for calculating Monte Carlo estimates for the aggregate
-density Z using point estimates or potserior samples of lambda.
+density Z using point estimates or posterior samples of lambda.
 }
