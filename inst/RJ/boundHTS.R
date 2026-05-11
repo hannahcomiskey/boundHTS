@@ -54,7 +54,7 @@ f_tilted <- tilt_density(mu_theory = lambda_pred[1],
 
 
 
-## ----poisson-tilted-plot, fig.cap="The tilted and convoluted density of the top series using Poisson distributed bottom series for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted denisty and the dashed black line indicates the predictive mean of the top series."----
+## ----poisson-tilted-plot, fig.cap="The tilted and convoluted density of the top series using Poisson distributed bottom series for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted density and the dashed black line indicates the predictive mean of the top series."----
 
 # Prepare data for plotting 
 df_plot <- data.frame(
@@ -162,7 +162,7 @@ f_tilted <- tilt_density(mu_theory = prop_pred[1],
 
 
 
-## ----beta-tilted-plot, fig.cap="The tilted and convoluted density of the top series using Beta distributed bottom series nodes for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted denisty and the dashed black line indicates the predictive mean of the top series."----
+## ----beta-tilted-plot, fig.cap="The tilted and convoluted density of the top series using Beta distributed bottom series nodes for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted density and the dashed black line indicates the predictive mean of the top series."----
 df_plot <- data.frame(
   y = rep(z_values,2),
   pdf = c(f_tilted$f_tilted, Density_top),

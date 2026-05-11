@@ -179,7 +179,7 @@ f_tilted <- tilt_density(mu_theory = lambda_pred[1],
 
 Figure~\ref{fig:poisson-tilted-plot} displays the exponentially tilted predictive mass functions for the top and bottom level series at a representative forecast origin. The unadjusted Poisson distribution implied by aggregation is shifted via exponential tilting so that its expected value coincides with the predictive mean from the base model. As expected, the adjustment primarily alters the tail behaviour of the distribution while maintaining the aggregation constraint.
 
-```{r, fig.cap="The tilted and convoluted density of the top series using Poisson distributed bottom series for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted denisty and the dashed black line indicates the predictive mean of the top series.\\label{fig:poisson-tilted-plot}"}
+```{r, fig.cap="The tilted and convoluted density of the top series using Poisson distributed bottom series for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted density and the dashed black line indicates the predictive mean of the top series.\\label{fig:poisson-tilted-plot}"}
 
 # Prepare data for plotting 
 df_plot <- data.frame(
@@ -320,7 +320,7 @@ f_tilted <- tilt_density(mu_theory = prop_pred[1],
 
 Figure~\ref{fig:beta-tilted-plot} displays the exponentially tilted probability density functions for the top and bottom level series at a representative forecast origin. The unadjusted convoluted Beta distribution implied by aggregation is shifted via exponential tilting so that its expected value coincides with the predictive mean from the base model. 
 
-```{r, fig.cap="The tilted and convoluted density of the top series using Beta distributed bottom series nodes for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted denisty and the dashed black line indicates the predictive mean of the top series. \\label{fig:beta-tilted-plot}"}
+```{r, fig.cap="The tilted and convoluted density of the top series using Beta distributed bottom series nodes for a given time point. The dark red colour captures the density of the convolution, the blue represents the tilted density and the dashed black line indicates the predictive mean of the top series. \\label{fig:beta-tilted-plot}"}
 df_plot <- data.frame(
   y = rep(z_values,2),
   pdf = c(f_tilted$f_tilted, Density_top),

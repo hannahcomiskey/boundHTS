@@ -234,7 +234,7 @@ means_df <- data.frame(
 
 ggplot2::ggplot() +
   ggplot2::geom_line(data = df_plot, ggplot2::aes(x = y, y = pmf, col='Tilted density')) +
-  ggplot2::geom_line(data = conv_plot, ggplot2::aes(x = y, y = pmf, col='Convoluted denisty')) +
+  ggplot2::geom_line(data = conv_plot, ggplot2::aes(x = y, y = pmf, col='Convoluted density')) +
   ggplot2::geom_vline(data = means_df,
              ggplot2::aes(xintercept = mean, linetype = "Predicitive mean")) +
   ggplot2::facet_wrap(~ node, nrow=5) +
