@@ -78,6 +78,10 @@
 Poisson_convolution <- function(groups, z_values, lambda_list, point) {
   dens_list <- list() # set up list to save results in
 
+  # Data checks
+  check_poisson_convolution_inputs(groups, z_values, lambda_list, point)
+
+  # Apply convolutions
   for(x in 1:length(groups)) { # convolution per level
     parent_node <- names(groups)[x+1]
     node_names  <- groups[[x]]
