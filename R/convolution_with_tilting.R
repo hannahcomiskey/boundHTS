@@ -49,6 +49,11 @@
 #' }
 #'
 #' @examples
+#'
+#' ## ---------------------------------------------------------------
+#' ## Example: Point-estimate Poisson convolution
+#' ## ---------------------------------------------------------------
+#'
 #' set.seed(123)
 #'
 #' groups <- list(
@@ -75,6 +80,35 @@
 #' )
 #'
 #' head(res$base_density[[1]])
+#'
+#' ## ---------------------------------------------------------------
+#' ## Example: Posterior-sample zero-inflated Beta convolution
+#' ## ---------------------------------------------------------------
+#'
+#'alpha_list_post <- list(cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
+#'                        as.matrix(rgamma(J, shape = 2, rate = 1)))
+#'
+#'beta_list_post <- list(cbind(rgamma(J, shape = 6, rate = 1), rgamma(J, shape = 3, rate = 1)),
+#'                       as.matrix(rgamma(J, shape = 2, rate = 1)))
+#'
+#'zoi_list_post <- list(cbind(rbeta(J, 2, 20), rbeta(J, 3, 15)), as.matrix(rbeta(J, 2, 20)))
+#'
+#'coi_list_post <- list(cbind(rbeta(J, 2, 2), rbeta(J, 1, 1)), as.matrix(rbeta(J, 1, 2)))
+#'
+#'weights_list <- list(c(0.4, 0.6), 1)
+#'
+#'res <- convolution_with_tilting(family = "ZOIB",
+#'                                groups =  list(State = c("A", "B"), Top = "National"),
+#'                                point = FALSE,
+#'                                mu_theory = mu_theory,
+#'                                z_values = seq(0, 1, length.out=1000),
+#'                                alpha_list = alpha_list_post,
+#'                                beta_list = beta_list_post,
+#'                                zoi_list = zoi_list_post,
+#'                                coi_list = coi_list_post,
+#'                                weights_list = weights_list,
+#'                                n_draws = 500,
+#'                                n_sims = 50)
 #'
 #' @export
 #'
