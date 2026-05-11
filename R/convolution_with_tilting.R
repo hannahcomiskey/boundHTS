@@ -100,9 +100,9 @@ convolution_with_tilting <- function(family,
   n_levels <- length(base_list)
 
   ## Storage objects
-  tilted_density   <- vector("list", n_levels)
-  tilting_param    <- vector("list", n_levels)
-  tilted_samples   <- vector("list", n_levels)
+  tilted_density <- vector("list", n_levels)
+  tilting_param <- vector("list", n_levels)
+  tilted_samples <- vector("list", n_levels)
 
   ## ---------------------------------------------------------------
   ## 2. Apply exponential tilting per level

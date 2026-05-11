@@ -121,10 +121,8 @@ Beta_convolution <- function(groups,
     z_values = z_values
   )
 
-  ## Levels requiring convolution
-  levels_to_process <- which(
-    vapply(groups, length, integer(1)) > 1L
-  )
+  ## Levels requiring convolution (removes top level)
+  levels_to_process <- which(vapply(groups, length, integer(1)) > 1L)
 
   dens_list <- vector("list", length(levels_to_process))
   names(dens_list) <- names(groups)[levels_to_process]

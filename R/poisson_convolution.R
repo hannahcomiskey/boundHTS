@@ -76,24 +76,59 @@
 #' @export
 
 Poisson_convolution <- function(groups, z_values, lambda_list, point) {
-  dens_list <- list() # set up list to save results in
 
-  # Data checks
+  dens_list <- list()
+
   check_poisson_convolution_inputs(groups, z_values, lambda_list, point)
 
-  # Apply convolutions
-  for(x in 1:length(groups)) { # convolution per level
-    parent_node <- names(groups)[x+1]
+  ## ---------------------------------------------------------
+  ## Identify valid levels (skip top if singleton)
+  ## ---------------------------------------------------------
+  valid_idx <- which(vapply(groups, length, integer(1)) > 1L)
+
+  for (i in seq_along(valid_idx)) {
+
+    x <- valid_idx[i]  # actual level index
+
     node_names  <- groups[[x]]
     lambda_input <- lambda_list[[x]]
-    if(point==TRUE & is.vector(lambda_input)==TRUE) {
-      dens <- Poisson_convolution_density_point_parallel(z_values, lambda_input)
+
+    ## ---------------------------------------------------------
+    ## Safe parent naming
+    ## ---------------------------------------------------------
+    parent_node <- if (!is.null(names(groups))) {
+      names(groups)[x+1]
+    } else {
+      paste0("Level_", x)
     }
-    if(point==FALSE & is.matrix(lambda_input)==TRUE) {
-      dens <- Poisson_convolution_density_parallel(z_values, lambda_input)
+
+    ## ---------------------------------------------------------
+    ## Convolution
+    ## ---------------------------------------------------------
+    if (point && is.vector(lambda_input)) {
+
+      dens <- Poisson_convolution_density_point_parallel(
+        z_values = z_values,
+        lambda_vector = lambda_input
+      )
+
+    } else if (!point && is.matrix(lambda_input)) {
+
+      dens <- Poisson_convolution_density_parallel(
+        z_values = z_values,
+        lambda_matrix = lambda_input
+      )
+
+    } else {
+      stop("lambda input type does not match 'point' argument")
     }
-    dens_df <- tibble::tibble(Node = parent_node, Z = z_values, Density = dens)
-    dens_list[[x]] <- dens_df
+
+    dens_list[[i]] <- tibble::tibble(
+      Node = parent_node,
+      Z = z_values,
+      Density = dens
+    )
   }
+
   return(dens_list)
 }
