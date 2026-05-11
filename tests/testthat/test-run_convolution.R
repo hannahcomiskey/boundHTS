@@ -11,7 +11,7 @@ test_that("run_convolution errors for unsupported family", {
       point = TRUE,
       z_values = 0:10
     ),
-    "Family name not recongised"
+    "Family name not recognised. Please refer to help file for naming."
   )
 
 })
