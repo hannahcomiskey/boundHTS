@@ -143,19 +143,25 @@ ZOIB_convolution <- function(groups, alpha_list, beta_list, zoi_list, coi_list, 
     stop("'groups' and 'coi_list' must have the same length.")
   }
 
-  ## Levels requiring convolution
-  levels_to_process <- which(
-    vapply(groups, length, integer(1)) > 1L
-  )
+  valid_idx <- which(vapply(groups, length, integer(1)) > 1L)
 
-  dens_list <- vector("list", length(levels_to_process))
-  names(dens_list) <- names(groups)[levels_to_process]
+  for (i in seq_along(valid_idx)) {
 
-  ## Convolution per level
-  for (x in levels_to_process) {
-
-    parent_node <- names(groups)[x+1]
+    x <- valid_idx[i]  # actual level index
     node_names  <- groups[[x]]
+
+    ## ---------------------------------------------------------
+    ## Safe parent naming
+    ## ---------------------------------------------------------
+    parent_node <- if (!is.null(names(groups))) {
+      names(groups)[x+1]
+    } else {
+      paste0("Level_", x)
+    }
+
+    ## ---------------------------------------------------------
+    ## ZOIB distribution parameters
+    ## ---------------------------------------------------------
     alpha_input <- alpha_list[[x]]
     beta_input <- beta_list[[x]]
     zoi_input <- zoi_list[[x]]
