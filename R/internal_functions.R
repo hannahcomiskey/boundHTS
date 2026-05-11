@@ -22,3 +22,12 @@ beta_params <- function(mean, sd) {
 safe_exp <- function(x) {
   exp(pmin(x, 700))
 }
+
+#' To handle ... in functions
+#' @param x vector of values
+#' @param y vector of values
+#' @export
+#
+`%||%` <- function(x, y) {
+  if (is.null(x)) y else x
+}

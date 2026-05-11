@@ -14,6 +14,8 @@ run_convolution(family, groups, point, z_values, ...)
 \item{point}{A true/false indicator to denote whether you are using point estimates (point=TRUE) or posterior samples (point=FALSE) of the Poisson parameters.}
 
 \item{z_values}{A grid of evaluation points. If the family is in the Beta-family, this can be left NULL and it defaults to a vector of length 1000 over the unit interval.}
+
+\item{...}{Parameters specific to the parameter family. See "Poisson_convolution", "Beta_convolution", "ZIB_convolution", and "ZOIB_convolution" for family-specific details.}
 }
 \value{
 The aggregate density Z over a grid of values.
