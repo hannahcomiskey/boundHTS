@@ -1,4 +1,4 @@
-#' Convolution + Exponential Tilting Wrapper
+#' Convolution with Exponential Tilting Wrapper
 #'
 #' @description
 #' This function combines hierarchical convolution of predictive densities
@@ -70,7 +70,7 @@
 #'
 #' mu_theory <- list(22, 22)
 #'
-#' res <- convolution_with_tilting(
+#' res <- run_convolution_with_tilting(
 #'   family = "Poisson",
 #'   groups = groups,
 #'   point = TRUE,
@@ -97,7 +97,7 @@
 #'
 #'weights_list <- list(c(0.4, 0.6), 1)
 #'
-#'res <- convolution_with_tilting(family = "ZOIB",
+#'res <- run_convolution_with_tilting(family = "ZOIB",
 #'                                groups =  list(State = c("A", "B"), Top = "National"),
 #'                                point = FALSE,
 #'                                mu_theory = mu_theory,
@@ -113,7 +113,7 @@
 #' @export
 #'
 
-convolution_with_tilting <- function(family,
+run_convolution_with_tilting <- function(family,
                                      groups,
                                      point,
                                      mu_theory,
