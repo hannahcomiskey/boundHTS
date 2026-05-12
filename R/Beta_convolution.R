@@ -123,6 +123,8 @@ Beta_convolution <- function(groups,
 
   valid_idx <- which(vapply(groups, length, integer(1)) > 1L)
 
+  dens_list <- list()
+
   for (i in seq_along(valid_idx)) {
 
     x <- valid_idx[i]  # actual level index
