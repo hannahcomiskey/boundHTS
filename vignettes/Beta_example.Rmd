@@ -177,7 +177,7 @@ weights_list <- list(c(0.75, 0.25), 1)
 
 # Set up expected values 
 mu_theory <- forecasts %>% 
-  filter(Node %in% c("AA", "AB", "A")) %>% 
+  filter(Node %in% c("A")) %>% 
   arrange(Node) %>% 
   pull(proportion)
 
@@ -214,42 +214,16 @@ forecasts_mean <- forecasts %>%
   tidyr::pivot_wider(names_from = Node, values_from = proportion) %>%
   dplyr::mutate(Method = 'Predicted mean')
 
-conv_dens <- rec_df %>%
-  dplyr::filter(Time == t_point & Node==tilted_nodes) %>%
-  tidyr::pivot_wider(names_from = Node, values_from = Density) %>%
-  dplyr::mutate(Method = 'Convolution')
-
-bottom_dens <- rec_df %>%
-  dplyr::filter(Time == t_point & Node %in% c("AA", "AB")) %>%
-  tidyr::pivot_wider(names_from = Node, values_from = Density) %>%
-  dplyr::mutate(Method = 'Bottom density')
-
-
-exp_plot_df <- tibble::tibble(x = z_values,
-                              Density = as.vector(f_tilted),
-                              Method = "Exp. tilted density",
-                              Time = n_testyears) %>%
-  dplyr::mutate(Density = ifelse(is.na(Density)==TRUE, 0, Density))
+exp_plot_df <- res$tilted_density[[1]] %>% mutate(Method= "Tilted density")
 
 
 ggplot2::ggplot() +
   ggplot2::geom_line(data = exp_plot_df,
-                ggplot2::aes(x = x, y = Density, colour = Method), linewidth = 1) +
-  ggplot2::geom_line(data = conv_dens,
-                ggplot2::aes(x = Z, y = A, colour = Method), linewidth = 1) +
-  # ggplot2::geom_line(data = bottom_dens,
-  #               ggplot2::aes(x = Z, y = AA, colour = Method), linewidth = 1) +
-  #   ggplot2::geom_line(data = bottom_dens,
-  #               ggplot2::aes(x = Z, y = AB, colour = Method), linewidth = 1) +
+                ggplot2::aes(x = Z, y = Density, colour=Method), linewidth = 1) +
   ggplot2::geom_vline(data = forecasts_mean,
                 ggplot2::aes(xintercept = A, colour = Method), linewidth = 1) +
   ggplot2::geom_vline(data = obs_point,
                 ggplot2::aes(xintercept = A, colour = Method), linewidth = 1) +
-  ggplot2::scale_colour_manual( values = c("Exp. tilted density" = "#1b9e77",
-                                           "Convolution" = "#d95f02",
-                                           "Bottom density" = "#626f02",
-                                           "Predicted mean" = "#7570b3",
-                                           "Observed data" = "#1950b3")) +
   ggplot2::labs(x = "Proportion", y = "Density") +
   ggplot2::theme_minimal(base_size = 14) +
   ggplot2::theme(legend.position = "bottom")

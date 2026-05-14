@@ -123,6 +123,7 @@ run_convolution_with_tilting <- function(family,
   ## ---------------------------------------------------------------
   ## 1. Run convolution step
   ## ---------------------------------------------------------------
+
   base_list <- run_convolution(
     family = family,
     groups = groups,
@@ -131,7 +132,7 @@ run_convolution_with_tilting <- function(family,
     ...
   )
 
-  n_levels <- length(base_list)
+  n_levels <- length(base_list$base_density)
 
   ## Storage objects
   tilted_density <- vector("list", n_levels)
@@ -146,10 +147,10 @@ run_convolution_with_tilting <- function(family,
     base_df <- base_list[[i]]
 
     z_vals <- base_df$Z
-    f_y    <- base_df$Density
+    f_y <- base_df$Density
 
     ## Discrete for Poisson, continuous otherwise
-    discrete_flag <- identical(family, "Poisson")
+    discrete_flag <- identical(family, "Poisson") # T/F
 
     tilt_res <- tilt_density(
       mu_theory = mu_theory[[i]],

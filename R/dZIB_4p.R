@@ -33,25 +33,29 @@
 
 dZIB_4p <- function(x, alpha_point, beta_point, zi_point, weight) {
 
-  # Scale to [0,1] interval
+  # scale
   x_scaled <- x / weight
 
-  # Initialize density to 0
-  dens <- x
-  dens[] <- 0
+  dens <- numeric(length(x))
 
-  # Boundary handling
-  at0 <- x_scaled == 0 # handles values == 0
-  inside <- x_scaled > 0 & x_scaled < 1 # handles values inside range
-  outside <- x_scaled < 0 | x_scaled > 1 # handles values outside range
+  # outside support
+  outside <- x_scaled < 0 | x_scaled > 1
+  if (any(outside)) {
+    dens[outside] <- 0
+  }
 
-  dens[outside] <- 0
-  dens[at0] <- zi_point
-  dens[inside] <- (1 - zi_point) * ExtDist::dBeta_ab(x[inside],
-                                                     alpha_point,
-                                                     beta_point,
-                                                     0, weight)
+  # point mass at 0 (numerically tolerant)
+  at0 <- abs(x_scaled) < 1e-12
+  if (any(at0)) {
+    dens[at0] <- zi_point
+  }
 
+  # interior
+  inside <- x_scaled > 0 & x_scaled < 1
+  if (any(inside)) {
+    dens[inside] <- (1 - zi_point) * dbeta(x_scaled[inside],
+                                           shape1 = alpha_point,
+                                           shape2 = beta_point) / weight
+  }
   return(dens)
-
 }
