@@ -132,7 +132,7 @@ run_convolution_with_tilting <- function(family,
     ...
   )
 
-  n_levels <- length(base_list$base_density)
+  n_levels <- length(base_list)
 
   ## Storage objects
   tilted_density <- vector("list", n_levels)

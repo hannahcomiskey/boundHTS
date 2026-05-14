@@ -107,7 +107,6 @@
 #'
 
 ZIB_convolution <- function(groups, alpha_list, beta_list, zi_list, weights_list, point, n_draws=2000, n_sims = 100, z_values=NULL) {
-  dens_list <- list() # set up list to save results in
   if(is.null(z_values)==TRUE) {
     z_values <- seq(0, 1, length.out = 1000) # density grid
   }
@@ -124,6 +123,7 @@ ZIB_convolution <- function(groups, alpha_list, beta_list, zi_list, weights_list
   }
 
   valid_idx <- which(vapply(groups, length, integer(1)) > 1L)
+  dens_list <- list() # set up list to save results in
 
   for (i in seq_along(valid_idx)) {
 
