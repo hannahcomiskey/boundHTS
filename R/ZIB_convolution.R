@@ -72,6 +72,12 @@
 #'
 #' J <- 100
 #'
+#' ## Define a simple two-level hierarchy
+#' groups <- list(
+#'   c("A", "B"),   # bottom level
+#'   c("Total")     # aggregated level
+#' )
+#'
 #' alpha_list_post <- list(
 #' cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
 #' as.matrix(rgamma(J, shape = 2, rate = 1))
@@ -92,7 +98,7 @@
 #' )
 #'
 #' dens_post <- ZIB_convolution(
-#'   groups = list(c("A", "B")),
+#'   groups = groups,
 #'   alpha_list = alpha_list_post,
 #'   beta_list = beta_list_post,
 #'   zi_list = zi_list_post,
