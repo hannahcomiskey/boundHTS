@@ -79,3 +79,4 @@ test_that("Poisson_convolution returns valid hierarchical densities", {
   ## ---------------------------------------------------------
   expect_true(all(vapply(res, nrow, integer(1)) > 0))
 })
+

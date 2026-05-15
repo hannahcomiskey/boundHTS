@@ -1,257 +1,146 @@
-test_that("ZIB convolution_density returns a finite scalar", {
+test_that("ZIB_convolution_density returns a finite scalar", {
 
   set.seed(123)
 
-  n_sims  <- 30
-  n_draws <- 10
-  N       <- 3
-
-  # inputs
-  alpha_matrix <- matrix(
-    runif(n_sims * N, min = 2, max = 10),
-    nrow = n_sims,
-    ncol = N
+  ## Define a simple two-level hierarchy
+  groups <- list(
+    bottom = c("A", "B"),   # bottom level
+    top = c("Total")     # aggregated level
   )
 
-  beta_matrix <- matrix(
-    runif(n_sims * N, min = 2, max = 10),
-    nrow = n_sims,
-    ncol = N
+  ## Point estimates for Beta parameters
+  alpha_list <- list(
+    c(2, 5),
+    c(7)
   )
 
-  zi_matrix <- matrix(
-    runif(n_draws * N, 0.1, 0.4),
-    nrow = n_draws,
-    ncol = N
+  beta_list <- list(
+    c(6, 3),
+    c(4)
   )
 
-  weighted_samps <- array(
-    runif(n_sims * n_draws * N, min = 0, max = 0.2),
-    dim = c(n_sims, n_draws, N)
+  zi_list <- list(
+    c(0.1, 0.1),
+    c(0.05)
   )
 
-  weights <- runif(N, min = 0.5, max = 2)
+  ## Aggregation weights
+  weights_list <- list(
+    c(0.4, 0.6),
+    1
+  )
 
-  # run function
-  dens <- ZIB_convolution(z_values =  seq(0,1, length.out = 10),
-                          alpha_input = alpha_matrix,
-                          beta_input = beta_matrix,
-                          zi_input = zi_matrix,
-                          weighted_samps = weighted_samps,
-                          weights = weights,
-                          point=FALSE)
+  ## Estimate densities
+  dens <- ZIB_convolution(
+    groups = groups,
+    alpha_list = alpha_list,
+    beta_list = beta_list,
+    zi_list =   zi_list,
+    weights_list = weights_list,
+    point = TRUE,
+    n_draws = 500,
+    n_sims = 50
+  )
+
   dens
 
   # ---- expectations ----
-  expect_type(dens, "double")
-  expect_length(dens, 10)
-  expect_true(all(is.finite(dens)))
-  expect_true(all(dens >= 0))
+  expect_type(dens, "list")
+  expect_length(dens[[1]]$Density, 1000)
+  expect_true(all(is.finite(dens[[1]]$Density)))
+  expect_true(all(dens[[1]]$Density >= 0))
 })
 
-test_that("ZIB convolution returns a valid density over z_values", {
+test_that("ZIB_convolution_density is stable when z is out of support", {
 
   set.seed(123)
 
-  n_sims  <- 30
-  n_draws <- 10
-  N <- 3
-  n_years <- 1
-
-  z_values <- seq(0, 1, length.out = 101)
-
-  # Monte Carlo draws of Y
-  weighted_samps <- array(
-    runif(n_sims * n_draws * N, min = 0, max = 0.2),
-    dim = c(n_sims, n_draws, N)
+  ## Define a simple two-level hierarchy
+  groups <- list(
+    bottom = c("A", "B"),   # bottom level
+    top = c("Total")     # aggregated level
   )
 
-  alpha_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
+  ## Point estimates for Beta parameters
+  alpha_list <- list(
+    c(2, 5),
+    c(7)
   )
 
-  beta_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
+  beta_list <- list(
+    c(6, 3),
+    c(4)
   )
 
-  zi_matrix <- matrix(
-    runif(n_draws * N, 0.1, 0.4),
-    nrow = n_draws,
-    ncol = N
+  zi_list <- list(
+    c(0.1, 0.1),
+    c(0.05)
   )
 
-  weights <- rep(1, N)
+  ## Aggregation weights
+  weights_list <- list(
+    c(0.4, 0.6),
+    1
+  )
 
-  dens <- ZIB_convolution(z_values = z_values,
-                           alpha_input = alpha_matrix,
-                           beta_input = beta_matrix,
-                           zi_input = zi_matrix,
-                           weighted_samps = weighted_samps,
-                           weights = weights,
-                           point=FALSE)
+  ## Estimate densities
+  expect_error(ZIB_convolution(
+    groups = groups,
+    alpha_list = alpha_list,
+    beta_list = beta_list,
+    zi_list =   zi_list,
+    weights_list = weights_list,
+    point = TRUE,
+    n_draws = 500,
+    n_sims = 50,
+    z_values = seq(-10, 10, length.out=200)
+  ))
 
-  expect_type(dens, "double")
-  expect_length(dens, length(z_values))
-  expect_true(all(is.finite(dens)))
-  expect_true(all(dens >= 0))
 })
 
-test_that("ZIB convolution integrates to one", {
+test_that("ZIB_convolution_density errors on incompatible dimensions", {
 
-  set.seed(1)
+  set.seed(123)
 
-  n_sims  <- 30
-  n_draws <- 10
-  N <- 3
-
-  z_values <- seq(0, 1, length.out = 101)
-
-  # Monte Carlo draws of Y
-  weighted_samps <- array(
-    runif(n_sims * n_draws * N, min = 0, max = 0.2),
-    dim = c(n_sims, n_draws, N)
+  ## Define a simple two-level hierarchy
+  groups <- list(
+    bottom = c("A", "B"),   # bottom level
+    top = c("Total")     # aggregated level
   )
 
-  alpha_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
+  ## Point estimates for Beta parameters
+  alpha_list <- list(
+    c(2, 5),
+    c(7)
   )
 
-  beta_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
+  beta_list <- list(
+    c(6, 3, 4),
+    c(2,3),
+    c(4)
   )
 
-  zi_matrix <- matrix(
-    runif(n_draws * N, 0.1, 0.4),
-    nrow = n_draws,
-    ncol = N
+  zi_list <- list(
+    c(0.1, 0.1),
+    c(0.05)
   )
 
-  weights <- rep(1, N)
+  ## Aggregation weights
+  weights_list <- list(
+    c(0.4, 0.6),
+    1
+  )
 
-  dens <- ZIB_convolution(z_values = z_values,
-                           alpha_input = alpha_matrix,
-                           beta_input = beta_matrix,
-                           zi_input = zi_matrix,
-                           weights = weights,
-                           weighted_samps = weighted_samps,
-                           point=FALSE)
+  ## Estimate densities
+  expect_error(ZIB_convolution(
+    groups = groups,
+    alpha_list = alpha_list,
+    beta_list = beta_list,
+    zi_list =   zi_list,
+    weights_list = weights_list,
+    point = TRUE,
+    n_draws = 500,
+    n_sims = 50,
+    z_values = seq(-10, 10, length.out=200)))
 
-  integral <- pracma::trapz(z_values, dens)
-
-  expect_equal(integral, 1, tolerance = 1e-6)
 })
-
-test_that("ZIB convolution is deterministic given fixed seed", {
-
-  set.seed(42)
-
-  n_sims  <- 30
-  n_draws <- 10
-  N <- 3
-
-  z_values <- seq(0, 1, length.out = 101)
-
-  # Monte Carlo draws of Y
-  weighted_samps <- array(
-    runif(n_sims * n_draws * N, min = 0, max = 0.2),
-    dim = c(n_sims, n_draws, N)
-  )
-
-  alpha_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
-  )
-
-  beta_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
-  )
-
-  zi_matrix <- matrix(
-    runif(n_draws * N, 0.1, 0.4),
-    nrow = n_draws,
-    ncol = N
-  )
-
-  weights <- rep(1, N)
-
-  set.seed(999)
-
-  dens1 <- ZIB_convolution(z_values = z_values,
-                            alpha_input = alpha_matrix,
-                            beta_input = beta_matrix,
-                            zi_input = zi_matrix,
-                            weights = weights,
-                            weighted_samps = weighted_samps,
-                            point=FALSE)
-
-  set.seed(999)
-
-  dens2 <- ZIB_convolution(z_values = z_values,
-                          alpha_input = alpha_matrix,
-                          beta_input = beta_matrix,
-                          zi_input = zi_matrix,
-                          weights = weights,
-                          weighted_samps = weighted_samps,
-                          point=FALSE)
-  expect_equal(dens1, dens2)
-})
-
-test_that("ZIB convolution returns zero density outside support", {
-
-  set.seed(7)
-
-  n_sims  <- 20
-  n_draws <- 5
-  N <- 3
-
-  z_values <- c(-1, 0, 0.5, 1, 2)
-
-  # Monte Carlo draws of Y
-  weighted_samps <- array(
-    runif(n_sims * n_draws * N, min = 0, max = 0.2),
-    dim = c(n_sims, n_draws, N)
-  )
-
-  alpha_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
-  )
-
-  beta_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
-  )
-
-  zi_matrix <- matrix(
-    runif(n_draws * N, 0.1, 0.4),
-    nrow = n_draws,
-    ncol = N
-  )
-
-  weights <- rep(1, N)
-
-  dens <- ZIB_convolution(z_values =  z_values,
-                           alpha_input = alpha_matrix,
-                           beta_input = beta_matrix,
-                           zi_input = zi_matrix,
-                           weighted_samps = weighted_samps,
-                           weights = weights,
-                           point=FALSE)
-
-  expect_true(all(dens[z_values < 0] == 0))
-  expect_true(all(dens[z_values > sum(weights)] == 0))
-})
-

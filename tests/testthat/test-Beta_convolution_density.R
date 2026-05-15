@@ -2,95 +2,127 @@ test_that("Beta_convolution_density returns a finite scalar", {
 
   set.seed(123)
 
-  n_sims  <- 30
-  n_draws <- 10
-  N       <- 3
-
-  # inputs
-  alpha_matrix <- matrix(
-    runif(n_sims * N, min = 2, max = 10),
-    nrow = n_sims,
-    ncol = N
+  ## Define a simple two-level hierarchy
+  groups <- list(
+    bottom = c("A", "B"),   # bottom level
+    top = c("Total")     # aggregated level
   )
 
-  beta_matrix <- matrix(
-    runif(n_sims * N, min = 2, max = 10),
-    nrow = n_sims,
-    ncol = N
+  ## Point estimates for Beta parameters
+  alpha_list <- list(
+    c(2, 5),
+    c(7)
   )
 
-  weighted_samps <- array(
-    runif(n_sims * n_draws * N, min = 0, max = 0.2),
-    dim = c(n_sims, n_draws, N)
+  beta_list <- list(
+    c(6, 3),
+    c(4)
   )
 
-  weights <- runif(N, min = 0.5, max = 2)
+  ## Aggregation weights
+  weights_list <- list(
+    c(0.4, 0.6),
+    1
+  )
 
-  # run function
-  dens <- Beta_convolution(z_values =  seq(0,1, length.out = 10),
-                           alpha_input = alpha_matrix,
-                           beta_input = beta_matrix,
-                           weighted_samps = weighted_samps,
-                           weights = weights,
-                           point=FALSE)
+  ## Estimate densities
+  dens <- Beta_convolution(
+    groups = groups,
+    alpha_list = alpha_list,
+    beta_list = beta_list,
+    weights_list = weights_list,
+    point = TRUE,
+    n_draws = 500,
+    n_sims = 50
+  )
+
   dens
 
   # ---- expectations ----
-  expect_type(dens, "double")
-  expect_length(dens, 10)
-  expect_true(all(is.finite(dens)))
-  expect_true(all(dens >= 0))
+  expect_type(dens, "list")
+  expect_length(dens[[1]]$Density, 1000)
+  expect_true(all(is.finite(dens[[1]]$Density)))
+  expect_true(all(dens[[1]]$Density >= 0))
 })
 
 test_that("Beta_convolution_density is stable when z is out of support", {
 
-  set.seed(1)
+  set.seed(123)
 
-  n_sims  <- 10
-  n_draws <- 5
-  N       <- 2
-
-  z_values <- seq(-10, -1, length.out = 10) # well outside support
-
-  alpha_matrix <- matrix(5, n_sims, N)
-  beta_matrix  <- matrix(5, n_sims, N)
-
-  weighted_samps <- array(
-    runif(n_sims * n_draws * N, 0, 0.1),
-    dim = c(n_sims, n_draws, N)
+  ## Define a simple two-level hierarchy
+  groups <- list(
+    bottom = c("A", "B"),   # bottom level
+    top = c("Total")     # aggregated level
   )
 
-  weights <- rep(1, N)
+  ## Point estimates for Beta parameters
+  alpha_list <- list(
+    c(2, 5),
+    c(7)
+  )
 
-  dens <- Beta_convolution(z_values =  z_values,
-                           alpha_input = alpha_matrix,
-                           beta_input = beta_matrix,
-                           weighted_samps = weighted_samps,
-                           weights = weights,
-                           point=FALSE)
+  beta_list <- list(
+    c(6, 3),
+    c(4)
+  )
 
-  expect_true(all(is.finite(dens)))
-  expect_equal(dens[1], 0, tolerance = 1e-12)
+  ## Aggregation weights
+  weights_list <- list(
+    c(0.4, 0.6),
+    1
+  )
+
+  ## Estimate densities
+  expect_error(Beta_convolution(
+    groups = groups,
+    alpha_list = alpha_list,
+    beta_list = beta_list,
+    weights_list = weights_list,
+    point = TRUE,
+    n_draws = 500,
+    n_sims = 50,
+    z_values = seq(-10, 10, length.out=200)
+  ))
+
 })
 
 test_that("Beta_convolution_density errors on incompatible dimensions", {
 
-  alpha_matrix <- matrix(2, nrow = 5, ncol = 3)
-  beta_matrix  <- matrix(2, nrow = 5, ncol = 3)
+  set.seed(123)
 
-  # wrong third dimension (should be N = 3)
-  weighted_samps <- array(runif(5 * 4 * 2), dim = c(5, 4, 2))
-
-  weights <- c(1, 1, 1)
-
-  expect_error(
-    Beta_convolution(z_values = seq(0,1, length.out = 10),
-                     alpha_input = alpha_matrix,
-                     beta_input = beta_matrix,
-                     weighted_samps = weighted_samps,
-                     weights = weights,
-                     point=FALSE
-    ),
-    regexp = NA
+  ## Define a simple two-level hierarchy
+  groups <- list(
+    bottom = c("A", "B"),   # bottom level
+    top = c("Total")     # aggregated level
   )
+
+  ## Point estimates for Beta parameters
+  alpha_list <- list(
+    c(2, 5),
+    c(7)
+  )
+
+  beta_list <- list(
+    c(6, 3, 4),
+    c(2,3),
+    c(4)
+  )
+
+  ## Aggregation weights
+  weights_list <- list(
+    c(0.4, 0.6),
+    1
+  )
+
+  ## Estimate densities
+  expect_error(Beta_convolution(
+    groups = groups,
+    alpha_list = alpha_list,
+    beta_list = beta_list,
+    weights_list = weights_list,
+    point = TRUE,
+    n_draws = 500,
+    n_sims = 50,
+    z_values = seq(-10, 10, length.out=200)))
+
 })

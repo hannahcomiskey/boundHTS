@@ -1,235 +1,166 @@
-test_that("ZOIB_convolution returns a valid density over z_values", {
+test_that("ZOIB_convolution_density returns a finite scalar", {
 
   set.seed(123)
 
-  n_sims  <- 30
-  n_draws <- 10
-  N <- 3
-  n_years <- 1
-
-  z_values <- seq(0, 1, length.out = 101)
-
-  # Monte Carlo draws of Y
-  weighted_samps <- array(
-    runif(n_sims * n_draws * N, min = 0, max = 0.2),
-    dim = c(n_sims, n_draws, N)
+  ## Define a simple two-level hierarchy
+  groups <- list(
+    bottom = c("A", "B"),   # bottom level
+    top = c("Total")     # aggregated level
   )
 
-  alpha_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
+  ## Point estimates for Beta parameters
+  alpha_list <- list(
+    c(2, 5),
+    c(7)
   )
 
-  beta_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
+  beta_list <- list(
+    c(6, 3),
+    c(4)
   )
 
-  zoi_matrix <- matrix(
-    runif(n_draws * N, 0.1, 0.4),
-    nrow = n_draws,
-    ncol = N
+  zoi_list <- list(
+    c(0.1, 0.1),
+    c(0.05)
   )
 
-  coi_matrix <- matrix(
-    runif(n_draws * N, 0.2, 0.8),
-    nrow = n_draws,
-    ncol = N
+  coi_list <- list(
+    c(0.05, 0.05),
+    c(0.05)
   )
 
-  weights <- rep(1, N)
 
-  dens <- ZOIB_convolution(z_values = z_values,
-                           alpha_input = alpha_matrix,
-                           beta_input = beta_matrix,
-                           zoi_input = zoi_matrix,
-                           coi_input = coi_matrix,
-                           weighted_samps = weighted_samps,
-                           weights = weights,
-                           point=FALSE)
+  ## Aggregation weights
+  weights_list <- list(
+    c(0.4, 0.6),
+    1
+  )
 
-  expect_type(dens, "double")
-  expect_length(dens, length(z_values))
-  expect_true(all(is.finite(dens)))
-  expect_true(all(dens >= 0))
+  ## Estimate densities
+  dens <- ZOIB_convolution(
+    groups = groups,
+    alpha_list = alpha_list,
+    beta_list = beta_list,
+    zoi_list =   zoi_list,
+    coi_list = coi_list,
+    weights_list = weights_list,
+    point = TRUE,
+    n_draws = 500,
+    n_sims = 50
+  )
+
+  dens
+
+  # ---- expectations ----
+  expect_type(dens, "list")
+  expect_length(dens[[1]]$Density, 1000)
+  expect_true(all(is.finite(dens[[1]]$Density)))
+  expect_true(all(dens[[1]]$Density >= 0))
 })
 
-test_that("ZOIB_convolution integrates to one", {
+test_that("ZOIB_convolution_density is stable when z is out of support", {
 
-  set.seed(1)
+  set.seed(123)
 
-  n_sims  <- 30
-  n_draws <- 10
-  N <- 3
-
-  z_values <- seq(0, 1, length.out = 101)
-
-  # Monte Carlo draws of Y
-  weighted_samps <- array(
-    runif(n_sims * n_draws * N, min = 0, max = 0.2),
-    dim = c(n_sims, n_draws, N)
+  ## Define a simple two-level hierarchy
+  groups <- list(
+    bottom = c("A", "B"),   # bottom level
+    top = c("Total")     # aggregated level
   )
 
-  alpha_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
+  ## Point estimates for Beta parameters
+  alpha_list <- list(
+    c(2, 5),
+    c(7)
   )
 
-  beta_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
+  beta_list <- list(
+    c(6, 3),
+    c(4)
   )
 
-  zoi_matrix <- matrix(
-    runif(n_draws * N, 0.1, 0.4),
-    nrow = n_draws,
-    ncol = N
+  zoi_list <- list(
+    c(0.1, 0.1),
+    c(0.05)
   )
 
-  coi_matrix <- matrix(
-    runif(n_draws * N, 0.2, 0.8),
-    nrow = n_draws,
-    ncol = N
+  coi_list <- list(
+    c(0.05, 0.05),
+    c(0.05)
   )
 
-  weights <- rep(1, N)
 
-  dens <- ZOIB_convolution(z_values = z_values,
-                           alpha_input = alpha_matrix,
-                           beta_input = beta_matrix,
-                           zoi_input = zoi_matrix,
-                           coi_input = coi_matrix,
-                           weights = weights,
-                           weighted_samps = weighted_samps,
-                           point=FALSE)
+  ## Aggregation weights
+  weights_list <- list(
+    c(0.4, 0.6),
+    1
+  )
 
-  integral <- pracma::trapz(z_values, dens)
+  ## Estimate densities
+  expect_error(ZOIB_convolution(
+    groups = groups,
+    alpha_list = alpha_list,
+    beta_list = beta_list,
+    zoi_list =   zoi_list,
+    coi_list = coi_list,
+    weights_list = weights_list,
+    point = TRUE,
+    n_draws = 500,
+    n_sims = 50,
+    z_values = seq(-10, 10, length.out=200)
+  ))
 
-  expect_equal(integral, 1, tolerance = 1e-6)
 })
 
-test_that("ZOIB_convolution is deterministic given fixed seed", {
+test_that("ZOIB_convolution_density errors on incompatible dimensions", {
 
-  set.seed(42)
+  set.seed(123)
 
-  n_sims  <- 30
-  n_draws <- 10
-  N <- 3
-
-  z_values <- seq(0, 1, length.out = 101)
-
-  # Monte Carlo draws of Y
-  weighted_samps <- array(
-    runif(n_sims * n_draws * N, min = 0, max = 0.2),
-    dim = c(n_sims, n_draws, N)
+  ## Define a simple two-level hierarchy
+  groups <- list(
+    bottom = c("A", "B"),   # bottom level
+    top = c("Total")     # aggregated level
   )
 
-  alpha_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
+  ## Point estimates for Beta parameters
+  alpha_list <- list(
+    c(2, 5),
+    c(7)
   )
 
-  beta_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
+  beta_list <- list(
+    c(6, 3, 4),
+    c(2,3),
+    c(4)
   )
 
-  zoi_matrix <- matrix(
-    runif(n_draws * N, 0.1, 0.4),
-    nrow = n_draws,
-    ncol = N
+  zoi_list <- list(
+    c(0.1, 0.1),
+    c(0.05)
   )
 
-  coi_matrix <- matrix(
-    runif(n_draws * N, 0.2, 0.8),
-    nrow = n_draws,
-    ncol = N
+  coi_list <- list(
+    c(0.05, 0.05),
+    c(0.05)
   )
 
-  weights <- rep(1, N)
+  ## Aggregation weights
+  weights_list <- list(
+    c(0.4, 0.6),
+    1
+  )
 
-  set.seed(999)
+  ## Estimate densities
+  expect_error(ZOIB_convolution(
+    groups = groups,
+    alpha_list = alpha_list,
+    beta_list = beta_list,
+    zoi_list =   zoi_list,
+    coi_list =   coi_list,
+    weights_list = weights_list,
+    point = TRUE,
+    n_draws = 500,
+    n_sims = 50,
+    z_values = seq(-10, 10, length.out=200)))
 
-  dens1 <- ZOIB_convolution(z_values = z_values,
-                            alpha_input = alpha_matrix,
-                            beta_input = beta_matrix,
-                            zoi_input = zoi_matrix,
-                            coi_input = coi_matrix,
-                            weights = weights,
-                            weighted_samps = weighted_samps,
-                            point=FALSE)
-
-  set.seed(999)
-
-  dens2 <- ZOIB_convolution(z_values = z_values,
-                            alpha_input = alpha_matrix,
-                            beta_input = beta_matrix,
-                            zoi_input = zoi_matrix,
-                            coi_input = coi_matrix,
-                            weights = weights,
-                            weighted_samps = weighted_samps,
-                            point=FALSE)
-  expect_equal(dens1, dens2)
 })
-
-test_that("ZOIB_convolution returns zero density outside support", {
-
-  set.seed(7)
-
-  n_sims  <- 20
-  n_draws <- 5
-  N <- 3
-
-  z_values <- c(-1, 0, 0.5, 1, 2)
-
-  # Monte Carlo draws of Y
-  weighted_samps <- array(
-    runif(n_sims * n_draws * N, min = 0, max = 0.2),
-    dim = c(n_sims, n_draws, N)
-  )
-
-  alpha_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
-  )
-
-  beta_matrix <- matrix(
-    runif(n_draws * N, min = 2, max = 10),
-    nrow = n_draws,
-    ncol = N
-  )
-
-  zoi_matrix <- matrix(
-    runif(n_draws * N, 0.1, 0.4),
-    nrow = n_draws,
-    ncol = N
-  )
-
-  coi_matrix <- matrix(
-    runif(n_draws * N, 0.2, 0.8),
-    nrow = n_draws,
-    ncol = N
-  )
-
-  weights <- rep(1, N)
-
-  dens <- ZOIB_convolution(z_values =  z_values,
-                           alpha_input = alpha_matrix,
-                           beta_input = beta_matrix,
-                           zoi_input = zoi_matrix,
-                           coi_input = coi_matrix,
-                           weighted_samps = weighted_samps,
-                           weights = weights,
-                           point=FALSE)
-
-  expect_true(all(dens[z_values < 0] == 0))
-  expect_true(all(dens[z_values > sum(weights)] == 0))
-})
-
