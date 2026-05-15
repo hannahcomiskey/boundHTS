@@ -25,8 +25,8 @@
 #'
 #' ## Define a simple two-level hierarchy
 #' groups <- list(
-#'   c("A", "B"),   # bottom level
-#'   c("Total")     # aggregated level
+#'   bottom = c("A", "B"),   # bottom level
+#'   top = c("Total")     # aggregated level
 #' )
 #'
 #' ## Point estimates for Beta parameters
@@ -59,11 +59,12 @@
 #' )
 #'
 #' ## Estimate densities
-#' dens <- ziB_convolution(
+#' dens <- ZOIB_convolution(
 #'   groups = groups,
 #'   alpha_list = alpha_list,
 #'   beta_list = beta_list,
-#'   zi_list = zi_list,
+#'   zoi_list = zoi_list,
+#'   coi_list = coi_list,
 #'   weights_list = weights_list,
 #'   point = TRUE,
 #'   n_draws = 500,
@@ -102,14 +103,15 @@
 #'   1
 #' )
 #'
-#' dens_post <- ZIB_convolution(
+#' dens_post <- ZOIB_convolution(
 #'   groups = list(c("A", "B")),
 #'   alpha_list = alpha_list_post,
 #'   beta_list = beta_list_post,
-#'   zi_list = zi_list_post,
+#'   zoi_list = zoi_list_post,
+#'   coi_list = coi_list_post,
 #'   weights_list = weights_list,
 #'   point = FALSE,
-#'   n_draws = 500,
+#'   n_draws = J,
 #'   n_sims = 50
 #' )
 #'

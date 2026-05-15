@@ -118,7 +118,7 @@ dens_post <- Beta_convolution(
   beta_list = beta_list_post,
   weights_list = weights_post,
   point = FALSE,
-  n_draws = 500,
+  n_draws = J,
   n_sims = 50
 )
 
