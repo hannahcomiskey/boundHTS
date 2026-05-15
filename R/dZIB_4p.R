@@ -29,6 +29,7 @@
 #'
 #' @export
 #' @importFrom ExtDist dBeta_ab
+#' @importFrom stats dbeta
 #' @export
 
 dZIB_4p <- function(x, alpha_point, beta_point, zi_point, weight) {
@@ -53,7 +54,7 @@ dZIB_4p <- function(x, alpha_point, beta_point, zi_point, weight) {
   # interior
   inside <- x_scaled > 0 & x_scaled < 1
   if (any(inside)) {
-    dens[inside] <- (1 - zi_point) * dbeta(x_scaled[inside],
+    dens[inside] <- (1 - zi_point) * stats::dbeta(x_scaled[inside],
                                            shape1 = alpha_point,
                                            shape2 = beta_point) / weight
   }
