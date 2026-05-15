@@ -1,4 +1,4 @@
-test_that("convolution_with_tilting returns correctly structured output", {
+test_that("run_convolution_with_tilting returns correctly structured output", {
 
   set.seed(123)
 
@@ -15,7 +15,7 @@ test_that("convolution_with_tilting returns correctly structured output", {
   z_values <- 0:30
   mu_theory <- list(22, 22)
 
-  res <- convolution_with_tilting(
+  res <- run_convolution_with_tilting(
     family = "Poisson",
     groups = groups,
     point = TRUE,
@@ -65,7 +65,7 @@ test_that("convolution and tilting preserve grid consistency", {
   z_values <- 0:25
   mu_theory <- list(15, 15)
 
-  res <- convolution_with_tilting(
+  res <- run_convolution_with_tilting(
     family = "Poisson",
     groups = groups,
     point = TRUE,
@@ -101,7 +101,7 @@ test_that("density outputs are valid probability distributions", {
   z_values <- 0:20
   mu_theory <- list(10, 10)
 
-  res <- convolution_with_tilting(
+  res <- run_convolution_with_tilting(
     family = "Poisson",
     groups = groups,
     point = TRUE,
@@ -140,7 +140,7 @@ test_that("tilting meaningfully changes distributions", {
     7
   )
 
-  res <- convolution_with_tilting(
+  res <- run_convolution_with_tilting(
     family = "Poisson",
     groups = groups,
     point = TRUE,
@@ -171,7 +171,7 @@ test_that("tilted samples are valid numeric vectors", {
     10
   )
 
-  res <- convolution_with_tilting(
+  res <- run_convolution_with_tilting(
     family = "Poisson",
     groups = groups,
     point = TRUE,
@@ -188,7 +188,7 @@ test_that("tilted samples are valid numeric vectors", {
 test_that("function fails gracefully on invalid family", {
 
   expect_error(
-    convolution_with_tilting(
+    run_convolution_with_tilting(
       family = "Gaussian",
       groups = list(A = 1),
       point = TRUE,

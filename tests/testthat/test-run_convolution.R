@@ -1,7 +1,4 @@
 # tests/testthat/test-run_convolution.R
-library(testthat)
-devtools::load_all()
-
 test_that("run_convolution errors for unsupported family", {
 
   expect_error(

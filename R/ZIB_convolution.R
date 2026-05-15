@@ -52,7 +52,7 @@
 #' )
 #'
 #' ## Estimate densities
-#' dens <- ziB_convolution(
+#' dens <- ZIB_convolution(
 #'   groups = groups,
 #'   alpha_list = alpha_list,
 #'   beta_list = beta_list,
