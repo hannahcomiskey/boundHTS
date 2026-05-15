@@ -102,43 +102,31 @@ head(dens[[1]])
 ## Example: Posterior-sample zero-inflated Beta convolution
 ## ---------------------------------------------------------------
 
-J <- 100
-
+J <- 500
 ## Define a simple two-level hierarchy
-groups <- list(
-  c("A", "B"),   # bottom level
-  c("Total")     # aggregated level
+groups <- list(Bottom = c("A", "B"),   # bottom level
+Top = c("Total")     # aggregated level
 )
+alpha_list_post <- list(cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
+                       as.matrix(rgamma(J, shape = 2, rate = 1))
+                       )
+beta_list_post <- list(cbind(rgamma(J, shape = 6, rate = 1), rgamma(J, shape = 3, rate = 1)),
+                      as.matrix(rgamma(J, shape = 2, rate = 1))
+                      )
+zi_list_post <- list(cbind(rbeta(J, 2, 20), rbeta(J, 3, 15)),
+                    as.matrix(rbeta(J, 2, 20))
+                    )
+weights_list <- list(c(0.4, 0.6),
+                    1)
 
-alpha_list_post <- list(
-cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
-as.matrix(rgamma(J, shape = 2, rate = 1))
-)
-
-beta_list_post <- list(
-cbind(rgamma(J, shape = 6, rate = 1), rgamma(J, shape = 3, rate = 1)),
-as.matrix(rgamma(J, shape = 2, rate = 1))
-)
-
-zi_list_post <- list(
-cbind(rbeta(J, 2, 20), rbeta(J, 3, 15)),
-as.matrix(rbeta(J, 2, 20)))
-
-weights_list <- list(
-  c(0.4, 0.6),
-  1
-)
-
-dens_post <- ZIB_convolution(
-  groups = groups,
-  alpha_list = alpha_list_post,
-  beta_list = beta_list_post,
-  zi_list = zi_list_post,
-  weights_list = weights_list,
-  point = FALSE,
-  n_draws = 500,
-  n_sims = 50
-)
-
+dens_post <- ZIB_convolution(groups = groups,
+                            alpha_list = alpha_list_post,
+                            beta_list = beta_list_post,
+                            zi_list = zi_list_post,
+                            weights_list = weights_list,
+                            point = FALSE,
+                            n_draws = J,
+                            n_sims = 50
+                            )
 head(dens_post[[1]])
 }
