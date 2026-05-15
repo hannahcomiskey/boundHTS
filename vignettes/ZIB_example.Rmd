@@ -322,7 +322,7 @@ res <- run_convolution_with_tilting(
   groups = list(Bottom = c("AA", "AB"), Top = "A"),
   point = TRUE,
   mu_theory = mu_theory,
-  z_values = seq(0, 1, length.out = 1000),
+  z_values = seq(0, 0.25, length.out = 1000),
   alpha_list = alpha_list,
   beta_list = beta_list,
   zi_list = zi_list,
