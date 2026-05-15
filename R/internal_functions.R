@@ -25,11 +25,9 @@ safe_exp <- function(x) {
 
 #' To handle ... in functions
 #'
-#' @name \%||\%
 #' @param x vector of values
 #' @param y vector of values
 #' @export
-#'
 `%||%` <- function(x, y) {
   if (is.null(x)) y else x
 }
