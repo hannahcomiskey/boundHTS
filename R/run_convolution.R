@@ -159,8 +159,8 @@ run_convolution <- function(family,
       beta_list = args$beta_list,
       weights_list = args$weights_list,
       point = point,
-      n_draws = args$n_draws %||% 2000,
-      n_sims = args$n_sims %||% 100,
+      n_draws = default_settings(args$n_draws, 2000),
+      n_sims = default_settings(args$n_sims, 100),
       z_values = z_values
     )
 
@@ -173,8 +173,8 @@ run_convolution <- function(family,
       zi_list = args$zi_list,
       weights_list = args$weights_list,
       point = point,
-      n_draws = args$n_draws %||% 2000,
-      n_sims = args$n_sims %||% 100,
+      n_draws = default_settings(args$n_draws, 2000),
+      n_sims = default_settings(args$n_sims, 100),
       z_values = z_values
     )
 
@@ -188,8 +188,8 @@ run_convolution <- function(family,
       coi_list = args$coi_list,
       weights_list = args$weights_list,
       point = point,
-      n_draws = args$n_draws %||% 2000,
-      n_sims = args$n_sims %||% 100,
+      n_draws = default_settings(args$n_draws, 2000),
+      n_sims = default_settings(args$n_sims, 100),
       z_values = z_values
     )
   }

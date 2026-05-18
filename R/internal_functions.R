@@ -28,11 +28,9 @@ safe_exp <- function(x) {
 #' @description
 #' Returns `y` if `x` is `NULL`, otherwise returns `x`.
 #'
-#' @rdname null-coalesce
-#' @aliases %||%
 #' @param x vector of values
 #' @param y vector of values
 #' @export
-`%||%` <- function(x, y) {
+default_settings <- function(x, y) {
   if (is.null(x)) y else x
 }
