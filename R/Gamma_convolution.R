@@ -27,7 +27,7 @@
 #'   top = c("Total")     # aggregated level
 #' )
 #'
-#' ## Point estimates for Beta parameters
+#' ## Point estimates for Gamma parameters
 #' shape_list <- list(
 #'   c(2, 5),
 #'   c(7)
@@ -94,7 +94,7 @@ Gamma_convolution <- function(groups,
                              rate_list,
                              z_values,
                              point,
-                             n_draws = 2000,
+                             n_draws = NULL,
                              n_sims = 100) {
 
 
@@ -128,30 +128,32 @@ Gamma_convolution <- function(groups,
     }
 
     ## ---------------------------------------------------------
-    ## Beta distribution parameters
+    ## Gamma distribution parameters
     ## ---------------------------------------------------------
     shape_input <- shape_list[[x]]
     rate_input  <- rate_list[[x]]
 
-    ## Bottom samples
-    bottom_samps <- array(
-      NA,
-      dim = c(n_sims, n_draws, length(node_names))
-    )
-
-    for (m in seq_along(node_names)) {
-
-      bottom_samps[, , m] <- matrix(
-        stats::rgamma(
-          n = n_sims * n_draws,
-          shape = shape_input[m],
-          rate = rate_input[m]),
-        nrow = n_sims,
-        ncol = n_draws
-      )
-    }
-
     if (isTRUE(point)) {
+
+      n_draws <- ifelse(is.null(n_draws), 2000, n_draws)
+
+      ## Bottom samples
+      bottom_samps <- array(
+        NA,
+        dim = c(n_sims, n_draws, length(node_names))
+      )
+
+      for (m in seq_along(node_names)) {
+
+        bottom_samps[, , m] <- matrix(
+          stats::rgamma(
+            n = n_sims * n_draws,
+            shape = shape_input[,m],
+            rate = rate_input[,m]),
+          nrow = n_sims,
+          ncol = n_draws
+        )
+      }
 
       dens <- Gamma_convolution_density_point_parallel(
         z_values = z_values,
@@ -160,6 +162,19 @@ Gamma_convolution <- function(groups,
         bottom_samps = bottom_samps)
 
     } else {
+
+      n_draws <- nrow(shape_input)
+
+      ## Bottom samples
+      bottom_samps <- array(NA, dim = c(n_sims, n_draws, length(node_names)))
+
+      for (m in 1:length(node_names)) {
+        for(s in 1:n_draws) {
+          bottom_samps[, s, m] <- stats::rgamma(n = n_sims,
+                                                shape = shape_input[s,m],
+                                                rate = rate_input[s,m])
+        }
+      }
 
       dens <- Gamma_convolution_density_parallel(
         z_values = z_values,

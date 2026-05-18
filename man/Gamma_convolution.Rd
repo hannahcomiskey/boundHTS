@@ -10,7 +10,7 @@ Gamma_convolution(
   rate_list,
   z_values,
   point,
-  n_draws = 2000,
+  n_draws = NULL,
   n_sims = 100
 )
 }
@@ -55,7 +55,7 @@ z_values <- seq(0, 50, length.out = 1000)
   top = c("Total")     # aggregated level
 )
 
-## Point estimates for Beta parameters
+## Point estimates for Gamma parameters
 shape_list <- list(
   c(2, 5),
   c(7)

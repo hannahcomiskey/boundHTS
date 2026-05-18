@@ -7,7 +7,6 @@
 #'   distribution for each observation (rows correspond to draws, columns correspond to nodes).
 #' @param bottom_samps Array of bottom series samples for each element contributing to the
 #'   aggregate (dimensions: n_sims x n_draws x b).
-#' @param n_sims Number of simulations to generate per draw. Defaults to 100.
 #'
 #' @details
 #' This function computes a Monte Carlo approximation of the density of an
@@ -39,15 +38,15 @@
 #'   z = 0.5,
 #'   shape_matrix = shape_matrix,
 #'   rate_matrix = rate_matrix,
-#'   bottom_samps = bottom_samps,
-#'   n_sims = 100
+#'   bottom_samps = bottom_samps
 #' )
 #'
 #' @export
 
-Gamma_convolution_density <- function(z, shape_matrix, rate_matrix, bottom_samps, n_sims=100) {
-  N <- dim(bottom_samps)[2]
-  n_draws <- dim(bottom_samps)[1]
+Gamma_convolution_density <- function(z, shape_matrix, rate_matrix, bottom_samps) {
+  N <- dim(bottom_samps)[3]
+  n_draws <- dim(bottom_samps)[2]
+  n_sims <- dim(bottom_samps)[1]
   conv_pdf <- matrix(0, nrow = n_sims, ncol=n_draws)
 
   # Generate convolution

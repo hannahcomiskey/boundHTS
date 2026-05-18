@@ -20,6 +20,9 @@ check_Gamma_convolution_inputs <- function(groups, shape_list, rate_list, point,
   ## -----------------------------
   ## Global checks
   ## -----------------------------
+  if (!isTRUE(point) && !is.null(n_draws)) {
+    stop("n_draws must be NULL when point = FALSE. The function automatically uses the number of posterior draws.")
+  }
 
   if (!is.list(groups)) {
     stop("'groups' must be a list.")
@@ -45,12 +48,12 @@ check_Gamma_convolution_inputs <- function(groups, shape_list, rate_list, point,
     stop("'point' must be TRUE or FALSE.")
   }
 
-  if (!is.numeric(n_draws) ||
-      length(n_draws) != 1 ||
-      n_draws <= 0 ||
-      n_draws %% 1 != 0) {
-
-    stop("'n_draws' must be a positive integer.")
+  if (isTRUE(point)) {
+    if (!is.numeric(n_draws) || length(n_draws) != 1 ||
+        is.na(n_draws) || !is.finite(n_draws) ||
+        n_draws <= 0 || n_draws %% 1 != 0) {
+      stop("'n_draws' must be a positive integer.")
+    }
   }
 
   if (!is.numeric(n_sims) ||
