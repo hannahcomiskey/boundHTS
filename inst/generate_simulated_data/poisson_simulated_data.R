@@ -1,5 +1,4 @@
-# This code generates bottom level time series for the
-# simulation study from a Binomial stationary DGP
+# This code generates bottom level time series for the simulation study from a Poisson stationary DGP
 require(portes)
 require(MASS)
 require(tidyr)
@@ -7,7 +6,8 @@ require(tsibble)
 
 # Set up variables
 set.seed(1209)
-N <- 2000
+N <- 2500
+burnin <- 500
 M <- 4 # Number of bottom level
 
 # Set up coefficients of GLM ---------------------------------------------------
@@ -15,14 +15,21 @@ b0 <- runif(M, min=0.4, max = 0.5)
 b1 <- runif(M, min=0.4, max = 0.5)
 b2 <- runif(M, min=0.4, max = 0.5)
 
-# Set up x values
-x <- runif(N, min = 0, max = 1)
+phi <- 0.7
+sigma <- 0.1
 
-# Calculate estimated lambdas
-y <- lambda <- matrix(NA, nrow = N, ncol = M)
+log_lambda <- matrix(NA, N, M)
+lambda <- y <- matrix(NA, N, M)
+
 for(m in 1:M) {
-  lambda[,m] <- exp(b0[m] + b1[m]*x + b2[m]*x^2)
-  y[,m] <- rpois(N, lambda = lambda[,m])
+  log_lambda[1,m] <- rnorm(1, 0, 0.1)
+
+  for(t in 2:N) {
+    log_lambda[t,m] <- b0[m] + phi * log_lambda[t-1,m] + rnorm(1, 0, sigma)
+  }
+
+  lambda[,m] <- exp(log_lambda[,m])
+  y[,m] <- rpois(N, lambda[,m])
 }
 
 head(y)
@@ -32,10 +39,10 @@ hist(y[,4])
 # Simulate epsilon noise
 y_star <- eps <- matrix(NA, nrow = N, ncol = M)
 
-eps[,1] <- sample(c(-4:2), size = N, replace = TRUE, prob = c(0.1, 0.1, 0.2, 0.2, 0.2, 0.1, 0.1))
-eps[,2] <- sample(c(-2, -1, 0, 1), size = N, replace = TRUE, prob = c(0.2, 0.3, 0.4, 0.1))
-eps[,3] <- sample(c(-1, 0, 1, 2, 3), size = N, replace = TRUE, prob = c(0.2, 0.2, 0.2, 0.2, 0.2))
-eps[,4] <- sample(c(-3, -2, 0, 1, 2, 3, 4), size = N, replace = TRUE, prob = c(0.126, 0.235, 0.235, 0.031, 0.206, 0.031, 0.136))
+eps[,1] <- sample(c(-1, 0, 1), size = N, replace = TRUE, prob = c(0.4, 0.4, 0.2))
+eps[,2] <- sample(c(-1, 0, 1), size = N, replace = TRUE, prob = c(0.2, 0.7, 0.1))
+eps[,3] <- sample(c(-1, 0, 1), size = N, replace = TRUE, prob = c(0.33, 0.34, 0.33))
+eps[,4] <- sample(c(-1, 0, 1), size = N, replace = TRUE, prob = c(0.2, 0.5, 0.3))
 
 
 # Disturb bottom series
@@ -48,9 +55,9 @@ colnames(y_star) <- c("AA", "AB", "BA", "BB")
 Tot = apply(y, 1, sum)
 Tot = ifelse(Tot < 0, 0, Tot)
 
-# Put into a wide format (for export to csv)
+# Put into a wide format (for export)
 
-poisson_sim_data <-tibble(X=x,Tot, as.data.frame(y_star))
+poisson_sim_data <-tibble(Time = 1:c(N-burnin), Tot = Tot[-c(1:burnin)], as.data.frame(y_star[-c(1:burnin),]))
 
 usethis::use_data(poisson_sim_data, overwrite=TRUE)
 

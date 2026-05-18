@@ -1,0 +1,199 @@
+---
+title: "Simulated Gamma distribution example"
+output: 
+  rmarkdown::html_vignette:
+       toc: true
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Simulated Gamma distribution example}
+  %\usepackage[UTF-8]{inputenc}
+---
+
+## Overview
+
+```{r, setup, message = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(boundHTS)
+library(forecast)
+```
+
+
+This vignette demonstrates how to:
+
+1. Simulate correlated Gamma distributed time series at the bottom level of a hierarchy
+2. Aggregate these series to higher levels with additional variability
+3. Estimate Bayesian state–space models at each level using auto-arima.
+4. Perform rolling one-step-ahead forecasting efficiently by reusing compiled models
+
+The example is intentionally simple (two bottom-level series and one aggregate), but the workflow generalizes to larger hierarchies.
+
+### Hierarchical structure
+
+We consider a two-level hierarchy:
+
+- **Bottom level**: two correlated proportions (`AA`, `AB`)
+- **Top level**: their aggregate (`Total`).
+
+All series take values in (0, Inf) and are modelled using Gamma distributions. 
+
+
+## Step 1: Load simulated Beta distributed data 
+
+```{r}
+head(gamma_sim_data)
+
+```
+
+
+## Step 2: Generating model estimates
+
+We estimate separate state–space models for:
+
+- the **top-level series** (`Total`)
+- the **mid-level series** (`A`, `B`)
+- the **bottom-level series** (`AA`, `AB`, `BA`, `BB`)
+
+### 2.1 Run the models
+
+```{r}
+nsim <- 1000
+n_testyears <- nrow(gamma_sim_data) # withhold one year of data as an example
+
+# Split data into test and training
+train_idx <- which(gamma_sim_data$Time < n_testyears)
+training_data <- gamma_sim_data[train_idx, , drop = FALSE]
+  
+# Fit models
+mod_A_logit <- forecast::auto.arima(training_data$logit_A) 
+mod_AA_logit <- forecast::auto.arima(training_data$logit_AA) 
+mod_AB_logit <- forecast::auto.arima(training_data$logit_AB) 
+
+# Get one-step ahead predictions
+fc_A <- as_tibble(forecast::forecast(mod_A_logit, h = 1))
+fc_AA <- as_tibble(forecast::forecast(mod_AA_logit, h = 1))
+fc_AB <- as_tibble(forecast::forecast(mod_AB_logit, h = 1))
+  
+# Get variance of one-step ahead forecast
+sim_logit_A <- replicate(5000, simulate(mod_A_logit, nsim = 1, future = TRUE))
+var_beta_A  <- var(sim_logit_A)
+sim_logit_AA <- replicate(5000, simulate(mod_AA_logit, nsim = 1, future = TRUE))
+var_beta_AA  <- var(sim_logit_AA)
+sim_logit_AB <-  replicate(5000, simulate(mod_AB_logit, nsim = 1, future = TRUE))
+var_beta_AB  <- var(sim_logit_AB)
+  
+# Create results dataframes for point estimates and variance
+fc_A <- fc_A %>% mutate(Node = "A",
+                        Time = n_testyears,
+                        logit_var = var_beta_A) %>%
+  rename(logit_mean = `Point Forecast`)
+fc_AA <- fc_AA %>% mutate(Node = "AA",
+                          Time = n_testyears,
+                          logit_var = var_beta_AA)  %>%
+    rename(logit_mean = `Point Forecast`)
+fc_AB <- fc_AB %>% mutate(Node = "AB",
+                          Time = n_testyears,
+                          logit_var = var_beta_AB)  %>%
+  rename(logit_mean = `Point Forecast`)
+
+forecasts <- bind_rows(fc_A, fc_AA, fc_AB) %>%
+  mutate(Node = factor(Node, levels = c("AA", "AB", "A"))) %>%
+  arrange(Node)
+ 
+
+```
+
+
+### 2.3 Back-transform the proportions
+```{r}
+# Back transform to proportions
+prop_var <- inv_logit_delta(inv_logit(forecasts$logit_mean), forecasts$logit_var)
+
+forecasts <- forecasts %>%
+  mutate(proportion = inv_logit(forecasts$logit_mean),
+         prop_var = prop_var) %>%
+  select(Time, Node, logit_mean, logit_var, proportion, prop_var)
+
+```
+
+
+## Step 3: Coherent hierarchical forecasting
+
+We estimate a coherent top-series probability density function (PDF) using a convolution and weighted Beta distributions. As inputs into this process we use:
+- the **top-level series** (`A`) estimates
+- the **bottom-level series** (`AA`, `AB`) estimates
+- A fine grid over which the density exists
+- Bottom-series weights
+
+### Step 3.1: Generate probability density function via convolution
+We will generate PDFs for the withheld data points to validate our method. You can loop over all years of you wish by updating the code to do so.
+
+```{r}
+## Get Beta parameters
+beta_params_df <- get_beta_params(forecasts$proportion, forecasts$prop_var)
+beta_params_df$Node <- forecasts$Node
+  
+alpha_list <- list(beta_params_df %>% filter(Node %in% c("AA", "AB")) %>% pull(Alpha),
+                   beta_params_df %>% filter(Node %in% c("A")) %>% pull(Alpha))
+
+beta_list <- list(beta_params_df %>% filter(Node %in% c("AA", "AB")) %>% pull(Beta),
+                   beta_params_df %>% filter(Node %in% c("A")) %>% pull(Beta))
+
+# Set up weights
+weights_list <- list(c(0.75, 0.25), 1)
+
+# Set up expected values 
+mu_theory <- forecasts %>% 
+  filter(Node %in% c("A")) %>% 
+  arrange(Node) %>% 
+  pull(proportion)
+
+# Run convolution with tilting 
+res <- run_convolution_with_tilting(family = "Beta",
+                                groups =  list(Bottom = c("AA", "AB"), Top = "A"),
+                                point = TRUE,
+                                mu_theory = mu_theory,
+                                z_values = seq(0, 1, length.out=1000),
+                                alpha_list = alpha_list,
+                                beta_list = beta_list,
+                                weights_list = weights_list,
+                                n_draws = 500,
+                                n_sims = 50)
+
+```
+
+
+## Step 4: Visualise the tilted convoluted PDF and compare against the predictive mean
+
+The figure presents the predictive density formed by convolving the estimated bottom-level weighted Beta distributions. The resulting density is subsequently tilted so that its expectation matches the corresponding one-step-ahead predictive mean, ensuring coherence between the full predictive distribution and the point forecast.
+
+For a single time point:
+```{r, echo=FALSE, fig.width=9, fig.height=5, dpi=150}
+t_point <- 250
+
+obs_point <- beta_sim_data %>% 
+  filter(Time==t_point) %>%
+  mutate(Method="Observed data")
+
+forecasts_mean <- forecasts %>% 
+  dplyr::filter(Time == t_point) %>%
+  dplyr::select(Time, Node, proportion) %>%
+  tidyr::pivot_wider(names_from = Node, values_from = proportion) %>%
+  dplyr::mutate(Method = 'Predicted mean')
+
+exp_plot_df <- res$tilted_density[[1]] %>% mutate(Method= "Tilted density")
+
+
+ggplot2::ggplot() +
+  ggplot2::geom_line(data = exp_plot_df,
+                ggplot2::aes(x = Z, y = Density, colour=Method), linewidth = 1) +
+  ggplot2::geom_vline(data = forecasts_mean,
+                ggplot2::aes(xintercept = A, colour = Method), linewidth = 1) +
+  ggplot2::geom_vline(data = obs_point,
+                ggplot2::aes(xintercept = A, colour = Method), linewidth = 1) +
+  ggplot2::labs(x = "Proportion", y = "Density") +
+  ggplot2::theme_minimal(base_size = 14) +
+  ggplot2::theme(legend.position = "bottom")
+
+```
+
