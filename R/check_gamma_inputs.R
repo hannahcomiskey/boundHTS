@@ -15,7 +15,7 @@
 #' @keywords internal
 #' @noRd
 
-check_gamma_convolution_inputs <- function(groups, shape_list, rate_list, point, n_draws, n_sims, z_values) {
+check_Gamma_convolution_inputs <- function(groups, shape_list, rate_list, point, n_draws, n_sims, z_values) {
 
   ## -----------------------------
   ## Global checks

@@ -45,9 +45,9 @@
 #'
 #' @export
 
-Gamma_convolution_density <- function(z, shape_matrix, rate_matrix, n_sims=100) {
-  N <- dim(shape_matrix)[2]
-  n_draws <- dim(shape_matrix)[1]
+Gamma_convolution_density <- function(z, shape_matrix, rate_matrix, bottom_samps, n_sims=100) {
+  N <- dim(bottom_samps)[2]
+  n_draws <- dim(bottom_samps)[1]
   conv_pdf <- matrix(0, nrow = n_sims, ncol=n_draws)
 
   # Generate convolution

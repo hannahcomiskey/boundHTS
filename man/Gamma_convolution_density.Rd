@@ -4,7 +4,13 @@
 \alias{Gamma_convolution_density}
 \title{Monte Carlo Convolution Density for Gamma Distributions}
 \usage{
-Gamma_convolution_density(z, shape_matrix, rate_matrix, n_sims = 100)
+Gamma_convolution_density(
+  z,
+  shape_matrix,
+  rate_matrix,
+  bottom_samps,
+  n_sims = 100
+)
 }
 \arguments{
 \item{z}{Numeric evaluation point for the aggregated density.}
@@ -15,10 +21,10 @@ distribution for each observation (rows correspond to draws, columns correspond 
 \item{rate_matrix}{Matrix of rate parameters for the Gamma
 distribution for each observation (rows correspond to draws, columns correspond to nodes).}
 
-\item{n_sims}{Number of simulations to generate per draw. Defaults to 100.}
-
 \item{bottom_samps}{Array of bottom series samples for each element contributing to the
 aggregate (dimensions: n_sims x n_draws x b).}
+
+\item{n_sims}{Number of simulations to generate per draw. Defaults to 100.}
 }
 \value{
 A numeric value representing the estimated aggregated density evaluated at \code{z}.
