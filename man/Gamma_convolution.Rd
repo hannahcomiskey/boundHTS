@@ -8,10 +8,10 @@ Gamma_convolution(
   groups,
   shape_list,
   rate_list,
+  z_values,
   point,
   n_draws = 2000,
-  n_sims = 100,
-  z_values
+  n_sims = 100
 )
 }
 \arguments{
@@ -23,14 +23,14 @@ Beta distribution shape1/alpha parameters for each element at the level over eac
 \item{rate_list}{A list of point estimates (point=TRUE) or matrix (point=FALSE) of
 Beta distribution shape2/beta parameters for each element at the level over each of the J observations (J rows x  X columns). The length of the list is the number of tiers in the hierarchy.}
 
+\item{z_values}{Evaluation points.}
+
 \item{point}{A true/false indicator to denote whether you are using
 point estimates (point=TRUE) or posterior samples (point=FALSE) of the Beta parameters.}
 
 \item{n_draws}{The number of draws to extract from the four-parameter Beta distribution. Default to 2000.}
 
 \item{n_sims}{The number of simulations to extract from the four-parameter Beta distribution per draw. Default to 100.}
-
-\item{z_values}{Evaluation points.}
 }
 \value{
 A list of aggregate densities Z over a grid of values using a convolution of Beta distributions for each of the aggregated nodes in the hierarchy.
@@ -44,10 +44,10 @@ Convolution is only performed for hierarchy levels containing more than one node
 }
 \examples{
 ## ---------------------------------------------------------------
-## Example: Point-estimate Beta convolution
+## Example: Point-estimate Gamma convolution
 ## ---------------------------------------------------------------
-
 set.seed(123)
+z_values <- seq(0, 50, length.out = 1000)
 
 ## Define a simple two-level hierarchy
  groups <- list(
@@ -72,6 +72,7 @@ dens <- Gamma_convolution(
   groups = groups,
   shape_list = shape_list,
   rate_list = rate_list,
+  z_values = z_values,
   point = TRUE,
   n_draws = 500,
   n_sims = 50
@@ -81,7 +82,7 @@ dens <- Gamma_convolution(
 head(dens[[1]])
 
 ## ---------------------------------------------------------------
-## Example: Posterior-sample Beta convolution
+## Example: Posterior-sample Gamma convolution
 ## ---------------------------------------------------------------
 z_values <- seq(0, 50, length.out = 1000)
 
@@ -107,10 +108,10 @@ dens_post <- Gamma_convolution(
   groups = groups,
   shape_list = shape_list_post,
   rate_list = rate_list_post,
+  z_values = z_values,
   point = FALSE,
   n_draws = J,
-  n_sims = 50,
-  z_values = z_values
+  n_sims = 50
 )
 
 head(dens_post[[1]])

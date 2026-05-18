@@ -16,10 +16,10 @@
 #' @return A list of aggregate densities Z over a grid of values using a convolution of Beta distributions for each of the aggregated nodes in the hierarchy.
 #' @examples
 #' ## ---------------------------------------------------------------
-#' ## Example: Point-estimate Beta convolution
+#' ## Example: Point-estimate Gamma convolution
 #' ## ---------------------------------------------------------------
-#'
 #' set.seed(123)
+#' z_values <- seq(0, 50, length.out = 1000)
 #'
 #' ## Define a simple two-level hierarchy
 #'  groups <- list(
@@ -44,6 +44,7 @@
 #'   groups = groups,
 #'   shape_list = shape_list,
 #'   rate_list = rate_list,
+#'   z_values = z_values,
 #'   point = TRUE,
 #'   n_draws = 500,
 #'   n_sims = 50
@@ -53,7 +54,7 @@
 #' head(dens[[1]])
 #'
 #' ## ---------------------------------------------------------------
-#' ## Example: Posterior-sample Beta convolution
+#' ## Example: Posterior-sample Gamma convolution
 #' ## ---------------------------------------------------------------
 #' z_values <- seq(0, 50, length.out = 1000)
 #'
@@ -79,10 +80,10 @@
 #'   groups = groups,
 #'   shape_list = shape_list_post,
 #'   rate_list = rate_list_post,
+#'   z_values = z_values,
 #'   point = FALSE,
 #'   n_draws = J,
-#'   n_sims = 50,
-#'   z_values = z_values
+#'   n_sims = 50
 #' )
 #'
 #' head(dens_post[[1]])
@@ -91,10 +92,10 @@
 Gamma_convolution <- function(groups,
                              shape_list,
                              rate_list,
+                             z_values,
                              point,
                              n_draws = 2000,
-                             n_sims = 100,
-                             z_values) {
+                             n_sims = 100) {
 
 
   ## Input checks
