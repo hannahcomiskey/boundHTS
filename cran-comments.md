@@ -11,14 +11,15 @@ will update accordingly.
 namespace calls (ExtDist::).
 The function `dBeta_4p` has been removed. Therefore, no code has been copied or 
 modified from ExtDist, and its authors are not listed in Authors@R.
-5. Wrapper functions (`Poisson_convolution`, `Beta_convolution`, 
+5. Wrapper functions (`run_convolution`, `run_convolution_with_tilting`, `Poisson_convolution`, `Beta_convolution`, 
 `ZIB_convolution`, and `ZOIB_convolution`) added to streamline user experience 
 for generating convolutions.
 6. Vignettes are updated to use these new wrapper functions. 
 
 > devtools::check(cran=T)
-── R CMD check results ──────────────────────────────────────────────────────────────────────── boundHTS 1.0.2 ────
-Duration: 1m 1.6s
+── R CMD check results ────────────────────────────────────────────────────────────────────────────────────────── boundHTS 1.0.2 ────
+Duration: 2m 51.8s
+0 errors ✔ | 0 warnings ✔ | 0 notes ✔
 
 > devtools::check_mac_release()
 Status: OK

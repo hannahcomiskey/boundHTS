@@ -1,10 +1,10 @@
 #' Wrapper for generating convolution
 #'
-#' @param family The name of the probability distribution used in the convolution. Must be a string of one of these options: c("Poisson", "NB", "Beta", "ZIB", "ZOIB").
+#' @param family The name of the probability distribution used in the convolution. Must be a string of one of these options: c("Poisson", "NB", "Beta", "ZIB", "ZOIB", "Gamma").
 #' @param groups List of nodes at each level in series. The length of the list is the number of tiers in the hierarchy.
 #' @param point A true/false indicator to denote whether you are using point estimates (point=TRUE) or posterior samples (point=FALSE) of the Poisson parameters.
 #' @param z_values A grid of evaluation points. If the family is in the Beta-family, this can be left NULL and it defaults to a vector of length 1000 over the unit interval.
-#' @param ... Parameters specific to the parameter family. See "Poisson_convolution", "Beta_convolution", "ZIB_convolution", and "ZOIB_convolution" for family-specific details.
+#' @param ... Parameters specific to the parameter family. See "Poisson_convolution", "Beta_convolution", "ZIB_convolution", "ZOIB_convolution" and "Gamma_convolution" for family-specific details.
 #' @details
 #' A wrapper function for calculating Monte Carlo estimates for the aggregate
 #' density Z using point estimates or posterior samples of lambda.
@@ -135,7 +135,7 @@ run_convolution <- function(family,
 
   args <- list(...)
 
-  if (!family %in% c("Poisson", "Beta", "ZIB", "ZOIB")) {
+  if (!family %in% c("Poisson", "Beta", "ZIB", "ZOIB", "Gamma")) {
     stop(
       "Family name not recognised. Please refer to help file for naming.",
       call. = FALSE
@@ -187,6 +187,16 @@ run_convolution <- function(family,
       zoi_list = args$zoi_list,
       coi_list = args$coi_list,
       weights_list = args$weights_list,
+      point = point,
+      n_draws = default_settings(args$n_draws, 2000),
+      n_sims = default_settings(args$n_sims, 100),
+      z_values = z_values
+    )
+  } else if (family == "Gamma") {
+    dens_list <- Gamma_convolution(
+      groups = groups,
+      shape_list = args$shape_list,
+      rate_list = args$rate_list,
       point = point,
       n_draws = default_settings(args$n_draws, 2000),
       n_sims = default_settings(args$n_sims, 100),

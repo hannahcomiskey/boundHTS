@@ -7,7 +7,7 @@
 run_convolution(family, groups, point, z_values, ...)
 }
 \arguments{
-\item{family}{The name of the probability distribution used in the convolution. Must be a string of one of these options: c("Poisson", "NB", "Beta", "ZIB", "ZOIB").}
+\item{family}{The name of the probability distribution used in the convolution. Must be a string of one of these options: c("Poisson", "NB", "Beta", "ZIB", "ZOIB", "Gamma").}
 
 \item{groups}{List of nodes at each level in series. The length of the list is the number of tiers in the hierarchy.}
 
@@ -15,7 +15,7 @@ run_convolution(family, groups, point, z_values, ...)
 
 \item{z_values}{A grid of evaluation points. If the family is in the Beta-family, this can be left NULL and it defaults to a vector of length 1000 over the unit interval.}
 
-\item{...}{Parameters specific to the parameter family. See "Poisson_convolution", "Beta_convolution", "ZIB_convolution", and "ZOIB_convolution" for family-specific details.}
+\item{...}{Parameters specific to the parameter family. See "Poisson_convolution", "Beta_convolution", "ZIB_convolution", "ZOIB_convolution" and "Gamma_convolution" for family-specific details.}
 }
 \value{
 The aggregate density Z over a grid of values.

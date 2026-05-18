@@ -21,7 +21,7 @@ distribution for each observation.}
 \item{beta_point}{Point estimates of beta (shape2) parameters for the Beta
 distribution for each observation.}
 
-\item{weighted_samps}{Array of weighted samples for each element in the
+\item{weighted_samps}{Array of weighted samples for each element contributing to the
 aggregate (dimensions: n_sims x n_draws x b).}
 
 \item{weights}{Numeric vector of weights used to combine the components

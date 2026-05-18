@@ -5,7 +5,7 @@
 #'   distribution for each observation.
 #' @param beta_point Point estimates of beta (shape2) parameters for the Beta
 #'   distribution for each observation.
-#' @param weighted_samps Array of weighted samples for each element in the
+#' @param weighted_samps Array of weighted samples for each element contributing to the
 #'   aggregate (dimensions: n_sims x n_draws x b).
 #' @param weights Numeric vector of weights used to combine the components
 #'   into the aggregated density \eqn{Z} (length b).
