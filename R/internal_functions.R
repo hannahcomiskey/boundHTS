@@ -25,6 +25,11 @@ safe_exp <- function(x) {
 
 #' To handle ... in functions
 #'
+#' @description
+#' Returns `y` if `x` is `NULL`, otherwise returns `x`.
+#'
+#' @rdname null-coalesce
+#' @aliases %||%
 #' @param x vector of values
 #' @param y vector of values
 #' @export

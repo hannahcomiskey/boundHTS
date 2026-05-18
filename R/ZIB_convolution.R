@@ -71,6 +71,7 @@
 #' ## ---------------------------------------------------------------
 #'
 #'J <- 500
+#'
 #'## Define a simple two-level hierarchy
 #'groups <- list(Bottom = c("A", "B"),   # bottom level
 #'Top = c("Total")     # aggregated level

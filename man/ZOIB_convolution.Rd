@@ -114,6 +114,11 @@ head(dens[[1]])
 
 J <- 100
 
+groups <- list(
+  bottom = c("A", "B"),   # bottom level
+  top = c("Total")     # aggregated level
+)
+
 alpha_list_post <- list(
 cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
 as.matrix(rgamma(J, shape = 2, rate = 1))
@@ -138,7 +143,7 @@ weights_list <- list(
 )
 
 dens_post <- ZOIB_convolution(
-  groups = list(c("A", "B")),
+  groups = groups,
   alpha_list = alpha_list_post,
   beta_list = beta_list_post,
   zoi_list = zoi_list_post,

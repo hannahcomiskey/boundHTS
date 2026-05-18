@@ -12,5 +12,5 @@ x \%||\% y
 \item{y}{vector of values}
 }
 \description{
-To handle ... in functions
+Returns \code{y} if \code{x} is \code{NULL}, otherwise returns \code{x}.
 }

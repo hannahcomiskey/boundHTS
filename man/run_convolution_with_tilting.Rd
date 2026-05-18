@@ -98,6 +98,8 @@ head(res$base_density[[1]])
 ## Example: Posterior-sample zero-inflated Beta convolution
 ## ---------------------------------------------------------------
 
+J <- 100
+
 alpha_list_post <- list(cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
                        as.matrix(rgamma(J, shape = 2, rate = 1)))
 
@@ -120,7 +122,7 @@ res <- run_convolution_with_tilting(family = "ZOIB",
                                zoi_list = zoi_list_post,
                                coi_list = coi_list_post,
                                weights_list = weights_list,
-                               n_draws = 500,
+                               n_draws = J,
                                n_sims = 50)
 
 }
