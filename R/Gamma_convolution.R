@@ -1,85 +1,95 @@
 #' Parallelized normalised predictive density over vector z
 #'
-#' @param groups List of nodes at each level in series. The list must go from bottom nodes to top nodes, and have each element of the list named. The length of the list is the number of tiers in the hierarchy.
-#' @param shape_list A list of point estimates (point=TRUE) or matrix (point=FALSE) of
-#' Beta distribution shape1/alpha parameters for each element at the level over each of the J observations (J rows x  X columns). The length of the list is the number of tiers in the hierarchy.
-#' @param rate_list A list of point estimates (point=TRUE) or matrix (point=FALSE) of
-#' Beta distribution shape2/beta parameters for each element at the level over each of the J observations (J rows x  X columns). The length of the list is the number of tiers in the hierarchy.
-#' @param point A true/false indicator to denote whether you are using
-#' point estimates (point=TRUE) or posterior samples (point=FALSE) of the Beta parameters.
-#' @param n_draws The number of draws to extract from the four-parameter Beta distribution. Default to 2000.
-#' @param n_sims The number of simulations to extract from the four-parameter Beta distribution per draw. Default to 100.
-#' @param z_values Evaluation points.
-#' @details
-#' A wrapper function for calculating Monte Carlo estimates for the aggregate density Z using the Beta distribution.
-#' Convolution is only performed for hierarchy levels containing more than one node. Levels with a single node are skipped, since no aggregation is required.
-#' @return A list of aggregate densities Z over a grid of values using a convolution of Beta distributions for each of the aggregated nodes in the hierarchy.
+#' @param S Binary summation matrix with rows corresponding to all hierarchy nodes and columns corresponding to bottom-level nodes.
+#' @param shape_mat Numeric vector (point = TRUE) or matrix (point = FALSE) of Gamma shape parameters for all hierarchy nodes.
+#' @param rate_mat Numeric vector (point = TRUE) or matrix (point = FALSE) of Gamma rate parameters for all hierarchy nodes.
+#' @param point Logical. If TRUE uses point estimates, otherwise posterior draws.
+#' @param n_draws Number of posterior draws (if applicable).
+#' @param n_sims Number of Monte Carlo simulations per draw.
+#' @param z_values Evaluation grid.
+#'
+#' @return List of aggregated density estimates.
 #' @examples
-#' ## ---------------------------------------------------------------
+#' ## ---------------------------------------------------------
 #' ## Example: Point-estimate Gamma convolution
-#' ## ---------------------------------------------------------------
+#' ## ---------------------------------------------------------
+#'
 #' set.seed(123)
-#' z_values <- seq(0, 50, length.out = 1000)
 #'
-#' ## Define a simple two-level hierarchy
-#'  groups <- list(
-#'   bottom = c("AA", "AB"),   # bottom level
-#'   top = c("Total")     # aggregated level
+#' S <- rbind(
+#'   Total = c(1, 1, 1, 1),
+#'   A     = c(1, 1, 0, 0),
+#'   B     = c(0, 0, 1, 1),
+#'   A1    = c(1, 0, 0, 0),
+#'   A2    = c(0, 1, 0, 0),
+#'   B1    = c(0, 0, 1, 0),
+#'   B2    = c(0, 0, 0, 1)
+#' )
+#' colnames(S) <- c("A1", "A2", "B1", "B2")
+#' shape_mat <- c(
+#'   Total = 8,
+#'   A = 5,
+#'   B = 6,
+#'   A1 = 2,
+#'   A2 = 4,
+#'   B1 = 3,
+#'   B2 = 5
 #' )
 #'
-#' ## Point estimates for Gamma parameters
-#' shape_list <- list(
-#'   c(2, 5),
-#'   c(7)
+#' rate_mat <- c(
+#'   Total = 4,
+#'   A = 3,
+#'   B = 2,
+#'   A1 = 6,
+#'   A2 = 5,
+#'   B1 = 7,
+#'   B2 = 4
 #' )
 #'
-#' rate_list <- list(
-#'   c(6, 3),
-#'   c(4)
-#' )
+#' z_values <- seq(0, 50, length.out = 500)
 #'
-#'
-#' ## Estimate densities
 #' dens <- Gamma_convolution(
-#'   groups = groups,
-#'   shape_list = shape_list,
-#'   rate_list = rate_list,
+#'   S = S,
+#'   shape_mat = shape_mat,
+#'   rate_mat = rate_mat,
 #'   z_values = z_values,
 #'   point = TRUE,
-#'   n_draws = 500,
 #'   n_sims = 50
 #' )
 #'
-#' ## Inspect first density estimate
 #' head(dens[[1]])
 #'
-#' ## ---------------------------------------------------------------
-#' ## Example: Posterior-sample Gamma convolution
-#' ## ---------------------------------------------------------------
-#' z_values <- seq(0, 50, length.out = 1000)
 #'
-#' groups <- list(
-#'   bottom = c("A", "B"),   # bottom level
-#'   top = c("Total")     # aggregated level
-#' )
+#' ## ---------------------------------------------------------
+#' ## Example: Posterior-sample Gamma convolution
+#' ## ---------------------------------------------------------
 #'
 #' J <- 100
 #'
-#' shape_list_post <- list(
-#' cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
-#' as.matrix(rgamma(J, shape = 2, rate = 1))
+#' shape_post <- cbind(
+#'   Total = rgamma(J, 8, 1),
+#'   A = rgamma(J, 5, 1),
+#'   B = rgamma(J, 6, 1),
+#'   A1 = rgamma(J, 2, 1),
+#'   A2 = rgamma(J, 4, 1),
+#'   B1 = rgamma(J, 3, 1),
+#'   B2 = rgamma(J, 5, 1)
 #' )
 #'
-#' rate_list_post <- list(
-#' cbind(rgamma(J, shape = 6, rate = 1), rgamma(J, shape = 3, rate = 1)),
-#' as.matrix(rgamma(J, shape = 2, rate = 1))
+#' rate_post <- cbind(
+#'   Total = rgamma(J, 4, 1),
+#'   A = rgamma(J, 3, 1),
+#'   B = rgamma(J, 2, 1),
+#'   A1 = rgamma(J, 6, 1),
+#'   A2 = rgamma(J, 5, 1),
+#'   B1 = rgamma(J, 7, 1),
+#'   B2 = rgamma(J, 4, 1)
 #' )
-#'
 #'
 #' dens_post <- Gamma_convolution(
-#'   groups = groups,
-#'   shape_list = shape_list_post,
-#'   rate_list = rate_list_post,
+#'   S = S,
+#'   shape_mat = shape_post,
+#'   rate_mat = rate_post,
 #'   z_values = z_values,
 #'   point = FALSE,
 #'   n_draws = J,
@@ -87,104 +97,127 @@
 #' )
 #'
 #' head(dens_post[[1]])
+#'
 #' @export
 
-Gamma_convolution <- function(groups,
-                             shape_list,
-                             rate_list,
-                             z_values,
-                             point,
-                             n_draws = NULL,
-                             n_sims = 100) {
+Gamma_convolution <- function(S,shape_mat,rate_mat, point,
+                              n_draws = NULL, n_sims = 100, z_values) {
 
-
+  ## --------------------------------------------------------
   ## Input checks
+  ## --------------------------------------------------------
+
   check_Gamma_convolution_inputs(
-    groups = groups,
-    shape_list = shape_list,
-    rate_list = rate_list,
+    S = S,
+    shape_mat = shape_mat,
+    rate_mat = rate_mat,
     point = point,
     n_draws = n_draws,
     n_sims = n_sims,
     z_values = z_values
   )
 
-  valid_idx <- which(vapply(groups, length, integer(1)) > 1L)
+  ## --------------------------------------------------------
+  ## Hierarchy structure
+  ## --------------------------------------------------------
 
-  dens_list <- list()
+  bottom_nodes <- colnames(S)
 
-  for (i in seq_along(valid_idx)) {
+  agg_nodes <- rownames(S)[
+    rowSums(S) > 1
+  ]
 
-    x <- valid_idx[i]  # actual level index
-    node_names  <- groups[[x]]
+  dens_list <- vector("list", length(agg_nodes))
 
-    ## ---------------------------------------------------------
-    ## Safe parent naming
-    ## ---------------------------------------------------------
-    parent_node <- if (!is.null(names(groups))) {
-      names(groups)[x+1]
-    } else {
-      paste0("Level_", x)
-    }
+  ## --------------------------------------------------------
+  ## Loop over aggregated nodes
+  ## --------------------------------------------------------
 
-    ## ---------------------------------------------------------
-    ## Gamma distribution parameters
-    ## ---------------------------------------------------------
-    shape_input <- shape_list[[x]]
-    rate_input  <- rate_list[[x]]
+  for (i in seq_along(agg_nodes)) {
+
+    parent_node <- agg_nodes[i]
+
+    node_idx <- which(S[parent_node, ] == 1)
+
+    node_names <- bottom_nodes[node_idx]
+
+    ## ------------------------------------------------------
+    ## Extract parameters
+    ## ------------------------------------------------------
 
     if (isTRUE(point)) {
 
+      shape_input <- shape_mat[node_names]
+      rate_input  <- rate_mat[node_names]
+
       n_draws <- ifelse(is.null(n_draws), 2000, n_draws)
 
-      ## Bottom samples
-      bottom_samps <- array(
-        NA,
-        dim = c(n_sims, n_draws, length(node_names))
-      )
+    } else {
+
+      shape_input <- shape_mat[, node_names, drop = FALSE]
+      rate_input  <- rate_mat[, node_names, drop = FALSE]
+
+      n_draws <- nrow(shape_mat)
+    }
+
+    ## ------------------------------------------------------
+    ## Simulate bottom-level Gamma samples
+    ## ------------------------------------------------------
+
+    bottom_samps <- array(NA, dim = c(n_sims, n_draws, length(node_names)))
+
+    if (isTRUE(point)) {
 
       for (m in seq_along(node_names)) {
 
-        bottom_samps[, , m] <- matrix(
-          stats::rgamma(
-            n = n_sims * n_draws,
-            shape = shape_input[,m],
-            rate = rate_input[,m]),
-          nrow = n_sims,
-          ncol = n_draws
-        )
+        bottom_samps[, , m] <- matrix( stats::rgamma(n_sims * n_draws,
+                                                     shape = shape_input[m],
+                                                     rate = rate_input[m]),
+                                       nrow = n_sims, ncol = n_draws)
       }
+    } else {
+
+      for (m in seq_along(node_names)) {
+        for (d in seq_len(n_draws)) {
+
+          bottom_samps[, d, m] <- stats::rgamma(n_sims,
+                                                shape = shape_input[d, m],
+                                                rate = rate_input[d, m])
+        }
+      }
+    }
+
+    ## ------------------------------------------------------
+    ## Density estimation
+    ## ------------------------------------------------------
+
+    if (isTRUE(point)) {
 
       dens <- Gamma_convolution_density_point_parallel(
         z_values = z_values,
         shape_point = shape_input,
         rate_point = rate_input,
-        bottom_samps = bottom_samps)
+        bottom_samps = bottom_samps
+      )
 
     } else {
-
-      n_draws <- nrow(shape_input)
-
-      ## Bottom samples
-      bottom_samps <- array(NA, dim = c(n_sims, n_draws, length(node_names)))
-
-      for (m in 1:length(node_names)) {
-        for(s in 1:n_draws) {
-          bottom_samps[, s, m] <- stats::rgamma(n = n_sims,
-                                                shape = shape_input[s,m],
-                                                rate = rate_input[s,m])
-        }
-      }
 
       dens <- Gamma_convolution_density_parallel(
         z_values = z_values,
         shape_matrix = shape_input,
         rate_matrix = rate_input,
-        bottom_samps = bottom_samps)
+        bottom_samps = bottom_samps
+      )
     }
-    dens_df <- tibble::tibble(Node = parent_node, Z = z_values, Density = dens)
-    dens_list[[x]] <- dens_df
+
+    dens_list[[i]] <- tibble::tibble(
+      Node = parent_node,
+      Z = z_values,
+      Density = dens
+    )
   }
+
+  names(dens_list) <- agg_nodes
 
   return(dens_list)
 }

@@ -5,109 +5,117 @@
 \title{Parallelized normalised predictive density over vector z}
 \usage{
 Gamma_convolution(
-  groups,
-  shape_list,
-  rate_list,
-  z_values,
+  S,
+  shape_mat,
+  rate_mat,
   point,
   n_draws = NULL,
-  n_sims = 100
+  n_sims = 100,
+  z_values
 )
 }
 \arguments{
-\item{groups}{List of nodes at each level in series. The list must go from bottom nodes to top nodes, and have each element of the list named. The length of the list is the number of tiers in the hierarchy.}
+\item{S}{Binary summation matrix with rows corresponding to all hierarchy nodes and columns corresponding to bottom-level nodes.}
 
-\item{shape_list}{A list of point estimates (point=TRUE) or matrix (point=FALSE) of
-Beta distribution shape1/alpha parameters for each element at the level over each of the J observations (J rows x  X columns). The length of the list is the number of tiers in the hierarchy.}
+\item{shape_mat}{Numeric vector (point = TRUE) or matrix (point = FALSE) of Gamma shape parameters for all hierarchy nodes.}
 
-\item{rate_list}{A list of point estimates (point=TRUE) or matrix (point=FALSE) of
-Beta distribution shape2/beta parameters for each element at the level over each of the J observations (J rows x  X columns). The length of the list is the number of tiers in the hierarchy.}
+\item{rate_mat}{Numeric vector (point = TRUE) or matrix (point = FALSE) of Gamma rate parameters for all hierarchy nodes.}
 
-\item{z_values}{Evaluation points.}
+\item{point}{Logical. If TRUE uses point estimates, otherwise posterior draws.}
 
-\item{point}{A true/false indicator to denote whether you are using
-point estimates (point=TRUE) or posterior samples (point=FALSE) of the Beta parameters.}
+\item{n_draws}{Number of posterior draws (if applicable).}
 
-\item{n_draws}{The number of draws to extract from the four-parameter Beta distribution. Default to 2000.}
+\item{n_sims}{Number of Monte Carlo simulations per draw.}
 
-\item{n_sims}{The number of simulations to extract from the four-parameter Beta distribution per draw. Default to 100.}
+\item{z_values}{Evaluation grid.}
 }
 \value{
-A list of aggregate densities Z over a grid of values using a convolution of Beta distributions for each of the aggregated nodes in the hierarchy.
+List of aggregated density estimates.
 }
 \description{
 Parallelized normalised predictive density over vector z
 }
-\details{
-A wrapper function for calculating Monte Carlo estimates for the aggregate density Z using the Beta distribution.
-Convolution is only performed for hierarchy levels containing more than one node. Levels with a single node are skipped, since no aggregation is required.
-}
 \examples{
-## ---------------------------------------------------------------
+## ---------------------------------------------------------
 ## Example: Point-estimate Gamma convolution
-## ---------------------------------------------------------------
+## ---------------------------------------------------------
+
 set.seed(123)
-z_values <- seq(0, 50, length.out = 1000)
 
-## Define a simple two-level hierarchy
- groups <- list(
-  bottom = c("AA", "AB"),   # bottom level
-  top = c("Total")     # aggregated level
+S <- rbind(
+  Total = c(1, 1, 1, 1),
+  A     = c(1, 1, 0, 0),
+  B     = c(0, 0, 1, 1),
+  A1    = c(1, 0, 0, 0),
+  A2    = c(0, 1, 0, 0),
+  B1    = c(0, 0, 1, 0),
+  B2    = c(0, 0, 0, 1)
 )
 
-## Point estimates for Gamma parameters
-shape_list <- list(
-  c(2, 5),
-  c(7)
+shape_mat <- c(
+  Total = 8,
+  A = 5,
+  B = 6,
+  A1 = 2,
+  A2 = 4,
+  B1 = 3,
+  B2 = 5
 )
 
-rate_list <- list(
-  c(6, 3),
-  c(4)
+rate_mat <- c(
+  Total = 4,
+  A = 3,
+  B = 2,
+  A1 = 6,
+  A2 = 5,
+  B1 = 7,
+  B2 = 4
 )
 
+z_values <- seq(0, 50, length.out = 500)
 
-## Estimate densities
 dens <- Gamma_convolution(
-  groups = groups,
-  shape_list = shape_list,
-  rate_list = rate_list,
+  S = S,
+  shape_mat = shape_mat,
+  rate_mat = rate_mat,
   z_values = z_values,
   point = TRUE,
-  n_draws = 500,
   n_sims = 50
 )
 
-## Inspect first density estimate
 head(dens[[1]])
 
-## ---------------------------------------------------------------
-## Example: Posterior-sample Gamma convolution
-## ---------------------------------------------------------------
-z_values <- seq(0, 50, length.out = 1000)
 
-groups <- list(
-  bottom = c("A", "B"),   # bottom level
-  top = c("Total")     # aggregated level
-)
+## ---------------------------------------------------------
+## Example: Posterior-sample Gamma convolution
+## ---------------------------------------------------------
 
 J <- 100
 
-shape_list_post <- list(
-cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
-as.matrix(rgamma(J, shape = 2, rate = 1))
+shape_post <- cbind(
+  Total = rgamma(J, 8, 1),
+  A = rgamma(J, 5, 1),
+  B = rgamma(J, 6, 1),
+  A1 = rgamma(J, 2, 1),
+  A2 = rgamma(J, 4, 1),
+  B1 = rgamma(J, 3, 1),
+  B2 = rgamma(J, 5, 1)
 )
 
-rate_list_post <- list(
-cbind(rgamma(J, shape = 6, rate = 1), rgamma(J, shape = 3, rate = 1)),
-as.matrix(rgamma(J, shape = 2, rate = 1))
+rate_post <- cbind(
+  Total = rgamma(J, 4, 1),
+  A = rgamma(J, 3, 1),
+  B = rgamma(J, 2, 1),
+  A1 = rgamma(J, 6, 1),
+  A2 = rgamma(J, 5, 1),
+  B1 = rgamma(J, 7, 1),
+  B2 = rgamma(J, 4, 1)
 )
-
 
 dens_post <- Gamma_convolution(
-  groups = groups,
-  shape_list = shape_list_post,
-  rate_list = rate_list_post,
+  S = S,
+  shape_mat = shape_post,
+  rate_mat = rate_post,
   z_values = z_values,
   point = FALSE,
   n_draws = J,
@@ -115,4 +123,5 @@ dens_post <- Gamma_convolution(
 )
 
 head(dens_post[[1]])
+
 }
