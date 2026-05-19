@@ -1,0 +1,139 @@
+#' Construct Hierarchical Aggregation Weight Matrix
+#'
+#' @description
+#' Builds a hierarchical aggregation weight matrix \eqn{W} from a binary
+#' summation matrix \eqn{S} and a list of local parent-child aggregation
+#' weights.
+#'
+#' The summation matrix \eqn{S} defines the hierarchy topology, while
+#' `weights_list` specifies the aggregation weights for each parent node.
+#'
+#' The resulting matrix \eqn{W} contains the induced bottom-level aggregation
+#' weights for every node in the hierarchy.
+#'
+#' @param S A binary summation matrix with rows corresponding to all nodes
+#' in the hierarchy and columns corresponding to bottom-level nodes.
+#' Entries should be 0 or 1.
+#'
+#' @param weights_list A named list of numeric vectors containing
+#' parent-child aggregation weights.
+#'
+#' Each list element name must correspond to a parent node in `rownames(S)`.
+#' The weights must sum to 1.
+#'
+#' @details
+#' Bottom-level nodes are automatically assigned identity weights.
+#'
+#' For each parent node, the function recursively propagates aggregation
+#' weights through the hierarchy to produce bottom-level aggregation weights.
+#'
+#' The returned matrix \eqn{W} satisfies:
+#'
+#' \deqn{
+#' y = Wb
+#' }
+#'
+#' where:
+#'
+#' \itemize{
+#' \item \eqn{b} is the vector of bottom-level series,
+#' \item \eqn{y} is the vector of all hierarchy nodes,
+#' \item \eqn{W} contains aggregation weights mapping bottom-level series
+#' to all hierarchy nodes.
+#' }
+#'
+#' @return
+#' A numeric matrix of the same dimension as `S` containing induced
+#' aggregation weights.
+#'
+#' @examples
+#' ## ---------------------------------------------------------
+#' ## Example hierarchy
+#' ##
+#' ##          Total
+#' ##         /     \
+#' ##        A       B
+#' ##      /  \    /  \
+#' ##    A1   A2 B1   B2
+#' ## ---------------------------------------------------------
+#'
+#' S <- rbind(
+#'   Total = c(1, 1, 1, 1),
+#'   A     = c(1, 1, 0, 0),
+#'   B     = c(0, 0, 1, 1),
+#'   A1    = c(1, 0, 0, 0),
+#'   A2    = c(0, 1, 0, 0),
+#'   B1    = c(0, 0, 1, 0),
+#'   B2    = c(0, 0, 0, 1)
+#' )
+#'
+#' weights_list <- list(
+#'   Total = c(A = 0.2, B = 0.8),
+#'   A = c(A1 = 0.4, A2 = 0.6),
+#'   B = c(B1 = 0.3, B2 = 0.7)
+#' )
+#'
+#' build_weight_matrix(S, weights_list)
+#'
+#' @export
+
+build_weight_matrix <- function(S, weights_list) {
+
+  ## ---------------------------------------------------------
+  ## Input checks
+  ## ---------------------------------------------------------
+
+  if (!is.matrix(S)) {
+    stop("'S' must be a matrix.")
+  }
+
+  if (is.null(rownames(S))) {
+    stop("'S' must contain row names.")
+  }
+
+  if (is.null(colnames(S))) {
+    stop("'S' must contain column names.")
+  }
+
+  if (!all(S %in% c(0, 1))) {
+    stop("'S' must be binary.")
+  }
+
+  if (!is.list(weights_list)) {
+    stop("'weights_list' must be a list.")
+  }
+
+  node_names <- rownames(S)
+  bottom_names <- colnames(S)
+
+  ## ---------------------------------------------------------
+  ## Initialise W
+  ## ---------------------------------------------------------
+
+  W <- matrix(0, nrow = nrow(S), ncol = ncol(S), dimnames = dimnames(S))
+
+  ## ---------------------------------------------------------
+  ## Bottom-level identity rows
+  ## ---------------------------------------------------------
+
+  for (b in bottom_names) {
+
+    row_idx <- which(node_names == b)
+    col_idx <- which(bottom_names == b)
+
+    W[row_idx, col_idx] <- 1
+  }
+
+  ## ---------------------------------------------------------
+  ## Compute all non-bottom nodes
+  ## ---------------------------------------------------------
+
+  non_bottom <- setdiff(node_names, bottom_names)
+
+  for (node in non_bottom) {
+    row_idx <- which(node_names == node)
+    W[row_idx, ] <- propagate_weights(weights_list = weights_list, node = node, W = W, bottom_names = bottom_names)
+  }
+
+  return(W)
+}

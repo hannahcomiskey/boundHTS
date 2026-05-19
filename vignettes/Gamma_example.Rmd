@@ -16,6 +16,12 @@ vignette: >
 library(tidyverse)
 library(boundHTS)
 library(forecast)
+
+get_gamma_params <- function(mean, var) {
+  alpha <- (mean^2)/var
+  beta <- mean/var
+  return(data.frame(Alpha = alpha, Beta = beta))
+}
 ```
 
 
@@ -63,81 +69,56 @@ n_testyears <- nrow(gamma_sim_data) # withhold one year of data as an example
 # Split data into test and training
 train_idx <- which(gamma_sim_data$Time < n_testyears)
 training_data <- gamma_sim_data[train_idx, , drop = FALSE]
-  
-# Fit models
-mod_A_logit <- forecast::auto.arima(training_data$logit_A) 
-mod_AA_logit <- forecast::auto.arima(training_data$logit_AA) 
-mod_AB_logit <- forecast::auto.arima(training_data$logit_AB) 
+nodes <- colnames(training_data)[-1]
+forecasts <- data.frame()
 
-# Get one-step ahead predictions
-fc_A <- as_tibble(forecast::forecast(mod_A_logit, h = 1))
-fc_AA <- as_tibble(forecast::forecast(mod_AA_logit, h = 1))
-fc_AB <- as_tibble(forecast::forecast(mod_AB_logit, h = 1))
+for(i in nodes) {
+  # Fit models
+  mod <- forecast::auto.arima(training_data[, i]) 
   
-# Get variance of one-step ahead forecast
-sim_logit_A <- replicate(5000, simulate(mod_A_logit, nsim = 1, future = TRUE))
-var_beta_A  <- var(sim_logit_A)
-sim_logit_AA <- replicate(5000, simulate(mod_AA_logit, nsim = 1, future = TRUE))
-var_beta_AA  <- var(sim_logit_AA)
-sim_logit_AB <-  replicate(5000, simulate(mod_AB_logit, nsim = 1, future = TRUE))
-var_beta_AB  <- var(sim_logit_AB)
+  # Get one-step ahead predictions
+  fc <- as_tibble(forecast::forecast(mod, h = 1))
+    
+  # Get variance of one-step ahead forecast
+  sims_fc <- replicate(5000, simulate(mod, nsim = 1, future = TRUE))
+  var_est  <- var(sims_fc)
+    
+  # Create results dataframes for point estimates and variance
+  fc <- fc %>% mutate(Node = i, Time = n_testyears, var_est = var_est) %>%
+    rename(mu_est = `Point Forecast`)
   
-# Create results dataframes for point estimates and variance
-fc_A <- fc_A %>% mutate(Node = "A",
-                        Time = n_testyears,
-                        logit_var = var_beta_A) %>%
-  rename(logit_mean = `Point Forecast`)
-fc_AA <- fc_AA %>% mutate(Node = "AA",
-                          Time = n_testyears,
-                          logit_var = var_beta_AA)  %>%
-    rename(logit_mean = `Point Forecast`)
-fc_AB <- fc_AB %>% mutate(Node = "AB",
-                          Time = n_testyears,
-                          logit_var = var_beta_AB)  %>%
-  rename(logit_mean = `Point Forecast`)
-
-forecasts <- bind_rows(fc_A, fc_AA, fc_AB) %>%
-  mutate(Node = factor(Node, levels = c("AA", "AB", "A"))) %>%
-  arrange(Node)
+  forecasts <- bind_rows(forecasts, fc) %>%
+    mutate(Node = factor(Node, levels = c("AA", "AB", "BA", "BB", "A", "B", "Tot"))) %>%
+    arrange(Node) %>%
+    select(Time, Node, mu_est, var_est)
  
+}
 
-```
-
-
-### 2.3 Back-transform the proportions
-```{r}
-# Back transform to proportions
-prop_var <- inv_logit_delta(inv_logit(forecasts$logit_mean), forecasts$logit_var)
-
-forecasts <- forecasts %>%
-  mutate(proportion = inv_logit(forecasts$logit_mean),
-         prop_var = prop_var) %>%
-  select(Time, Node, logit_mean, logit_var, proportion, prop_var)
 
 ```
 
 
 ## Step 3: Coherent hierarchical forecasting
 
-We estimate a coherent top-series probability density function (PDF) using a convolution and weighted Beta distributions. As inputs into this process we use:
-- the **top-level series** (`A`) estimates
-- the **bottom-level series** (`AA`, `AB`) estimates
+We estimate a coherent top-series probability density function (PDF) using a convolution and Gamma distributions. As inputs into this process we use:
+- the **top-level series** (`Tot`) estimates
+- the **mid-level series** (`A`, `B`) estimates
+- the **bottom-level series** (`AA`, `AB`, `BA`, `BB`) estimates
 - A fine grid over which the density exists
-- Bottom-series weights
 
 ### Step 3.1: Generate probability density function via convolution
 We will generate PDFs for the withheld data points to validate our method. You can loop over all years of you wish by updating the code to do so.
 
 ```{r}
-## Get Beta parameters
-beta_params_df <- get_beta_params(forecasts$proportion, forecasts$prop_var)
-beta_params_df$Node <- forecasts$Node
+## Get Beta parameters HERE
+gamma_params_df <- get_gamma_params(forecasts$mu_est, forecasts$var_est)
+gamma_params_df$Node <- forecasts$Node
   
-alpha_list <- list(beta_params_df %>% filter(Node %in% c("AA", "AB")) %>% pull(Alpha),
-                   beta_params_df %>% filter(Node %in% c("A")) %>% pull(Alpha))
+alpha_list <- list(gamma_params_df %>% filter(Node %in% c("AA", "AB")) %>% pull(Alpha),
+                   gamma_params_df %>% filter(Node %in% c("A")) %>% pull(Alpha))
 
-beta_list <- list(beta_params_df %>% filter(Node %in% c("AA", "AB")) %>% pull(Beta),
-                   beta_params_df %>% filter(Node %in% c("A")) %>% pull(Beta))
+beta_list <- list(gamma_params_df %>% filter(Node %in% c("AA", "AB")) %>% pull(Beta),
+                   gamma_params_df %>% filter(Node %in% c("A")) %>% pull(Beta))
 
 # Set up weights
 weights_list <- list(c(0.75, 0.25), 1)
