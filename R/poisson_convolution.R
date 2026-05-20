@@ -12,70 +12,47 @@
 #' ## ---------------------------------------------------------
 #' ## Example: Point-estimate Poisson convolution
 #' ## ---------------------------------------------------------
-#'
 #' set.seed(123)
 #'
-#' S <- rbind(
-#'   Total = c(1, 1, 1, 1),
-#'   A     = c(1, 1, 0, 0),
-#'   B     = c(0, 0, 1, 1),
-#'   A1    = c(1, 0, 0, 0),
-#'   A2    = c(0, 1, 0, 0),
-#'   B1    = c(0, 0, 1, 0),
-#'   B2    = c(0, 0, 0, 1)
-#' )
+#' S <- rbind(Total = c(1, 1, 1, 1),
+#' A = c(1, 1, 0, 0),
+#' B = c(0, 0, 1, 1),
+#' A1 = c(1, 0, 0, 0),
+#' A2 = c(0, 1, 0, 0),
+#' B1 = c(0, 0, 1, 0),
+#' B2 = c(0, 0, 0, 1))
 #' colnames(S) <- c("A1", "A2", "B1", "B2")
 #'
-#' lambda_mat <- c(
-#'   Total = 8,
-#'   A = 5,
-#'   B = 6,
-#'   A1 = 2,
-#'   A2 = 4,
-#'   B1 = 3,
-#'   B2 = 5
-#' )
+#' lambda_mat <- c(Total = 8,
+#' A = 5,
+#' B = 6,
+#' A1 = 2,
+#' A2 = 4,
+#' B1 = 3,
+#' B2 = 5)
 #'
-#' z_values <- seq(0, 50, length.out = 500)
+#' z_values <- seq(0, 100)
 #'
-#' dens <- Poisson_convolution(
-#'   S = S,
-#'   lambda_mat = lambda_mat,
-#'   rate_mat = rate_mat,
-#'   z_values = z_values,
-#'   point = TRUE,
-#'   n_sims = 50
-#' )
+#' dens <- Poisson_convolution(S = S, lambda_mat = lambda_mat,
+#' z_values = z_values,
+#' point = TRUE,
+#' n_sims = 50,
+#' n_draws = 100)
 #'
 #' head(dens[[1]])
-#'
 #'
 #' ## ---------------------------------------------------------
 #' ## Example: Posterior-sample Poisson convolution
 #' ## ---------------------------------------------------------
-#'
 #' J <- 100
+#' lambda_post <- cbind(Total = rgamma(J, 8, 1),
+#' A = rgamma(J, 5, 1), B = rgamma(J, 6, 1), A1 = rgamma(J, 2, 1),
+#' A2 = rgamma(J, 4, 1), B1 = rgamma(J, 3, 1), B2 = rgamma(J, 5, 1))
 #'
-#' lambda_post <- cbind(Total = rPoisson(J, 8, 1),
-#'   A = rPoisson(J, 5, 1),
-#'   B = rPoisson(J, 6, 1),
-#'   A1 = rPoisson(J, 2, 1),
-#'   A2 = rPoisson(J, 4, 1),
-#'   B1 = rPoisson(J, 3, 1),
-#'   B2 = rPoisson(J, 5, 1)
-#' )
+#' dens_post <- Poisson_convolution(S = S, lambda_mat = lambda_post,
+#'  z_values = z_values, point = FALSE, n_sims = 50)
 #'
-#'
-#' dens_post <- Poisson_convolution(
-#'   S = S,
-#'   lambda_mat = lambda_post,
-#'   z_values = z_values,
-#'   point = FALSE,
-#'   n_draws = J,
-#'   n_sims = 50
-#' )
-#'
-#' head(dens_post[[1]])
+#'  head(dens_post[[1]])
 #'
 #' @export
 
