@@ -1,237 +1,107 @@
 #' Validate inputs for Poisson convolution functions
 #'
-#' Internal helper function used to validate inputs supplied to
-#' Poisson convolution density estimation functions.
+#' Internal helper used to validate inputs supplied to Poisson convolution density estimation functions using S and lambda_mat structure.
 #'
-#' @param groups A named list of nodes at each hierarchical level.
-#' @param z_values Numeric vector of evaluation points.
-#' @param lambda_list A list of lambda vectors or matrices.
+#' @param S Binary summation matrix defining hierarchy structure.
+#'
+#' @param lambda_mat Numeric vector or matrix of Poisson shape parameters.
+#'
 #' @param point Logical indicating whether point estimates are supplied.
+#'
+#' @param n_draws Number of posterior draws (or NULL in posterior mode).
+#'
+#' @param n_sims Number of Monte Carlo simulations per draw.
+#'
+#' @param z_values Optional numeric vector of evaluation points.
 #'
 #' @return Invisibly returns TRUE if all checks pass.
 #'
 #' @keywords internal
 #' @noRd
-check_poisson_convolution_inputs <- function(groups,
-                                             z_values,
-                                             lambda_list,
-                                             point) {
 
-  ## ---------------------------------------------------------------
-  ## groups checks
-  ## ---------------------------------------------------------------
+check_Poisson_convolution_inputs <- function(S, lambda_mat, point, n_draws, n_sims, z_values) {
 
-  if (!is.list(groups)) {
-    stop(
-      "'groups' must be a list.",
-      call. = FALSE
-    )
+  ## -----------------------------
+  ## Global checks
+  ## -----------------------------
+
+  if (!is.matrix(S) && !is.data.frame(S)) {
+    stop("'S' must be a binary matrix or data.frame.")
   }
 
-  if (length(groups) == 0L) {
-    stop(
-      "'groups' must contain at least one hierarchy level.",
-      call. = FALSE
-    )
+  if (!is.logical(point) || length(point) != 1) {
+    stop("'point' must be TRUE or FALSE.")
   }
 
-  if (is.null(names(groups)) || any(names(groups) == "")) {
-    stop(
-      "'groups' must be a named list.",
-      call. = FALSE
-    )
+  if (!isTRUE(point) && !is.null(n_draws)) {
+    stop("n_draws must be NULL when point = FALSE (auto-inferred from matrix).")
   }
 
-  ## check node names
-  for (x in seq_along(groups)) {
+  if (isTRUE(point)) {
 
-    node_names <- groups[[x]]
-
-    if (!is.character(node_names)) {
-      stop(
-        paste0(
-          "groups[[", x, "]] must be a character vector."
-        ),
-        call. = FALSE
-      )
-    }
-
-    if (length(node_names) == 0L) {
-      stop(
-        paste0(
-          "groups[[", x, "]] must contain at least one node."
-        ),
-        call. = FALSE
-      )
-    }
-
-    if (anyNA(node_names)) {
-      stop(
-        paste0(
-          "groups[[", x, "]] contains missing node names."
-        ),
-        call. = FALSE
-      )
+    if (!is.numeric(n_draws) || length(n_draws) != 1 ||
+        is.na(n_draws) || !is.finite(n_draws) ||
+        n_draws <= 0 || n_draws %% 1 != 0) {
+      stop("'n_draws' must be a positive integer.")
     }
   }
 
-  ## ---------------------------------------------------------------
-  ## z_values checks
-  ## ---------------------------------------------------------------
+  if (!is.numeric(n_sims) || length(n_sims) != 1 ||
+      n_sims <= 0 || n_sims %% 1 != 0) {
+    stop("'n_sims' must be a positive integer.")
+  }
 
   if (!is.numeric(z_values)) {
-    stop(
-      "'z_values' must be numeric.",
-      call. = FALSE
-    )
+    stop("'z_values' must be numeric.")
   }
 
-  if (length(z_values) == 0L) {
-    stop(
-      "'z_values' must contain at least one value.",
-      call. = FALSE
-    )
+  if (any(z_values < 0, na.rm = TRUE)) {
+    stop("'z_values' must be greater than 0.")
   }
 
-  if (anyNA(z_values)) {
-    stop(
-      "'z_values' must not contain missing values.",
-      call. = FALSE
-    )
+  ## -----------------------------
+  ## Node structure checks
+  ## -----------------------------
+
+  bottom_nodes <- colnames(S)
+
+  if (is.null(bottom_nodes)) {
+    stop("'S' must have column names corresponding to bottom nodes.")
   }
 
-  if (any(z_values < 0)) {
-    stop(
-      "'z_values' must be non-negative.",
-      call. = FALSE
-    )
-  }
+  n_nodes <- length(bottom_nodes)
 
-  ## ---------------------------------------------------------------
-  ## lambda_list checks
-  ## ---------------------------------------------------------------
+  ## -----------------------------
+  ## Parameter checks
+  ## -----------------------------
 
-  if (!is.list(lambda_list)) {
-    stop(
-      "'lambda_list' must be a list.",
-      call. = FALSE
-    )
-  }
+  if (isTRUE(point)) {
 
-  if (length(lambda_list) != length(groups)) {
-    stop(
-      "'lambda_list' must have the same length as 'groups'.",
-      call. = FALSE
-    )
-  }
-
-  ## ---------------------------------------------------------------
-  ## point checks
-  ## ---------------------------------------------------------------
-
-  if (!is.logical(point) || length(point) != 1L) {
-    stop(
-      "'point' must be a single logical value.",
-      call. = FALSE
-    )
-  }
-
-  ## ---------------------------------------------------------------
-  ## Per-level checks
-  ## ---------------------------------------------------------------
-
-  for (x in seq_along(groups)) {
-
-    node_names  <- groups[[x]]
-    lambda_input <- lambda_list[[x]]
-
-    ## ------------------------------------------------------------
-    ## Point-estimate case
-    ## ------------------------------------------------------------
-
-    if (isTRUE(point)) {
-
-      if (!is.numeric(lambda_input) || !is.vector(lambda_input)) {
-        stop(
-          paste0(
-            "lambda_list[[", x,
-            "]] must be a numeric vector when point = TRUE."
-          ),
-          call. = FALSE
-        )
-      }
-
-      if (length(lambda_input) != length(node_names)) {
-        stop(
-          paste0(
-            "lambda_list[[", x,
-            "]] must have length equal to the number of nodes."
-          ),
-          call. = FALSE
-        )
-      }
+    if (!is.numeric(lambda_mat) || !is.vector(lambda_mat)) {
+      stop("lambda_mat must be a numeric vector when point = TRUE.")
     }
 
-    ## ------------------------------------------------------------
-    ## Posterior-sample case
-    ## ------------------------------------------------------------
-
-    if (!isTRUE(point)) {
-
-      if (!is.matrix(lambda_input)) {
-        stop(
-          paste0(
-            "lambda_list[[", x,
-            "]] must be a matrix when point = FALSE."
-          ),
-          call. = FALSE
-        )
-      }
-
-      if (!is.numeric(lambda_input)) {
-        stop(
-          paste0(
-            "lambda_list[[", x,
-            "]] must be numeric."
-          ),
-          call. = FALSE
-        )
-      }
-
-      if (ncol(lambda_input) != length(node_names)) {
-        stop(
-          paste0(
-            "The number of columns in lambda_list[[", x,
-            "]] must equal the number of nodes."
-          ),
-          call. = FALSE
-        )
-      }
+    if (length(lambda_mat) != nrow(S)) {
+      stop("Length of lambda_mat must equal number of nodes in S.")
     }
 
-    ## ------------------------------------------------------------
-    ## Shared checks
-    ## ------------------------------------------------------------
+  } else {
 
-    if (anyNA(lambda_input)) {
-      stop(
-        paste0(
-          "lambda_list[[", x,
-          "]] contains missing values."
-        ),
-        call. = FALSE
-      )
+    if (!is.matrix(lambda_mat)) {
+      stop("lambda_mat must be a matrix when point = FALSE.")
     }
 
-    if (any(lambda_input <= 0)) {
-      stop(
-        paste0(
-          "lambda_list[[", x,
-          "]] must contain positive values only."
-        ),
-        call. = FALSE
-      )
+    if (ncol(lambda_mat) != nrow(S)) {
+      stop("Number of columns in lambda_mat must equal number of nodes in S.")
     }
+  }
+
+  ## -----------------------------
+  ## Positivity checks
+  ## -----------------------------
+
+  if (any(lambda_mat <= 0, na.rm = TRUE)) {
+    stop("All shape parameters must be positive.")
   }
 
   invisible(TRUE)

@@ -51,7 +51,7 @@ S <- rbind(
   B1    = c(0, 0, 1, 0),
   B2    = c(0, 0, 0, 1)
 )
-
+colnames(S) <- c("A1", "A2", "B1", "B2")
 shape_mat <- c(
   Total = 8,
   A = 5,

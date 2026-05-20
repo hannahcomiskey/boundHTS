@@ -1,126 +1,144 @@
-#' Parallelized normalised predictive Poisson density over vector z
+#' Parallelized normalised predictive density over vector z
 #'
-#' @param groups List of nodes at each level in series. The list must go from bottom nodes to top nodes, and have each element of the list named. The length of the list is the number of tiers in the hierarchy.
-#' @param z_values Evaluation points.
-#' @param lambda_list A list of point estimates (point=TRUE) or matrix (point=FALSE) of lambda parameters for the Poisson distribution for each bottom series observation.
-#' @param point A true/false indicator to denote whether you are using point estimates (point=TRUE) or posterior samples (point=FALSE) of the Poisson parameters.
-#' @details
-#' A wrapper function for calculating Monte Carlo estimates for the aggregate
-#' density Z using point estimates or posterior samples of lambda.
+#' @param S Binary summation matrix with rows corresponding to all hierarchy nodes and columns corresponding to bottom-level nodes.
+#' @param lambda_mat Numeric vector (point = TRUE) or matrix (point = FALSE) of Poisson shape parameters for all hierarchy nodes.
+#' @param point Logical. If TRUE uses point estimates, otherwise posterior draws.
+#' @param n_draws Number of posterior draws (if applicable).
+#' @param n_sims Number of Monte Carlo simulations per draw.
+#' @param z_values Evaluation grid.
 #'
-#' @return The aggregate density Z over a grid of values.
+#' @return List of aggregated density estimates.
 #' @examples
-#' ## ---------------------------------------------------------------
+#' ## ---------------------------------------------------------
 #' ## Example: Point-estimate Poisson convolution
-#' ## ---------------------------------------------------------------
+#' ## ---------------------------------------------------------
 #'
 #' set.seed(123)
 #'
-#' ## Define hierarchy from bottom to top
-#'  groups <- list(NSW = c("NSW_Male", "NSW_Female"),
-#'  VIC = c("VIC_Male", "VIC_Female"),
-#'  State = c("NSW", "VIC"),
-#'  National = c("AUS"))
+#' S <- rbind(
+#'   Total = c(1, 1, 1, 1),
+#'   A     = c(1, 1, 0, 0),
+#'   B     = c(0, 0, 1, 1),
+#'   A1    = c(1, 0, 0, 0),
+#'   A2    = c(0, 1, 0, 0),
+#'   B1    = c(0, 0, 1, 0),
+#'   B2    = c(0, 0, 0, 1)
+#' )
+#' colnames(S) <- c("A1", "A2", "B1", "B2")
 #'
-#' ## Evaluation grid
-#' z_values <- 0:40
-#'
-#' ## Point estimates for lambda
-#'  lambda_list <- list(c(14, 12), # State-by-sex NSW
-#'  c(13, 13), # State-by-sex VIC
-#'  c(22, 28), # State
-#'  52 # National
-#'  )
-#'
-#' ## Estimate aggregate densities
-#' dens <- Poisson_convolution(
-#'   groups = groups,
-#'   z_values = z_values,
-#'   lambda_list = lambda_list,
-#'   point = TRUE
+#' lambda_mat <- c(
+#'   Total = 8,
+#'   A = 5,
+#'   B = 6,
+#'   A1 = 2,
+#'   A2 = 4,
+#'   B1 = 3,
+#'   B2 = 5
 #' )
 #'
-#' ## Inspect first level density
+#' z_values <- seq(0, 50, length.out = 500)
+#'
+#' dens <- Poisson_convolution(
+#'   S = S,
+#'   lambda_mat = lambda_mat,
+#'   rate_mat = rate_mat,
+#'   z_values = z_values,
+#'   point = TRUE,
+#'   n_sims = 50
+#' )
+#'
 #' head(dens[[1]])
 #'
-#' ## ---------------------------------------------------------------
+#'
+#' ## ---------------------------------------------------------
 #' ## Example: Posterior-sample Poisson convolution
-#' ## ---------------------------------------------------------------
+#' ## ---------------------------------------------------------
 #'
-#' set.seed(123)
+#' J <- 100
 #'
-#' ## Number of posterior draws
-#' J <- 500
-#' ## Posterior samples for State-by-sex lambdas
-#' lambda_state_sex_NSW <- cbind(rgamma(J, shape = 12, rate = 1), rgamma(J, shape = 10, rate = 1))
-#' lambda_state_sex_VIC <- cbind(rgamma(J, shape = 15, rate = 1), rgamma(J, shape = 13, rate = 1))
-#' ## Posterior samples for State lambdas
-#' lambda_state <- cbind(rgamma(J, shape = 22, rate = 1), rgamma(J, shape = 28, rate = 1))
-#'
-#' ## Posterior samples for National lambda
-#' lambda_national <- matrix(rgamma(J, shape = 50, rate = 1), ncol = 1)
-#'
-#' ## Store posterior samples in a list
-#' lambda_list_post <- list(lambda_state_sex_NSW, lambda_state_sex_VIC, lambda_state, lambda_national)
-#'
-#' ## Estimate aggregate densities
-#' dens_post <- Poisson_convolution(
-#'   groups = groups,
-#'   z_values = z_values,
-#'   lambda_list = lambda_list_post,
-#'   point = FALSE
+#' lambda_post <- cbind(Total = rPoisson(J, 8, 1),
+#'   A = rPoisson(J, 5, 1),
+#'   B = rPoisson(J, 6, 1),
+#'   A1 = rPoisson(J, 2, 1),
+#'   A2 = rPoisson(J, 4, 1),
+#'   B1 = rPoisson(J, 3, 1),
+#'   B2 = rPoisson(J, 5, 1)
 #' )
 #'
-#' ## Inspect density estimate
+#'
+#' dens_post <- Poisson_convolution(
+#'   S = S,
+#'   lambda_mat = lambda_post,
+#'   z_values = z_values,
+#'   point = FALSE,
+#'   n_draws = J,
+#'   n_sims = 50
+#' )
+#'
 #' head(dens_post[[1]])
+#'
 #' @export
 
-Poisson_convolution <- function(groups, z_values, lambda_list, point) {
+Poisson_convolution <- function(S, lambda_mat, point,
+                              n_draws = NULL, n_sims = 100, z_values) {
 
-  dens_list <- list()
+  ## --------------------------------------------------------
+  ## Input checks
+  ## --------------------------------------------------------
 
-  check_poisson_convolution_inputs(groups, z_values, lambda_list, point)
+  check_Poisson_convolution_inputs(S = S, lambda_mat = lambda_mat, point = point,
+                                   n_draws = n_draws, n_sims = n_sims, z_values = z_values)
 
-  ## ---------------------------------------------------------
-  ## Identify valid levels (skip top if singleton)
-  ## ---------------------------------------------------------
-  valid_idx <- which(vapply(groups, length, integer(1)) > 1L)
+  ## --------------------------------------------------------
+  ## Hierarchy structure
+  ## --------------------------------------------------------
 
-  for (i in seq_along(valid_idx)) {
+  bottom_nodes <- colnames(S)
 
-    x <- valid_idx[i]  # actual level index
+  agg_nodes <- rownames(S)[rowSums(S) > 1]
 
-    node_names  <- groups[[x]]
-    lambda_input <- lambda_list[[x]]
+  dens_list <- vector("list", length(agg_nodes))
 
-    ## ---------------------------------------------------------
-    ## Safe parent naming
-    ## ---------------------------------------------------------
-    parent_node <- if (!is.null(names(groups))) {
-      names(groups)[x+1]
+  ## --------------------------------------------------------
+  ## Loop over aggregated nodes
+  ## --------------------------------------------------------
+
+  for (i in seq_along(agg_nodes)) {
+
+    parent_node <- agg_nodes[i]
+
+    node_idx <- which(S[parent_node, ] == 1)
+
+    node_names <- bottom_nodes[node_idx]
+
+    ## ------------------------------------------------------
+    ## Extract parameters
+    ## ------------------------------------------------------
+
+    if (isTRUE(point)) {
+      lambda_input <- lambda_mat[node_names]
+      n_draws <- ifelse(is.null(n_draws), 2000, n_draws)
     } else {
-      paste0("Level_", x)
+      lambda_input <- lambda_mat[, node_names, drop = FALSE]
+      n_draws <- nrow(lambda_mat)
     }
 
-    ## ---------------------------------------------------------
-    ## Convolution
-    ## ---------------------------------------------------------
-    if (point && is.vector(lambda_input)) {
+    ## ------------------------------------------------------
+    ## Density estimation
+    ## ------------------------------------------------------
+
+    if (isTRUE(point)) {
 
       dens <- Poisson_convolution_density_point_parallel(
         z_values = z_values,
         lambda_vector = lambda_input
       )
 
-    } else if (!point && is.matrix(lambda_input)) {
-
+    } else {
       dens <- Poisson_convolution_density_parallel(
         z_values = z_values,
         lambda_matrix = lambda_input
       )
-
-    } else {
-      stop("lambda input type does not match 'point' argument")
     }
 
     dens_list[[i]] <- tibble::tibble(
@@ -129,6 +147,8 @@ Poisson_convolution <- function(groups, z_values, lambda_list, point) {
       Density = dens
     )
   }
+
+  names(dens_list) <- agg_nodes
 
   return(dens_list)
 }
