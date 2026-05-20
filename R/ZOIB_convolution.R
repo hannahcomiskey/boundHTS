@@ -1,210 +1,330 @@
-#' Parallelized normalised predictive density over vector z
+#' Parallelized normalised Zero-One Inflated Beta predictive density over vector z
 #'
-#' @param groups List of nodes at each level in series. The length of the list is the number of tiers in the hierarchy.
-#' @param alpha_list A list of point estimates (point=TRUE) or matrix (point=FALSE) of
-#' Beta distribution shape1/alpha parameters for each element per level over each of the J observations (J rows x  X columns). The length of the list is the number of levels in the hierarchy.
-#' @param beta_list A list of point estimates (point=TRUE) or matrix (point=FALSE) of
-#' Beta distribution shape2/beta parameters for each element per level over each of the J observations (J rows x  X columns). The length of the list is the number of levels in the hierarchy.
-#' @param zoi_list A list of point estimates (point=TRUE) or matrix (point=FALSE) of zero-inflation probability parameters for each element per level over each of the J observations (J rows x  X columns). The length of the list is the number of levels in the hierarchy.
-#' @param coi_list A list of point estimates (point=TRUE) or matrix (point=FALSE) of conditional probability of getting exactly 1 for each element per level over each of the J observations (J rows x  X columns). The length of the list is the number of levels in the hierarchy.
-#' @param weights_list A list of weights that are used to combine to form the aggregated density Z. The length of the list is the number of levels (excluding the top level) in the hierarchy.
-#' @param point A true/false indicator to denote whether you are using
-#' point estimates (point=TRUE) or posterior samples (point=FALSE) of the zero-one inflated Beta parameters.
-#' @param n_draws The number of draws to extract from the four-parameter zero-one inflated Beta distribution. Default to 2000.
-#' @param n_sims The number of simulations to extract from the four-parameter zero-one inflated Beta distribution per draw. Default to 100.
-#' @param z_values Evaluation points. Defaults to be NULL and in-built grid is (0,1) over 1000 evenly spaced points.
+#' @param S Binary summation matrix with rows corresponding to all
+#' hierarchy nodes and columns corresponding to bottom-level nodes.
+#'
+#' @param alpha_mat Numeric vector (point = TRUE) or matrix
+#' (point = FALSE) of Beta shape1/alpha parameters for all hierarchy nodes.
+#'
+#' @param beta_mat Numeric vector (point = TRUE) or matrix
+#' (point = FALSE) of Beta shape2/beta parameters for all hierarchy nodes.
+#'
+#' @param zoi_mat Numeric vector (point = TRUE) or matrix
+#' (point = FALSE) of zi (zero-inflation) parameters for all hierarchy nodes.
+#'
+#' @param weights_list A named list of local aggregation weights used
+#' to construct the aggregation weight matrix.
+#'
+#' @param point Logical indicating whether point estimates
+#' (`point = TRUE`) or posterior samples (`point = FALSE`)
+#' are supplied.
+#'
+#' @param n_draws Number of posterior draws.
+#'
+#' @param n_sims Number of Monte Carlo simulations per draw.
+#'
+#' @param z_values Density evaluation grid.
+#'
 #' @details
-#' A wrapper function for calculating Monte Carlo estimates for the aggregate density Z using the zero-one inflated Beta distribution.
-#' @return A list of aggregate densities Z over a grid of values using a convolution of zero-one inflated Beta distributions for each of the aggregated nodes in the hierarchy.
+#' A wrapper function for calculating Monte Carlo estimates for the
+#' aggregate density Z using four-parameter Beta distributions.
+#'
+#' Aggregation is performed coherently using:
+#'
+#' \deqn{
+#' y = Wb
+#' }
+#'
+#' where:
+#'
+#' \itemize{
+#' \item \eqn{b} are bottom-level random variables,
+#' \item \eqn{W} is the aggregation weight matrix.
+#' }
+#'
+#' Density estimation is only performed for aggregated hierarchy nodes.
+#'
+#' @return
+#' A list of aggregate densities over a grid of values for each
+#' aggregated hierarchy node.
+#'
 #' @examples
-#' ## ---------------------------------------------------------------
-#' ## Example: Point-estimate zero-one inflated Beta convolution
-#' ## ---------------------------------------------------------------
+#' ## ---------------------------------------------------------
+#' ## Example: Point-estimate Zero-One Inflated Beta convolution
+#' ## ---------------------------------------------------------
 #'
 #' set.seed(123)
 #'
-#' ## Define a simple two-level hierarchy
-#' groups <- list(
-#'   bottom = c("A", "B"),   # bottom level
-#'   top = c("Total")     # aggregated level
+#' S <- rbind(
+#'   Total = c(1, 1, 1, 1),
+#'   A     = c(1, 1, 0, 0),
+#'   B     = c(0, 0, 1, 1),
+#'   A1    = c(1, 0, 0, 0),
+#'   A2    = c(0, 1, 0, 0),
+#'   B1    = c(0, 0, 1, 0),
+#'   B2    = c(0, 0, 0, 1)
+#' )
+#' colnames(S) <- c("A1", "A2", "B1", "B2")
+#'
+#' local_weights <- list(
+#'   Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
+#'   A     = c(A1 = 0.40, A2 = 0.60),
+#'   B     = c(B1 = 0.30, B2 = 0.70)
 #' )
 #'
-#' ## Point estimates for Beta parameters
-#' alpha_list <- list(
-#'   c(2, 5),
-#'   c(7)
+#' alpha_mat <- c(
+#'   Total = 8,
+#'   A = 5,
+#'   B = 6,
+#'   A1 = 2,
+#'   A2 = 4,
+#'   B1 = 3,
+#'   B2 = 5
 #' )
 #'
-#' beta_list <- list(
-#'   c(6, 3),
-#'   c(4)
+#' beta_mat <- c(
+#'   Total = 4,
+#'   A = 3,
+#'   B = 2,
+#'   A1 = 6,
+#'   A2 = 5,
+#'   B1 = 7,
+#'   B2 = 4
 #' )
 #'
-#' ## Zero-inflation probabilities
-#' zoi_list <- list(
-#'   c(0.10, 0.20),
-#'   c(0.05)
+#' zoi_mat <- c(
+#'   Total = 0.05,
+#'   A = 0.01,
+#'   B = 0.03,
+#'   A1 = 0.04,
+#'   A2 = 0.03,
+#'   B1 = 0.02,
+#'   B2 = 0.01
 #' )
 #'
-#' ## Conditional one inflation probabilities
-#' coi_list <- list(
-#'   c(0.05, 0.05),
-#'   c(0.05)
+#' coi_mat <- c(
+#'   Total = 0.01,
+#'   A = 0.02,
+#'   B = 0.02,
+#'   A1 = 0.01,
+#'   A2 = 0.01,
+#'   B1 = 0.01,
+#'   B2 = 0.01
 #' )
 #'
-#' ## Aggregation weights
-#' weights_list <- list(
-#'   c(0.4, 0.6),
-#'   1
-#' )
+#' dens <- ZOIB_convolution(S = S, alpha_mat = alpha_mat,
+#'  beta_mat = beta_mat, zoi_mat = zoi_mat, coi_mat = coi_mat,
+#'  weights_list = local_weights, point = TRUE, n_draws = 500, n_sims = 50)
 #'
-#' ## Estimate densities
-#' dens <- ZOIB_convolution(
-#'   groups = groups,
-#'   alpha_list = alpha_list,
-#'   beta_list = beta_list,
-#'   zoi_list = zoi_list,
-#'   coi_list = coi_list,
-#'   weights_list = weights_list,
-#'   point = TRUE,
-#'   n_draws = 500,
-#'   n_sims = 50
-#' )
-#'
-#' ## Inspect first density estimate
 #' head(dens[[1]])
 #'
-#' ## ---------------------------------------------------------------
-#' ## Example: Posterior-sample zero-one inflated Beta convolution
-#' ## ---------------------------------------------------------------
+#' ## ---------------------------------------------------------
+#' ## Example: Posterior-sample Zero-One Inflated Beta convolution
+#' ## ---------------------------------------------------------
 #'
 #' J <- 100
 #'
-#' groups <- list(
-#'   bottom = c("A", "B"),   # bottom level
-#'   top = c("Total")     # aggregated level
+#' alpha_post <- cbind(
+#'   Total = rgamma(J, 8, 1),
+#'   A = rgamma(J, 5, 1),
+#'   B = rgamma(J, 6, 1),
+#'   A1 = rgamma(J, 2, 1),
+#'   A2 = rgamma(J, 4, 1),
+#'   B1 = rgamma(J, 3, 1),
+#'   B2 = rgamma(J, 5, 1)
 #' )
 #'
-#' alpha_list_post <- list(
-#' cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
-#' as.matrix(rgamma(J, shape = 2, rate = 1))
+#' beta_post <- cbind(
+#'   Total = rgamma(J, 4, 1),
+#'   A = rgamma(J, 3, 1),
+#'   B = rgamma(J, 2, 1),
+#'   A1 = rgamma(J, 6, 1),
+#'   A2 = rgamma(J, 5, 1),
+#'   B1 = rgamma(J, 7, 1),
+#'   B2 = rgamma(J, 4, 1)
 #' )
 #'
-#' beta_list_post <- list(
-#' cbind(rgamma(J, shape = 6, rate = 1), rgamma(J, shape = 3, rate = 1)),
-#' as.matrix(rgamma(J, shape = 2, rate = 1))
+#' zoi_post <- cbind(
+#'   Total = rbeta(J, 1, 1),
+#'   A = rbeta(J, 1, 1),
+#'   B = rbeta(J, 1, 1),
+#'   A1 = rbeta(J, 1, 1),
+#'   A2 = rbeta(J, 1, 1),
+#'   B1 = rbeta(J, 1, 1),
+#'   B2 = rbeta(J, 1, 1)
 #' )
 #'
-#' zoi_list_post <- list(
-#' cbind(rbeta(J, 2, 20), rbeta(J, 3, 15)),
-#' as.matrix(rbeta(J, 2, 20)))
-#'
-#' coi_list_post <- list(
-#' cbind(rbeta(J, 2, 2), rbeta(J, 1, 1)),
-#' as.matrix(rbeta(J, 1, 2)))
-#'
-#' weights_list <- list(
-#'   c(0.4, 0.6),
-#'   1
+#' coi_post <- cbind(
+#'   Total = rbeta(J, 1, 1),
+#'   A = rbeta(J, 1, 1),
+#'   B = rbeta(J, 1, 1),
+#'   A1 = rbeta(J, 1, 1),
+#'   A2 = rbeta(J, 1, 1),
+#'   B1 = rbeta(J, 1, 1),
+#'   B2 = rbeta(J, 1, 1)
 #' )
 #'
-#' dens_post <- ZOIB_convolution(
-#'   groups = groups,
-#'   alpha_list = alpha_list_post,
-#'   beta_list = beta_list_post,
-#'   zoi_list = zoi_list_post,
-#'   coi_list = coi_list_post,
-#'   weights_list = weights_list,
-#'   point = FALSE,
-#'   n_draws = J,
-#'   n_sims = 50
-#' )
+#' dens_post <- ZOIB_convolution(S = S, alpha_mat = alpha_post, beta_mat = beta_post,
+#' coi_mat = zoi_post, coi_post = coi_post, weights_list = local_weights, point = FALSE, n_sims = 50)
 #'
 #' head(dens_post[[1]])
+#'
 #' @export
 
+ZOIB_convolution <- function(S, alpha_mat, beta_mat, zoi_mat, coi_mat,
+                             weights_list, point, n_draws = 2000,
+                             n_sims = 100, z_values = NULL) {
 
-ZOIB_convolution <- function(groups, alpha_list, beta_list, zoi_list, coi_list, weights_list, point, n_draws=2000, n_sims = 100, z_values=NULL) {
-  dens_list <- list() # set up list to save results in
-  # Set up density grid
-  if(is.null(z_values)==TRUE) {
+  ## --------------------------------------------------------
+  ## Density grid
+  ## --------------------------------------------------------
+
+  if (is.null(z_values)) {
     z_values <- seq(0, 1, length.out = 1000)
   }
 
-  # Check data inputs for validity
-  check_beta_convolution_inputs(groups, alpha_list, beta_list, weights_list, point, n_draws, n_sims, z_values)
+  ## --------------------------------------------------------
+  ## Build aggregation matrix
+  ## --------------------------------------------------------
 
-  if (!is.list(zoi_list)) {
-    stop("'zoi_list' must be a list.")
-  }
+  W <- build_weight_matrix(S = S, weights_list = weights_list)
 
-  if (length(groups) != length(zoi_list)) {
-    stop("'groups' and 'zoi_list' must have the same length.")
-  }
+  ## --------------------------------------------------------
+  ## Input checks
+  ## --------------------------------------------------------
 
-  if (!is.list(coi_list)) {
-    stop("'coi_list' must be a list.")
-  }
+  check_beta_convolution_inputs(S = S, W = W, alpha_mat = alpha_mat,
+                                beta_mat = beta_mat, point = point,
+                                n_draws = n_draws, n_sims = n_sims,
+                                z_values = z_values)
 
-  if (length(groups) != length(coi_list)) {
-    stop("'groups' and 'coi_list' must have the same length.")
-  }
+  ## --------------------------------------------------------
+  ## Bottom and aggregated nodes
+  ## --------------------------------------------------------
 
-  valid_idx <- which(vapply(groups, length, integer(1)) > 1L)
+  bottom_nodes <- colnames(S)
 
-  for (i in seq_along(valid_idx)) {
+  agg_nodes <- setdiff(rownames(W), bottom_nodes)
 
-    x <- valid_idx[i]  # actual level index
-    node_names  <- groups[[x]]
+  W_agg <- W[agg_nodes, , drop = FALSE]
 
-    ## ---------------------------------------------------------
-    ## Safe parent naming
-    ## ---------------------------------------------------------
-    parent_node <- if (!is.null(names(groups))) {
-      names(groups)[x+1]
+  n_bottom <- length(bottom_nodes)
+  n_agg <- nrow(W_agg)
+
+  ## --------------------------------------------------------
+  ## Density estimation
+  ## --------------------------------------------------------
+
+  dens_list <- vector("list", n_agg)
+
+  for (i in seq_len(n_agg)) {
+
+    ## ------------------------------------------------------
+    ## Current aggregated node
+    ## ------------------------------------------------------
+
+    parent_node <- agg_nodes[i]
+
+    ## ------------------------------------------------------
+    ## Bottom nodes contributing to aggregation
+    ## ------------------------------------------------------
+
+    weights <- W_agg[i, ]
+
+    valid_bottom <- which(weights > 0)
+
+    node_names <- bottom_nodes[valid_bottom]
+
+    weights <- weights[valid_bottom]
+
+    ## ------------------------------------------------------
+    ## Extract ZOIB parameters
+    ## ------------------------------------------------------
+
+    if (isTRUE(point)) {
+
+      alpha_input <- alpha_mat[match(node_names, names(alpha_mat))]
+      beta_input <- beta_mat[match(node_names, names(beta_mat))]
+      zoi_input <- zoi_mat[match(node_names, names(zoi_mat))]
+      coi_input <- coi_mat[match(node_names, names(coi_mat))]
+
     } else {
-      paste0("Level_", x)
+
+      alpha_input <- alpha_mat[ , match(node_names, colnames(alpha_mat)),drop = FALSE]
+      beta_input <- beta_mat[ ,match(node_names, colnames(beta_mat)), drop = FALSE]
+      zoi_input <- zoi_mat[ ,match(node_names, colnames(zoi_mat)), drop = FALSE]
+      coi_input <- coi_mat[ ,match(node_names, colnames(coi_mat)), drop = FALSE]
+
     }
 
-    ## ---------------------------------------------------------
-    ## ZOIB distribution parameters
-    ## ---------------------------------------------------------
-    alpha_input <- alpha_list[[x]]
-    beta_input <- beta_list[[x]]
-    zoi_input <- zoi_list[[x]]
-    coi_input <- coi_list[[x]]
-    weights <- weights_list[[x]]
+    ## ------------------------------------------------------
+    ## Weighted samples
+    ## ------------------------------------------------------
 
-    ## Get weighted samples
     weighted_samps <- array(NA, dim = c(n_sims, n_draws, length(node_names)))
 
-    for (m in seq_along(node_names)) {
-      weighted_samps[,,m] <- matrix(ExtDist::rBeta_ab(n_sims * n_draws,
-                                                      alpha_input[m],
-                                                      beta_input[m],
-                                                      0, weights[m]),
-                                    nrow=n_sims, ncol= n_draws)
-    }
-    if(point==TRUE & is.vector(alpha_input)==TRUE & is.vector(beta_input)==TRUE & is.vector(zoi_input)==TRUE & is.vector(coi_input)==TRUE) {
+    ## ------------------------------------------------------
+    ## Point-estimate mode
+    ## ------------------------------------------------------
+
+    if (isTRUE(point)) {
+
+      for (m in seq_len(length(node_names))) {
+
+        weighted_samps[, , m] <- matrix(ExtDist::rBeta_ab(n = n_sims * n_draws,
+                                                          shape1 = alpha_input[m],
+                                                          shape2 = beta_input[m],
+                                                          a = 0,
+                                                          b = weights[m]),
+                                        nrow = n_sims, ncol = n_draws)
+      }
+
       dens <- ZOIB_convolution_density_point_parallel(z_values = z_values,
-                                                      alpha_point = alpha_input,
-                                                      beta_point = beta_input,
-                                                      zoi_point = zoi_input,
-                                                      coi_point = coi_input,
-                                                      weighted_samps = weighted_samps,
-                                                      weights = weights)
-    }
-    if(point==FALSE & is.matrix(alpha_input)==TRUE & is.matrix(beta_input)==TRUE & is.matrix(zoi_input)==TRUE  & is.matrix(coi_input)==TRUE) {
+                                                     alpha_point = alpha_input,
+                                                     beta_point = beta_input,
+                                                     zoi_point = zoi_input,
+                                                     coi_point = coi_input,
+                                                     weighted_samps = weighted_samps,
+                                                     weights = weights)
+    } else {
+
+      ## ----------------------------------------------------
+      ## Posterior-sample mode
+      ## ----------------------------------------------------
+
+      for (m in seq_len(length(node_names))) {
+        for (d in seq_len(n_draws)) {
+          weighted_samps[, d, m] <- ExtDist::rBeta_ab(n = n_sims,
+                                                      shape1 = alpha_input[d, m],
+                                                      shape2 = beta_input[d, m],
+                                                      a = 0,
+                                                      b = weights[m])
+        }
+      }
+
       dens <- ZOIB_convolution_density_parallel(z_values = z_values,
-                                                alpha_matrix = alpha_input,
-                                                beta_matrix = beta_input,
-                                                zoi_matrix = zoi_input,
-                                                coi_matrix = coi_input,
-                                                weighted_samps = weighted_samps,
-                                                weights = weights)
+                                               alpha_matrix = alpha_input,
+                                               beta_matrix = beta_input,
+                                               zoi_matrix = zoi_input,
+                                               coi_matrix = coi_input,
+                                               weighted_samps = weighted_samps,
+                                               weights = weights)
     }
-    dens_df <- tibble::tibble(Node = parent_node, Z = z_values, Density = dens)
-    dens_list[[x]] <- dens_df
+
+    ## ------------------------------------------------------
+    ## Store densities
+    ## ------------------------------------------------------
+
+    dens_df <- tibble::tibble(
+      Node = parent_node,
+      Z = z_values,
+      Density = dens
+    )
+
+    dens_list[[i]] <- dens_df
   }
+
+  names(dens_list) <- agg_nodes
+
   return(dens_list)
 }
