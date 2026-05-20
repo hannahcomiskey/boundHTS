@@ -66,6 +66,7 @@
 #'   B1    = c(0, 0, 1, 0),
 #'   B2    = c(0, 0, 0, 1)
 #' )
+#' colnames(S) <- c("A1", "A2", "B1", "B2")
 #'
 #' weights_list <- list(
 #'   Total = c(A = 0.2, B = 0.8),
