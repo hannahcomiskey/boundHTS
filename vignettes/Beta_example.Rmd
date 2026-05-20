@@ -129,9 +129,7 @@ fc_AB <- fc_AB %>% mutate(Node = "AB",
                           logit_var = var_beta_AB)  %>%
   rename(logit_mean = `Point Forecast`)
 
-forecasts <- bind_rows(fc_A, fc_AA, fc_AB) %>%
-  mutate(Node = factor(Node, levels = c("AA", "AB", "A"))) %>%
-  arrange(Node)
+forecasts <- bind_rows(fc_A, fc_AA, fc_AB)
  
 
 ```
@@ -166,14 +164,18 @@ We will generate PDFs for the withheld data points to validate our method. You c
 beta_params_df <- get_beta_params(forecasts$proportion, forecasts$prop_var)
 beta_params_df$Node <- forecasts$Node
   
-alpha_list <- list(beta_params_df %>% filter(Node %in% c("AA", "AB")) %>% pull(Alpha),
-                   beta_params_df %>% filter(Node %in% c("A")) %>% pull(Alpha))
+alpha_mat <- beta_params_df %>% select(Node, Alpha) %>% pivot_wider(names_from = Node, values_from = Alpha)
 
-beta_list <- list(beta_params_df %>% filter(Node %in% c("AA", "AB")) %>% pull(Beta),
-                   beta_params_df %>% filter(Node %in% c("A")) %>% pull(Beta))
+beta_mat <- beta_params_df %>% select(Node, Beta) %>% pivot_wider(names_from = Node, values_from = Beta)
 
 # Set up weights
-weights_list <- list(c(0.75, 0.25), 1)
+weights_list <- list(A = c(0.75, 0.25))
+
+# S matrix 
+S <- rbind(A = c(1, 1),
+           AA = c(1, 0),
+           AB = c(0, 1))
+colnames(S) <- c("AA", "AB")
 
 # Set up expected values 
 mu_theory <- forecasts %>% 

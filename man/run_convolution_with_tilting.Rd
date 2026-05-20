@@ -4,13 +4,13 @@
 \alias{run_convolution_with_tilting}
 \title{Convolution with Exponential Tilting Wrapper}
 \usage{
-run_convolution_with_tilting(family, groups, point, mu_theory, z_values, ...)
+run_convolution_with_tilting(family, S, point, mu_theory, z_values, ...)
 }
 \arguments{
 \item{family}{Character. Distribution family used in convolution.
 Must be one of: \code{"Poisson"}, \code{"Beta"}, \code{"ZIB"}, \code{"ZOIB"}.}
 
-\item{groups}{Named list defining hierarchical structure from bottom
+\item{S}{Named list defining hierarchical structure from bottom
 to top level. Each element contains node names at that level.}
 
 \item{point}{Logical. If TRUE, uses point estimates of parameters.
@@ -63,66 +63,173 @@ raw and tilted densities.
 }
 \examples{
 
-## ---------------------------------------------------------------
+## ---------------------------------------------------------
 ## Example: Point-estimate Poisson convolution
+## ---------------------------------------------------------
+set.seed(123)
+
+S <- rbind(Total = c(1, 1, 1, 1),
+A = c(1, 1, 0, 0),
+B = c(0, 0, 1, 1),
+A1 = c(1, 0, 0, 0),
+A2 = c(0, 1, 0, 0),
+B1 = c(0, 0, 1, 0),
+B2 = c(0, 0, 0, 1))
+colnames(S) <- c("A1", "A2", "B1", "B2")
+
+lambda_mat <- c(Total = 8, A = 5, B = 6, A1 = 2, A2 = 4, B1 = 3, B2 = 5)
+
+z_values <- seq(0, 100)
+
+dens <- run_convolution_with_tilting(family = "Poisson",
+ S = S,
+ mu_theory = c(Total = 9, A = 4, B = 10, A1 = 1, A2 = 4, B1 = 2, B2 = 7),
+ lambda_mat = lambda_mat,
+ z_values = z_values,
+ point = TRUE,
+ n_sims = 50,
+ n_draws = 100)
+
+head(dens[[1]])
+
+## ---------------------------------------------------------
+## Example: Point-estimate Beta convolution
+## ---------------------------------------------------------
+
+set.seed(123)
+
+S_beta <- rbind(
+  Total = c(1, 1, 1, 1),
+  A     = c(1, 1, 0, 0),
+  B     = c(0, 0, 1, 1),
+  A1    = c(1, 0, 0, 0),
+  A2    = c(0, 1, 0, 0),
+  B1    = c(0, 0, 1, 0),
+  B2    = c(0, 0, 0, 1)
+)
+colnames(S_beta) <- c("A1", "A2", "B1", "B2")
+
+local_weights <- list( Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
+A = c(A1 = 0.40, A2 = 0.60), B = c(B1 = 0.30, B2 = 0.70))
+
+alpha_mat <- c(
+  Total = 8,
+  A = 5,
+  B = 6,
+  A1 = 2,
+  A2 = 4,
+  B1 = 3,
+  B2 = 5
+)
+
+beta_mat <- c(
+  Total = 4,
+  A = 3,
+  B = 2,
+  A1 = 6,
+  A2 = 5,
+  B1 = 7,
+  B2 = 4
+)
+
+mu_theory <- c( Total = 0.55, A = 0.18, B = 0.37, A1 = 0.05, A2 = 0.11, B1 = 0.14, B2 = 0.31)
+
+dens <- run_convolution_with_tilting(family = "Beta",
+  S = S_beta,
+  point = TRUE,
+  mu_theory =
+  z_values = NULL,
+  alpha_mat = alpha_mat,
+  beta_mat = beta_mat,
+  weights_list = weights_list,
+  n_draws = 500,
+  n_sims = 50
+)
+
+## Inspect results
+head(dens[[1]])
+
+
+## ---------------------------------------------------------------
+## Example: Zero-one-inflated Beta convolution
 ## ---------------------------------------------------------------
 
 set.seed(123)
 
-groups <- list(
-  State = c("NSW", "VIC"),
-  National = c("AUS")
+S_beta <- rbind(
+  Total = c(1, 1, 1, 1),
+  A = c(1, 1, 0, 0),
+  B = c(0, 0, 1, 1),
+  A1 = c(1, 0, 0, 0),
+  A2 = c(0, 1, 0, 0),
+  B1 = c(0, 0, 1, 0),
+  B2 = c(0, 0, 0, 1)
+)
+colnames(S_beta) <- c("A1", "A2", "B1", "B2")
+
+local_weights <- list(
+  Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
+  A = c(A1 = 0.40, A2 = 0.60),
+  B = c(B1 = 0.30, B2 = 0.70)
 )
 
-lambda_list <- list(
-  c(12, 10),
-  22
+alpha_mat <- c(
+  Total = 8,
+  A = 5,
+  B = 6,
+  A1 = 2,
+  A2 = 4,
+  B1 = 3,
+  B2 = 5
 )
 
-z_values <- 0:60
+beta_mat <- c(
+  Total = 4,
+  A = 3,
+  B = 2,
+  A1 = 6,
+  A2 = 5,
+  B1 = 7,
+  B2 = 4
+)
 
-mu_theory <- list(22, 22)
+zoi_mat <- c(
+  Total = 0.05,
+  A = 0.01,
+  B = 0.03,
+  A1 = 0.04,
+  A2 = 0.03,
+  B1 = 0.02,
+  B2 = 0.01
+)
 
-res <- run_convolution_with_tilting(
-  family = "Poisson",
-  groups = groups,
+coi_mat <- c(
+  Total = 0.01,
+  A = 0.02,
+  B = 0.02,
+  A1 = 0.01,
+  A2 = 0.01,
+  B1 = 0.01,
+  B2 = 0.01
+)
+mu_theory <- c( Total = 0.60, A = 0.22, B = 0.40, A1 = 0.07, A2 = 0.14, B1 = 0.16, B2 = 0.34)
+
+dens_zoib <- run_convolution_with_tilting(family = "ZOIB",
+  S = S_beta,
   point = TRUE,
-  mu_theory = mu_theory,
-  z_values = z_values,
-  lambda_list = lambda_list
+  mu_theory =
+  z_values = NULL,
+  alpha_mat = alpha_mat,
+  beta_mat = beta_mat,
+  zoi_mat = zoi_mat,
+  coi_mat = coi_mat,
+  weights_list = weights_list,
+  n_draws = 500,
+  n_sims = 50
 )
 
-head(res$base_density[[1]])
+## Inspect results
+head(dens_zoib[[1]])
 
-## ---------------------------------------------------------------
-## Example: Posterior-sample zero-inflated Beta convolution
-## ---------------------------------------------------------------
-
-J <- 100
-
-alpha_list_post <- list(cbind(rgamma(J, shape = 2, rate = 1), rgamma(J, shape = 5, rate = 1)),
-                       as.matrix(rgamma(J, shape = 2, rate = 1)))
-
-beta_list_post <- list(cbind(rgamma(J, shape = 6, rate = 1), rgamma(J, shape = 3, rate = 1)),
-                      as.matrix(rgamma(J, shape = 2, rate = 1)))
-
-zoi_list_post <- list(cbind(rbeta(J, 2, 20), rbeta(J, 3, 15)), as.matrix(rbeta(J, 2, 20)))
-
-coi_list_post <- list(cbind(rbeta(J, 2, 2), rbeta(J, 1, 1)), as.matrix(rbeta(J, 1, 2)))
-
-weights_list <- list(c(0.4, 0.6), 1)
-
-res <- run_convolution_with_tilting(family = "ZOIB",
-                               groups =  list(State = c("A", "B"), Top = "National"),
-                               point = FALSE,
-                               mu_theory = mu_theory,
-                               z_values = seq(0, 1, length.out=1000),
-                               alpha_list = alpha_list_post,
-                               beta_list = beta_list_post,
-                               zoi_list = zoi_list_post,
-                               coi_list = coi_list_post,
-                               weights_list = weights_list,
-                               n_draws = J,
-                               n_sims = 50)
 
 }
