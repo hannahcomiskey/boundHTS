@@ -164,12 +164,20 @@ We will generate PDFs for the withheld data points to validate our method. You c
 beta_params_df <- get_beta_params(forecasts$proportion, forecasts$prop_var)
 beta_params_df$Node <- forecasts$Node
   
-alpha_mat <- beta_params_df %>% select(Node, Alpha) %>% pivot_wider(names_from = Node, values_from = Alpha)
+alpha_mat <- beta_params_df %>% 
+  select(Node, Alpha) %>% 
+  pivot_wider(names_from = Node, values_from = Alpha) %>% 
+  unlist()
 
-beta_mat <- beta_params_df %>% select(Node, Beta) %>% pivot_wider(names_from = Node, values_from = Beta)
+beta_mat <- beta_params_df %>% 
+  select(Node, Beta) %>% 
+  pivot_wider(names_from = Node, values_from = Beta) %>% 
+  unlist()
 
 # Set up weights
-weights_list <- list(A = c(0.75, 0.25))
+local_weights <- list(
+  A = c(AA = 0.75, AB = 0.25)
+)
 
 # S matrix 
 S <- rbind(A = c(1, 1),
@@ -185,15 +193,15 @@ mu_theory <- forecasts %>%
 
 # Run convolution with tilting 
 res <- run_convolution_with_tilting(family = "Beta",
-                                groups =  list(Bottom = c("AA", "AB"), Top = "A"),
-                                point = TRUE,
-                                mu_theory = mu_theory,
-                                z_values = seq(0, 1, length.out=1000),
-                                alpha_list = alpha_list,
-                                beta_list = beta_list,
-                                weights_list = weights_list,
-                                n_draws = 500,
-                                n_sims = 50)
+                                    S = S,
+                                    point = TRUE,
+                                    mu_theory = mu_theory,
+                                    z_values = seq(0, 1, length.out=1000),
+                                    alpha_mat = alpha_mat,
+                                    beta_mat = beta_mat,
+                                    weights_list = local_weights,
+                                    n_draws = 500,
+                                    n_sims = 50)
 
 ```
 

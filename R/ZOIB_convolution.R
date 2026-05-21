@@ -112,9 +112,15 @@
 #'   B2 = 0.01
 #' )
 #'
-#' dens <- ZOIB_convolution(S = S, alpha_mat = alpha_mat,
-#'  beta_mat = beta_mat, zoi_mat = zoi_mat, coi_mat = coi_mat,
-#'  weights_list = local_weights, point = TRUE, n_draws = 500, n_sims = 50)
+#'dens <- ZOIB_convolution(S = S,
+#'  alpha_mat = alpha_mat,
+#'  beta_mat = beta_mat,
+#'  zoi_mat = zoi_mat,
+#'  coi_mat = coi_mat,
+#'  weights_list = local_weights,
+#'  point = TRUE,
+#'  n_draws = 500,
+#'  n_sims = 50)
 #'
 #' head(dens[[1]])
 #'
@@ -164,15 +170,21 @@
 #'   B2 = rbeta(J, 1, 1)
 #' )
 #'
-#' dens_post <- ZOIB_convolution(S = S, alpha_mat = alpha_post, beta_mat = beta_post,
-#' coi_mat = zoi_post, coi_post = coi_post, weights_list = local_weights, point = FALSE, n_sims = 50)
+#' dens_post <- ZOIB_convolution(S = S,
+#' alpha_mat = alpha_post,
+#' beta_mat = beta_post,
+#' zoi_mat = zoi_post,
+#' coi_mat = coi_post,
+#' weights_list = local_weights,
+#' point = FALSE,
+#' n_sims = 50)
 #'
 #' head(dens_post[[1]])
 #'
 #' @export
 
 ZOIB_convolution <- function(S, alpha_mat, beta_mat, zoi_mat, coi_mat,
-                             weights_list, point, n_draws = 2000,
+                             weights_list, point, n_draws = NULL,
                              n_sims = 100, z_values = NULL) {
 
   ## --------------------------------------------------------
@@ -247,6 +259,7 @@ ZOIB_convolution <- function(S, alpha_mat, beta_mat, zoi_mat, coi_mat,
       beta_input <- beta_mat[match(node_names, names(beta_mat))]
       zoi_input <- zoi_mat[match(node_names, names(zoi_mat))]
       coi_input <- coi_mat[match(node_names, names(coi_mat))]
+      n_draws <- ifelse(is.null(n_draws), 2000, n_draws)
 
     } else {
 
@@ -254,7 +267,7 @@ ZOIB_convolution <- function(S, alpha_mat, beta_mat, zoi_mat, coi_mat,
       beta_input <- beta_mat[ ,match(node_names, colnames(beta_mat)), drop = FALSE]
       zoi_input <- zoi_mat[ ,match(node_names, colnames(zoi_mat)), drop = FALSE]
       coi_input <- coi_mat[ ,match(node_names, colnames(coi_mat)), drop = FALSE]
-
+      n_draws <- nrow(alpha_input)
     }
 
     ## ------------------------------------------------------

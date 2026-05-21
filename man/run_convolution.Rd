@@ -74,7 +74,7 @@ S_beta <- rbind(
 )
 colnames(S_beta) <- c("A1", "A2", "B1", "B2")
 
-local_weights <- list(
+weights_list <- list(
   Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
   A     = c(A1 = 0.40, A2 = 0.60),
   B     = c(B1 = 0.30, B2 = 0.70)
@@ -133,7 +133,7 @@ S_beta <- rbind(
 )
 colnames(S_beta) <- c("A1", "A2", "B1", "B2")
 
-local_weights <- list(
+weights_list <- list(
   Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
   A = c(A1 = 0.40, A2 = 0.60),
   B = c(B1 = 0.30, B2 = 0.70)

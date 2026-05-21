@@ -133,7 +133,6 @@
 #'   beta_mat = beta_post,
 #'   weights_list = local_weights,
 #'   point = FALSE,
-#'   n_draws = J,
 #'   n_sims = 50
 #' )
 #'
@@ -142,7 +141,7 @@
 #' @export
 
 Beta_convolution <- function(S, alpha_mat, beta_mat, weights_list, point,
-                             n_draws = 2000, n_sims = 100, z_values = NULL) {
+                             n_draws = NULL, n_sims = 100, z_values = NULL) {
 
   ## --------------------------------------------------------
   ## Density grid
@@ -220,16 +219,16 @@ Beta_convolution <- function(S, alpha_mat, beta_mat, weights_list, point,
     ## ------------------------------------------------------
 
     if (isTRUE(point)) {
-
       alpha_input <- alpha_mat[match(node_names, names(alpha_mat))]
-
       beta_input <- beta_mat[match(node_names, names(beta_mat))]
+      n_draws <- ifelse(is.null(n_draws), 2000, n_draws)
 
     } else {
 
       alpha_input <- alpha_mat[ , match(node_names, colnames(alpha_mat)),drop = FALSE]
-
       beta_input <- beta_mat[ ,match(node_names, colnames(beta_mat)), drop = FALSE]
+      n_draws <- nrow(alpha_input)
+
     }
 
     ## ------------------------------------------------------

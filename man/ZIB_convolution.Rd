@@ -11,7 +11,7 @@ ZIB_convolution(
   zi_mat,
   weights_list,
   point,
-  n_draws = 2000,
+  n_draws = NULL,
   n_sims = 100,
   z_values = NULL
 )
@@ -163,8 +163,13 @@ zi_post <- cbind(
   B2 = rbeta(J, 1, 1)
 )
 
-dens_post <- ZIB_convolution(S = S, alpha_mat = alpha_post, beta_mat = beta_post,
-zi_post = zi_post, weights_list = local_weights, point = FALSE, n_sims = 50)
+dens_post <- ZIB_convolution(S = S,
+ alpha_mat = alpha_post,
+ beta_mat = beta_post,
+ zi_mat = zi_post,
+ weights_list = local_weights,
+ point = FALSE,
+ n_sims = 50)
 
 head(dens_post[[1]])
 

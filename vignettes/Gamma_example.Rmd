@@ -18,9 +18,9 @@ library(boundHTS)
 library(forecast)
 
 get_gamma_params <- function(mean, var) {
-  alpha <- (mean^2)/var
-  beta <- mean/var
-  return(data.frame(Alpha = alpha, Beta = beta))
+  shape <- (mean^2)/var
+  rate <- mean/var
+  return(data.frame(Shape = shape, Rate = rate))
 }
 ```
 
@@ -110,36 +110,57 @@ We estimate a coherent top-series probability density function (PDF) using a con
 We will generate PDFs for the withheld data points to validate our method. You can loop over all years of you wish by updating the code to do so.
 
 ```{r}
-## Get Beta parameters HERE
+## Get Gamma parameters
 gamma_params_df <- get_gamma_params(forecasts$mu_est, forecasts$var_est)
 gamma_params_df$Node <- forecasts$Node
   
-alpha_list <- list(gamma_params_df %>% filter(Node %in% c("AA", "AB")) %>% pull(Alpha),
-                   gamma_params_df %>% filter(Node %in% c("A")) %>% pull(Alpha))
+shape_mat <- gamma_params_df %>% 
+  select(Node, Shape) %>% 
+  pivot_wider(names_from = Node, values_from = Shape) %>% 
+  unlist()
 
-beta_list <- list(gamma_params_df %>% filter(Node %in% c("AA", "AB")) %>% pull(Beta),
-                   gamma_params_df %>% filter(Node %in% c("A")) %>% pull(Beta))
-
-# Set up weights
-weights_list <- list(c(0.75, 0.25), 1)
+rate_mat <- gamma_params_df %>% 
+  select(Node, Rate) %>% 
+  pivot_wider(names_from = Node, values_from = Rate) %>% 
+  unlist()
 
 # Set up expected values 
 mu_theory <- forecasts %>% 
-  filter(Node %in% c("A")) %>% 
-  arrange(Node) %>% 
-  pull(proportion)
+  select(Node, mu_est) %>%
+  pivot_wider(names_from = Node, values_from = mu_est) %>%
+  unlist()
 
+# S matrix 
+S <- rbind(Tot = c(1, 1, 1, 1),
+           A = c(1, 1, 0, 0),
+           B = c(0, 0, 1, 1),
+           AA = c(1, 0, 0, 0),
+           AB = c(0, 1, 0, 0),
+           BA = c(0, 0, 1, 0),
+           BB = c(0, 0, 0, 1))
+colnames(S) <- c("AA", "AB", "BA", "BB")
+
+dens <- Gamma_convolution(
+   S = S,
+   shape_mat = shape_mat,
+   rate_mat = rate_mat,
+   z_values = z_values,
+   point = TRUE,
+   n_sims = 50,
+   n_draws = 100
+ )
+ 
 # Run convolution with tilting 
-res <- run_convolution_with_tilting(family = "Beta",
-                                groups =  list(Bottom = c("AA", "AB"), Top = "A"),
-                                point = TRUE,
-                                mu_theory = mu_theory,
-                                z_values = seq(0, 1, length.out=1000),
-                                alpha_list = alpha_list,
-                                beta_list = beta_list,
-                                weights_list = weights_list,
-                                n_draws = 500,
-                                n_sims = 50)
+res <- run_convolution_with_tilting(family = "Gamma",
+                                    S = S,
+                                    point = TRUE,
+                                    mu_theory = mu_theory,
+                                    z_values = seq(0, 100),
+                                    shape_mat = shape_mat,
+                                    rate_mat = rate_mat,
+                                    weights_list = local_weights,
+                                    n_draws = 500,
+                                    n_sims = 50)
 
 ```
 
@@ -150,31 +171,35 @@ The figure presents the predictive density formed by convolving the estimated bo
 
 For a single time point:
 ```{r, echo=FALSE, fig.width=9, fig.height=5, dpi=150}
-t_point <- 250
+t_point <- nrow(gamma_sim_data)
 
-obs_point <- beta_sim_data %>% 
+obs_point <- gamma_sim_data %>% 
   filter(Time==t_point) %>%
+  select(!Time) %>%
+  pivot_longer(cols = everything(), names_to = "Node", values_to = "Observed") %>%
+  filter(Node %in% c("A", "B", "Tot")) %>%
   mutate(Method="Observed data")
 
 forecasts_mean <- forecasts %>% 
   dplyr::filter(Time == t_point) %>%
-  dplyr::select(Time, Node, proportion) %>%
-  tidyr::pivot_wider(names_from = Node, values_from = proportion) %>%
+  dplyr::select(Time, Node, mu_est) %>%
+  filter(Node %in% c("A", "B", "Tot")) %>%
   dplyr::mutate(Method = 'Predicted mean')
 
-exp_plot_df <- res$tilted_density[[1]] %>% mutate(Method= "Tilted density")
+exp_plot_df <- bind_rows(res$tilted_density) %>% mutate(Method= "Tilted density")
 
 
 ggplot2::ggplot() +
   ggplot2::geom_line(data = exp_plot_df,
                 ggplot2::aes(x = Z, y = Density, colour=Method), linewidth = 1) +
   ggplot2::geom_vline(data = forecasts_mean,
-                ggplot2::aes(xintercept = A, colour = Method), linewidth = 1) +
+                ggplot2::aes(xintercept = mu_est, colour = Method), linewidth = 1) +
   ggplot2::geom_vline(data = obs_point,
-                ggplot2::aes(xintercept = A, colour = Method), linewidth = 1) +
+                ggplot2::aes(xintercept = Observed, colour = Method), linewidth = 1) +
   ggplot2::labs(x = "Proportion", y = "Density") +
   ggplot2::theme_minimal(base_size = 14) +
-  ggplot2::theme(legend.position = "bottom")
+  ggplot2::theme(legend.position = "bottom") +
+  facet_wrap(~Node)
 
 ```
 

@@ -52,6 +52,7 @@ S <- rbind(
   B2    = c(0, 0, 0, 1)
 )
 colnames(S) <- c("A1", "A2", "B1", "B2")
+
 shape_mat <- c(
   Total = 8,
   A = 5,
@@ -80,7 +81,8 @@ dens <- Gamma_convolution(
   rate_mat = rate_mat,
   z_values = z_values,
   point = TRUE,
-  n_sims = 50
+  n_sims = 50,
+  n_draws = 100
 )
 
 head(dens[[1]])
@@ -118,7 +120,6 @@ dens_post <- Gamma_convolution(
   rate_mat = rate_post,
   z_values = z_values,
   point = FALSE,
-  n_draws = J,
   n_sims = 50
 )
 

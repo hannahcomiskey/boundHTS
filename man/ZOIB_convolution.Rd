@@ -12,7 +12,7 @@ ZOIB_convolution(
   coi_mat,
   weights_list,
   point,
-  n_draws = 2000,
+  n_draws = NULL,
   n_sims = 100,
   z_values = NULL
 )
@@ -133,9 +133,15 @@ coi_mat <- c(
   B2 = 0.01
 )
 
-dens <- ZOIB_convolution(S = S, alpha_mat = alpha_mat,
- beta_mat = beta_mat, zoi_mat = zoi_mat, coi_mat = coi_mat,
- weights_list = local_weights, point = TRUE, n_draws = 500, n_sims = 50)
+dens <- ZOIB_convolution(S = S,
+ alpha_mat = alpha_mat,
+ beta_mat = beta_mat,
+ zoi_mat = zoi_mat,
+ coi_mat = coi_mat,
+ weights_list = local_weights,
+ point = TRUE,
+ n_draws = 500,
+ n_sims = 50)
 
 head(dens[[1]])
 
@@ -185,8 +191,14 @@ coi_post <- cbind(
   B2 = rbeta(J, 1, 1)
 )
 
-dens_post <- ZOIB_convolution(S = S, alpha_mat = alpha_post, beta_mat = beta_post,
-coi_mat = zoi_post, coi_post = coi_post, weights_list = local_weights, point = FALSE, n_sims = 50)
+dens_post <- ZOIB_convolution(S = S,
+alpha_mat = alpha_post,
+beta_mat = beta_post,
+zoi_mat = zoi_post,
+coi_mat = coi_post,
+weights_list = local_weights,
+point = FALSE,
+n_sims = 50)
 
 head(dens_post[[1]])
 

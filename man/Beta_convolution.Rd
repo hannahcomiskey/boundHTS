@@ -10,7 +10,7 @@ Beta_convolution(
   beta_mat,
   weights_list,
   point,
-  n_draws = 2000,
+  n_draws = NULL,
   n_sims = 100,
   z_values = NULL
 )
@@ -152,7 +152,6 @@ dens_post <- Beta_convolution(
   beta_mat = beta_post,
   weights_list = local_weights,
   point = FALSE,
-  n_draws = J,
   n_sims = 50
 )
 

@@ -109,7 +109,7 @@ S_beta <- rbind(
 )
 colnames(S_beta) <- c("A1", "A2", "B1", "B2")
 
-local_weights <- list( Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
+weights_list <- list( Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
 A = c(A1 = 0.40, A2 = 0.60), B = c(B1 = 0.30, B2 = 0.70))
 
 alpha_mat <- c(
@@ -137,7 +137,7 @@ mu_theory <- c( Total = 0.55, A = 0.18, B = 0.37, A1 = 0.05, A2 = 0.11, B1 = 0.1
 dens <- run_convolution_with_tilting(family = "Beta",
   S = S_beta,
   point = TRUE,
-  mu_theory =
+  mu_theory = mu_theory,
   z_values = NULL,
   alpha_mat = alpha_mat,
   beta_mat = beta_mat,
@@ -167,7 +167,7 @@ S_beta <- rbind(
 )
 colnames(S_beta) <- c("A1", "A2", "B1", "B2")
 
-local_weights <- list(
+weights_list <- list(
   Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
   A = c(A1 = 0.40, A2 = 0.60),
   B = c(B1 = 0.30, B2 = 0.70)
@@ -217,7 +217,7 @@ mu_theory <- c( Total = 0.60, A = 0.22, B = 0.40, A1 = 0.07, A2 = 0.14, B1 = 0.1
 dens_zoib <- run_convolution_with_tilting(family = "ZOIB",
   S = S_beta,
   point = TRUE,
-  mu_theory =
+  mu_theory = mu_theory,
   z_values = NULL,
   alpha_mat = alpha_mat,
   beta_mat = beta_mat,

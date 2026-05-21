@@ -26,16 +26,15 @@
 #' b <- 2
 #'
 #' # Simulated samples
-#' bottom_samps <- array(rgamma(n_sims * n_draws * b),
-#'                         dim = c(n_sims, n_draws, b))
+#' bottom_samps <- array(rgamma(n_sims * n_draws * b, shape = 2, rate= 3),
+#'  dim = c(n_sims, n_draws, b))
 #'
 #' shape_matrix <- matrix(runif(n_draws * b, 2, 5), nrow = n_draws)
 #' rate_matrix  <- matrix(runif(n_draws * b, 2, 5), nrow = n_draws)
 #'
 #' weights <- c(1, 1)
 #'
-#' Gamma_convolution_density(
-#'   z = 0.5,
+#' Gamma_convolution_density(z = 0.5,
 #'   shape_matrix = shape_matrix,
 #'   rate_matrix = rate_matrix,
 #'   bottom_samps = bottom_samps

@@ -143,15 +143,20 @@
 #'   B2 = rbeta(J, 1, 1)
 #' )
 #'
-#' dens_post <- ZIB_convolution(S = S, alpha_mat = alpha_post, beta_mat = beta_post,
-#' zi_post = zi_post, weights_list = local_weights, point = FALSE, n_sims = 50)
+#' dens_post <- ZIB_convolution(S = S,
+#'  alpha_mat = alpha_post,
+#'  beta_mat = beta_post,
+#'  zi_mat = zi_post,
+#'  weights_list = local_weights,
+#'  point = FALSE,
+#'  n_sims = 50)
 #'
 #' head(dens_post[[1]])
 #'
 #' @export
 
 ZIB_convolution <- function(S, alpha_mat, beta_mat, zi_mat, weights_list, point,
-                             n_draws = 2000, n_sims = 100, z_values = NULL) {
+                             n_draws = NULL, n_sims = 100, z_values = NULL) {
 
   ## --------------------------------------------------------
   ## Density grid
@@ -224,13 +229,14 @@ ZIB_convolution <- function(S, alpha_mat, beta_mat, zi_mat, weights_list, point,
       alpha_input <- alpha_mat[match(node_names, names(alpha_mat))]
       beta_input <- beta_mat[match(node_names, names(beta_mat))]
       zi_input <- zi_mat[match(node_names, names(zi_mat))]
+      n_draws <- ifelse(is.null(n_draws), 2000, n_draws)
 
     } else {
 
       alpha_input <- alpha_mat[ , match(node_names, colnames(alpha_mat)),drop = FALSE]
       beta_input <- beta_mat[ ,match(node_names, colnames(beta_mat)), drop = FALSE]
       zi_input <- zi_mat[ ,match(node_names, colnames(zi_mat)), drop = FALSE]
-
+      n_draws <- nrow(alpha_input)
     }
 
     ## ------------------------------------------------------

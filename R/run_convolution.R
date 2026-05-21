@@ -55,7 +55,7 @@
 #' )
 #' colnames(S_beta) <- c("A1", "A2", "B1", "B2")
 #'
-#' local_weights <- list(
+#' weights_list <- list(
 #'   Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
 #'   A     = c(A1 = 0.40, A2 = 0.60),
 #'   B     = c(B1 = 0.30, B2 = 0.70)
@@ -114,7 +114,7 @@
 #' )
 #' colnames(S_beta) <- c("A1", "A2", "B1", "B2")
 #'
-#' local_weights <- list(
+#' weights_list <- list(
 #'   Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
 #'   A = c(A1 = 0.40, A2 = 0.60),
 #'   B = c(B1 = 0.30, B2 = 0.70)
@@ -192,9 +192,11 @@ run_convolution <- function(family, S, point, z_values, ...) {
   if (family == "Poisson") {
 
     dens_list <- Poisson_convolution(S = S,
-                                     z_values = z_values,
-                                     lambda_list = args$lambda_list,
-                                     point = point
+                                     lambda_mat = args$lambda_mat,
+                                     point = point,
+                                     n_draws = default_settings(args$n_draws, 2000),
+                                     n_sims = default_settings(args$n_sims, 100),
+                                     z_values = z_values
                                      )
   } else if (family == "Beta") {
 

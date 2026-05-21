@@ -96,7 +96,7 @@
 #' )
 #' colnames(S_beta) <- c("A1", "A2", "B1", "B2")
 #'
-#' local_weights <- list( Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
+#' weights_list <- list( Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
 #' A = c(A1 = 0.40, A2 = 0.60), B = c(B1 = 0.30, B2 = 0.70))
 #'
 #' alpha_mat <- c(
@@ -124,7 +124,7 @@
 #' dens <- run_convolution_with_tilting(family = "Beta",
 #'   S = S_beta,
 #'   point = TRUE,
-#'   mu_theory =
+#'   mu_theory = mu_theory,
 #'   z_values = NULL,
 #'   alpha_mat = alpha_mat,
 #'   beta_mat = beta_mat,
@@ -154,7 +154,7 @@
 #' )
 #' colnames(S_beta) <- c("A1", "A2", "B1", "B2")
 #'
-#' local_weights <- list(
+#' weights_list <- list(
 #'   Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
 #'   A = c(A1 = 0.40, A2 = 0.60),
 #'   B = c(B1 = 0.30, B2 = 0.70)
@@ -204,7 +204,7 @@
 #' dens_zoib <- run_convolution_with_tilting(family = "ZOIB",
 #'   S = S_beta,
 #'   point = TRUE,
-#'   mu_theory =
+#'   mu_theory = mu_theory,
 #'   z_values = NULL,
 #'   alpha_mat = alpha_mat,
 #'   beta_mat = beta_mat,
@@ -249,6 +249,7 @@ run_convolution_with_tilting <- function(family, S, point, mu_theory, z_values, 
 
     base_df <- base_list[[i]]
 
+    node_name <- unique(base_df$Node)
     z_vals <- base_df$Z
     f_y <- base_df$Density
 
@@ -256,13 +257,14 @@ run_convolution_with_tilting <- function(family, S, point, mu_theory, z_values, 
     discrete_flag <- identical(family, "Poisson") # T/F
 
     tilt_res <- tilt_density(
-      mu_theory = mu_theory[base_df$Node[1]],
+      mu_theory = mu_theory[node_name],
       z_vals = z_vals,
       f_y = f_y,
       discrete = discrete_flag
     )
 
     tilted_density[[i]] <- data.frame(
+      Node = node_name,
       Z = z_vals,
       Density = tilt_res$f_tilted
     )

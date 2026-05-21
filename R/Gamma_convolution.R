@@ -26,6 +26,7 @@
 #'   B2    = c(0, 0, 0, 1)
 #' )
 #' colnames(S) <- c("A1", "A2", "B1", "B2")
+#'
 #' shape_mat <- c(
 #'   Total = 8,
 #'   A = 5,
@@ -54,7 +55,8 @@
 #'   rate_mat = rate_mat,
 #'   z_values = z_values,
 #'   point = TRUE,
-#'   n_sims = 50
+#'   n_sims = 50,
+#'   n_draws = 100
 #' )
 #'
 #' head(dens[[1]])
@@ -92,7 +94,6 @@
 #'   rate_mat = rate_post,
 #'   z_values = z_values,
 #'   point = FALSE,
-#'   n_draws = J,
 #'   n_sims = 50
 #' )
 #'
@@ -100,7 +101,7 @@
 #'
 #' @export
 
-Gamma_convolution <- function(S,shape_mat,rate_mat, point,
+Gamma_convolution <- function(S, shape_mat, rate_mat, point,
                               n_draws = NULL, n_sims = 100, z_values) {
 
   ## --------------------------------------------------------

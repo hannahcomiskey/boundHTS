@@ -86,12 +86,16 @@ check_beta_convolution_inputs <- function(
     stop("'point' must be TRUE or FALSE.")
   }
 
-  if (!is.numeric(n_draws) ||
-      length(n_draws) != 1 ||
-      n_draws <= 0 ||
-      n_draws %% 1 != 0) {
+  if (isTRUE(point)) {
+    if (!is.numeric(n_draws) || length(n_draws) != 1 ||
+        is.na(n_draws) || !is.finite(n_draws) ||
+        n_draws <= 0 || n_draws %% 1 != 0) {
+      stop("'n_draws' must be a positive integer.")
+    }
+  }
 
-    stop("'n_draws' must be a positive integer.")
+  if (!isTRUE(point) && !is.null(n_draws)) {
+    stop("n_draws must be NULL when point = FALSE (auto-inferred from matrix).")
   }
 
   if (!is.numeric(n_sims) ||
@@ -204,22 +208,6 @@ check_beta_convolution_inputs <- function(
       stop(
         "'alpha_mat' and 'beta_mat' ",
         "must have identical dimensions."
-      )
-    }
-
-    if (nrow(alpha_mat) != n_draws) {
-
-      stop(
-        "Number of rows in 'alpha_mat' ",
-        "must equal 'n_draws'."
-      )
-    }
-
-    if (nrow(beta_mat) != n_draws) {
-
-      stop(
-        "Number of rows in 'beta_mat' ",
-        "must equal 'n_draws'."
       )
     }
 
