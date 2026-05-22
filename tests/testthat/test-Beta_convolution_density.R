@@ -161,3 +161,4 @@ test_that("Beta_convolution_density errors on incompatible dimensions", {
                )
 
 })
+
