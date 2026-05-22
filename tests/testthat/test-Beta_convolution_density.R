@@ -1,41 +1,50 @@
 test_that("Beta_convolution_density returns a finite scalar", {
+   set.seed(123)
 
-  set.seed(123)
+   S <- rbind(
+     Total = c(1, 1, 1, 1),
+     A     = c(1, 1, 0, 0),
+     B     = c(0, 0, 1, 1),
+     A1    = c(1, 0, 0, 0),
+     A2    = c(0, 1, 0, 0),
+     B1    = c(0, 0, 1, 0),
+     B2    = c(0, 0, 0, 1)
+   )
+   colnames(S) <- c("A1", "A2", "B1", "B2")
 
-  ## Define a simple two-level hierarchy
-  groups <- list(
-    bottom = c("A", "B"),   # bottom level
-    top = c("Total")     # aggregated level
-  )
+   local_weights <- list(
+     Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
+     A     = c(A1 = 0.40, A2 = 0.60),
+     B     = c(B1 = 0.30, B2 = 0.70)
+   )
 
-  ## Point estimates for Beta parameters
-  alpha_list <- list(
-    c(2, 5),
-    c(7)
-  )
+   alpha_mat <- c(
+     Total = 8,
+     A = 5,
+     B = 6,
+     A1 = 2,
+     A2 = 4,
+     B1 = 3,
+     B2 = 5
+   )
 
-  beta_list <- list(
-    c(6, 3),
-    c(4)
-  )
+   beta_mat <- c(
+     Total = 4,
+     A = 3,
+     B = 2,
+     A1 = 6,
+     A2 = 5,
+     B1 = 7,
+     B2 = 4
+   )
 
-  ## Aggregation weights
-  weights_list <- list(
-    c(0.4, 0.6),
-    1
-  )
-
-  ## Estimate densities
-  dens <- Beta_convolution(
-    groups = groups,
-    alpha_list = alpha_list,
-    beta_list = beta_list,
-    weights_list = weights_list,
-    point = TRUE,
-    n_draws = 500,
-    n_sims = 50
-  )
-
+   dens <- Beta_convolution(S = S,
+                            alpha_mat = alpha_mat,
+                            beta_mat = beta_mat,
+                            weights_list = local_weights,
+                            point = TRUE,
+                            n_draws = 500,
+                            n_sims = 50)
   dens
 
   # ---- expectations ----
@@ -49,80 +58,106 @@ test_that("Beta_convolution_density is stable when z is out of support", {
 
   set.seed(123)
 
-  ## Define a simple two-level hierarchy
-  groups <- list(
-    bottom = c("A", "B"),   # bottom level
-    top = c("Total")     # aggregated level
+  S <- rbind(
+    Total = c(1, 1, 1, 1),
+    A     = c(1, 1, 0, 0),
+    B     = c(0, 0, 1, 1),
+    A1    = c(1, 0, 0, 0),
+    A2    = c(0, 1, 0, 0),
+    B1    = c(0, 0, 1, 0),
+    B2    = c(0, 0, 0, 1)
+  )
+  colnames(S) <- c("A1", "A2", "B1", "B2")
+
+  local_weights <- list(
+    Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
+    A     = c(A1 = 0.40, A2 = 0.60),
+    B     = c(B1 = 0.30, B2 = 0.70)
   )
 
-  ## Point estimates for Beta parameters
-  alpha_list <- list(
-    c(2, 5),
-    c(7)
+  alpha_mat <- c(
+    Total = 8,
+    A = 5,
+    B = 6,
+    A1 = 2,
+    A2 = 4,
+    B1 = 3,
+    B2 = 5
   )
 
-  beta_list <- list(
-    c(6, 3),
-    c(4)
-  )
-
-  ## Aggregation weights
-  weights_list <- list(
-    c(0.4, 0.6),
-    1
+  beta_mat <- c(
+    Total = 4,
+    A = 3,
+    B = 2,
+    A1 = 6,
+    A2 = 5,
+    B1 = 7,
+    B2 = 4
   )
 
   ## Estimate densities
-  expect_error(Beta_convolution(
-    groups = groups,
-    alpha_list = alpha_list,
-    beta_list = beta_list,
-    weights_list = weights_list,
-    point = TRUE,
-    n_draws = 500,
-    n_sims = 50,
-    z_values = seq(-10, 10, length.out=200)
+  expect_error(Beta_convolution(S = S,
+                                alpha_mat = alpha_mat,
+                                beta_mat = beta_mat,
+                                weights_list = local_weights,
+                                point = TRUE,
+                                n_draws = 500,
+                                n_sims = 50,
+                                z_values = seq(-10, 10, length.out=200)
   ))
 
 })
 
 test_that("Beta_convolution_density errors on incompatible dimensions", {
-
   set.seed(123)
 
-  ## Define a simple two-level hierarchy
-  groups <- list(
-    bottom = c("A", "B"),   # bottom level
-    top = c("Total")     # aggregated level
+  S <- rbind(
+    Total = c(1, 1, 1, 1),
+    A     = c(1, 1, 0, 0),
+    B     = c(0, 0, 1, 1),
+    A1    = c(1, 0, 0, 0),
+    A2    = c(0, 1, 0, 0),
+    B1    = c(0, 0, 1, 0),
+    B2    = c(0, 0, 0, 1)
+  )
+  colnames(S) <- c("A1", "A2", "B1", "B2")
+
+  local_weights <- list(
+    Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
+    A     = c(A1 = 0.40, A2 = 0.60),
+    B     = c(B1 = 0.30, B2 = 0.70)
   )
 
-  ## Point estimates for Beta parameters
-  alpha_list <- list(
-    c(2, 5),
-    c(7)
+  alpha_mat <- c(
+    Total = 8,
+    A = 5,
+    B = 6,
+    C = 6,
+    A1 = 2,
+    A2 = 4,
+    B1 = 3,
+    B2 = 5
   )
 
-  beta_list <- list(
-    c(6, 3, 4),
-    c(2,3),
-    c(4)
-  )
-
-  ## Aggregation weights
-  weights_list <- list(
-    c(0.4, 0.6),
-    1
+  beta_mat <- c(
+    Total = 4,
+    A = 3,
+    B = 2,
+    A1 = 6,
+    A2 = 5,
+    B1 = 7,
+    B2 = 4
   )
 
   ## Estimate densities
-  expect_error(Beta_convolution(
-    groups = groups,
-    alpha_list = alpha_list,
-    beta_list = beta_list,
-    weights_list = weights_list,
-    point = TRUE,
-    n_draws = 500,
-    n_sims = 50,
-    z_values = seq(-10, 10, length.out=200)))
+  expect_error(Beta_convolution(S = S,
+                                alpha_mat = alpha_mat,
+                                beta_mat = beta_mat,
+                                weights_list = local_weights,
+                                point = TRUE,
+                                n_draws = 500,
+                                n_sims = 50
+                                )
+               )
 
 })

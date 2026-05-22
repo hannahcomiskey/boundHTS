@@ -194,8 +194,8 @@ run_convolution <- function(family, S, point, z_values, ...) {
     dens_list <- Poisson_convolution(S = S,
                                      lambda_mat = args$lambda_mat,
                                      point = point,
-                                     n_draws = default_settings(args$n_draws, 2000),
-                                     n_sims = default_settings(args$n_sims, 100),
+                                     n_draws = args$n_draws,
+                                     n_sims = args$n_sims,
                                      z_values = z_values
                                      )
   } else if (family == "Beta") {
@@ -205,8 +205,8 @@ run_convolution <- function(family, S, point, z_values, ...) {
                                   beta_mat = args$beta_mat,
                                   weights_list = args$weights_list,
                                   point = point,
-                                  n_draws = default_settings(args$n_draws, 2000),
-                                  n_sims = default_settings(args$n_sims, 100),
+                                  n_draws = args$n_draws,
+                                  n_sims = args$n_sims,
                                   z_values = z_values
                                   )
   } else if (family == "ZIB") {
@@ -217,8 +217,8 @@ run_convolution <- function(family, S, point, z_values, ...) {
                                  zi_mat = args$zi_mat,
                                  weights_list = args$weights_list,
                                  point = point,
-                                 n_draws = default_settings(args$n_draws, 2000),
-                                 n_sims = default_settings(args$n_sims, 100),
+                                 n_draws = args$n_draws,
+                                 n_sims = args$n_sims,
                                  z_values = z_values
                                  )
   } else if (family == "ZOIB") {
@@ -230,8 +230,8 @@ run_convolution <- function(family, S, point, z_values, ...) {
                                   coi_mat = args$coi_mat,
                                   weights_list = args$weights_list,
                                   point = point,
-                                  n_draws = default_settings(args$n_draws, 2000),
-                                  n_sims = default_settings(args$n_sims, 100),
+                                  n_draws = args$n_draws,
+                                  n_sims = args$n_sims,
                                   z_values = z_values
                                   )
   } else if (family == "Gamma") {
@@ -240,8 +240,8 @@ run_convolution <- function(family, S, point, z_values, ...) {
                                    shape_mat = args$shape_mat,
                                    rate_mat = args$rate_mat,
                                    point = point,
-                                   n_draws = default_settings(args$n_draws, 2000),
-                                   n_sims = default_settings(args$n_sims, 100),
+                                   n_draws = args$n_draws,
+                                   n_sims = args$n_sims,
                                    z_values = z_values
                                    )
   }

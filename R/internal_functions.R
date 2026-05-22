@@ -23,18 +23,6 @@ safe_exp <- function(x) {
   exp(pmin(x, 700))
 }
 
-#' To handle ... in functions
-#'
-#' @description
-#' Returns `y` if `x` is `NULL`, otherwise returns `x`.
-#'
-#' @param x vector of values
-#' @param y vector of values
-#' @export
-default_settings <- function(x, y) {
-  if (is.null(x)) y else x
-}
-
 
 #' Recursive weight propagation
 #'

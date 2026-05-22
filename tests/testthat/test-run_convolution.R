@@ -1,36 +1,50 @@
 # tests/testthat/test-run_convolution.R
-test_that("run_convolution errors for unsupported family", {
+test_that("run_convolution function fails gracefully on invalid family", {
+  set.seed(123)
 
-  expect_error(
-    run_convolution(
-      family = "Gaussian",
-      groups = list(A = c("a1", "a2")),
-      point = TRUE,
-      z_values = 0:10
-    ),
-    "Family name not recognised. Please refer to help file for naming."
-  )
+  S <- rbind(Total = c(1, 1, 1, 1),
+             A = c(1, 1, 0, 0),
+             B = c(0, 0, 1, 1),
+             A1 = c(1, 0, 0, 0),
+             A2 = c(0, 1, 0, 0),
+             B1 = c(0, 0, 1, 0),
+             B2 = c(0, 0, 0, 1))
+  colnames(S) <- c("A1", "A2", "B1", "B2")
 
+  lambda_mat <- c(Total = 8, A = 5, B = 6, A1 = 2, A2 = 4, B1 = 3, B2 = 5)
+
+  z_values <- seq(0, 100)
+
+  expect_error(run_convolution(family = "Gaussian",
+                               S = S,
+                               lambda_mat = lambda_mat,
+                               z_values = z_values,
+                               point = TRUE,
+                               n_sims = 50, n_draws = 100), "not")
 })
+
 
 test_that("Poisson convolution runs with point estimates", {
 
-  groups <- list(
-    NSW = c("NSW_Male", "NSW_Female"),
-    National = c("AUS")
-  )
+  S <- rbind(Total = c(1, 1, 1, 1),
+             A = c(1, 1, 0, 0),
+             B = c(0, 0, 1, 1),
+             A1 = c(1, 0, 0, 0),
+             A2 = c(0, 1, 0, 0),
+             B1 = c(0, 0, 1, 0),
+             B2 = c(0, 0, 0, 1))
+  colnames(S) <- c("A1", "A2", "B1", "B2")
 
-  lambda_list <- list(c(12, 10), 22)
+  lambda_mat <- c(Total = 8, A = 5, B = 6, A1 = 2, A2 = 4, B1 = 3, B2 = 5)
 
-  z_values <- 0:40
+  z_values <- seq(0, 100)
 
-  result <- run_convolution(
-    family = "Poisson",
-    groups = groups,
-    point = TRUE,
-    z_values = z_values,
-    lambda_list = lambda_list
-  )
+  result <- run_convolution(family = "Poisson",
+                            S = S,
+                            lambda_mat = lambda_mat,
+                            z_values = z_values,
+                            point = TRUE,
+                            n_sims = 50, n_draws = 100)
 
   expect_type(result, "list")
 
@@ -51,32 +65,30 @@ test_that("Poisson convolution runs with posterior samples", {
   set.seed(123)
 
   J <- 100
+  S <- rbind(Total = c(1, 1, 1, 1),
+             A = c(1, 1, 0, 0),
+             B = c(0, 0, 1, 1),
+             A1 = c(1, 0, 0, 0),
+             A2 = c(0, 1, 0, 0),
+             B1 = c(0, 0, 1, 0),
+             B2 = c(0, 0, 0, 1))
+  colnames(S) <- c("A1", "A2", "B1", "B2")
 
-  groups <- list(
-    NSW = c("NSW_Male", "NSW_Female"),
-    National = c("AUS")
-  )
+  lambda_post <- cbind(Total = rgamma(J, 8, 1),
+                       A = rgamma(J, 5, 1),
+                       B = rgamma(J, 6, 1),
+                       A1 = rgamma(J, 2, 1),
+                       A2 = rgamma(J, 4, 1),
+                       B1 = rgamma(J, 3, 1),
+                       B2 = rgamma(J, 5, 1))
 
-  lambda_list <- list(
-    cbind(
-      rgamma(J, shape = 12, rate = 1),
-      rgamma(J, shape = 10, rate = 1)
-    ),
-    matrix(
-      rgamma(J, shape = 22, rate = 1),
-      ncol = 1
-    )
-  )
-
-  z_values <- 0:40
-
-  result <- run_convolution(
-    family = "Poisson",
-    groups = groups,
-    point = FALSE,
-    z_values = z_values,
-    lambda_list = lambda_list
-  )
+  dens_post <- run_convolution(family = "Poisson",
+                               S = S,
+                               lambda_mat = lambda_post,
+                               point = FALSE,
+                               n_sims = 50,
+                               n_draws = NULL,
+                               z_values = seq(0, 100))
 
   expect_type(result, "list")
 
