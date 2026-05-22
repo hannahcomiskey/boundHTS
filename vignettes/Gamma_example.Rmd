@@ -140,27 +140,26 @@ S <- rbind(Tot = c(1, 1, 1, 1),
            BB = c(0, 0, 0, 1))
 colnames(S) <- c("AA", "AB", "BA", "BB")
 
-dens <- Gamma_convolution(
-   S = S,
-   shape_mat = shape_mat,
-   rate_mat = rate_mat,
-   z_values = z_values,
-   point = TRUE,
-   n_sims = 50,
-   n_draws = 100
- )
+# Run convolution (just to see what the density is like before tilting)
+convolution_density <- Gamma_convolution(S = S,
+                                         shape_mat = shape_mat,
+                                         rate_mat = rate_mat,
+                                         z_values = seq(0, 100),
+                                         point = TRUE,
+                                         n_sims = 500,
+                                         n_draws = 100
+                                         )
  
 # Run convolution with tilting 
-res <- run_convolution_with_tilting(family = "Gamma",
+res_tilt <- run_convolution_with_tilting(family = "Gamma",
                                     S = S,
                                     point = TRUE,
                                     mu_theory = mu_theory,
                                     z_values = seq(0, 100),
                                     shape_mat = shape_mat,
                                     rate_mat = rate_mat,
-                                    weights_list = local_weights,
                                     n_draws = 500,
-                                    n_sims = 50)
+                                    n_sims = 100)
 
 ```
 
@@ -186,19 +185,31 @@ forecasts_mean <- forecasts %>%
   dplyr::filter(Node %in% c("A", "B", "Tot")) %>%
   dplyr::mutate(Method = 'Predicted mean')
 
-exp_plot_df <- bind_rows(res$tilted_density) %>% mutate(Method= "Tilted density")
+convolution_df <- bind_rows(convolution_density) %>% mutate(Method= "Convolution")
 
+exp_plot_df <- bind_rows(res_tilt$tilted_density) %>% mutate(Method= "Exponential Tilting")
+
+
+method_cols <- c("Exponential Tilting" = "#1b9e77",
+                 "Convolution" = "#d95f02",
+                 "Observed data" = "#7970b3",
+                 "Predicted mean" = "#0196f5")
 
 ggplot2::ggplot() +
-  ggplot2::geom_line(data = exp_plot_df,
-                ggplot2::aes(x = Z, y = Density, colour=Method), linewidth = 1) +
+  ggplot2::geom_area(data = exp_plot_df,
+                ggplot2::aes(x = Z, y = Density, colour=Method, fill=Method), alpha=0.35, linewidth = 1) +
+  ggplot2::geom_area(data = convolution_df,
+                ggplot2::aes(x = Z, y = Density, colour=Method, fill=Method), alpha=0.35, linewidth = 1) +
   ggplot2::geom_vline(data = forecasts_mean,
                 ggplot2::aes(xintercept = mu_est, colour = Method), linewidth = 1) +
   ggplot2::geom_vline(data = obs_point,
                 ggplot2::aes(xintercept = Observed, colour = Method), linewidth = 1) +
   ggplot2::labs(x = "Proportion", y = "Density") +
   ggplot2::theme_minimal(base_size = 14) +
+  ggplot2::scale_colour_manual(values = method_cols) +
+  ggplot2::scale_fill_manual(values = method_cols) +
   ggplot2::theme(legend.position = "bottom") +
+  ggplot2::guides(fill = "none") +
   facet_wrap(~Node)
 
 ```
