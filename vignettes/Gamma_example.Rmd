@@ -174,16 +174,16 @@ For a single time point:
 t_point <- nrow(gamma_sim_data)
 
 obs_point <- gamma_sim_data %>% 
-  filter(Time==t_point) %>%
-  select(!Time) %>%
-  pivot_longer(cols = everything(), names_to = "Node", values_to = "Observed") %>%
-  filter(Node %in% c("A", "B", "Tot")) %>%
-  mutate(Method="Observed data")
+  dplyr::filter(Time==t_point) %>%
+  dplyr::select(!Time) %>%
+  tidyr::pivot_longer(cols = everything(), names_to = "Node", values_to = "Observed") %>%
+  dplyr::filter(Node %in% c("A", "B", "Tot")) %>%
+  dplyr::mutate(Method="Observed data")
 
 forecasts_mean <- forecasts %>% 
   dplyr::filter(Time == t_point) %>%
   dplyr::select(Time, Node, mu_est) %>%
-  filter(Node %in% c("A", "B", "Tot")) %>%
+  dplyr::filter(Node %in% c("A", "B", "Tot")) %>%
   dplyr::mutate(Method = 'Predicted mean')
 
 exp_plot_df <- bind_rows(res$tilted_density) %>% mutate(Method= "Tilted density")

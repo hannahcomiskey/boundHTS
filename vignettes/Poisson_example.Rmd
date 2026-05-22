@@ -116,20 +116,27 @@ We estimate a coherent top-series probability mass function (PMF) using a convol
 
 #### Step 3.1: Generate PMF via convolution and tilt the convoluted PMF towards the predictive mean.
 ```{r}
+# Set up summation matrix
+S <- rbind(Tot = c(1, 1, 1, 1),
+           AA = c(1, 0, 0, 0),
+           AB = c(0, 1, 0, 0),
+           BA = c(0, 0, 1, 0),
+           BB = c(0, 0, 0, 1))
+colnames(S) <- c("AA", "AB", "BA", "BB")
+ 
+
 # Set up expected values 
-mu_theory <- as.vector(unlist(lambda_est[N, "Tot"])) # predictive mean of the aggregated series
+mu_theory <- unlist(lambda_est[N,]) # predictive mean of the aggregated series
 
 # Run convolution with tilting 
 res <- run_convolution_with_tilting(family = "Poisson",
-                                groups =  list(Bottom = c("AA", "AB", "BA", "BB"),
-                                               Top = "Tot"),
-                                point = TRUE,
-                                mu_theory = mu_theory,
-                                z_values = seq(0,45),
-                                lambda_list = list(lambda_est[N,c("AA", "AB", "BA", "BB")],
-                                                   lambda_est[N,c("Tot")]),
-                                n_draws = 2000,
-                                n_sims = 100)
+                                    S = S,
+                                    point = TRUE,
+                                    mu_theory = mu_theory,
+                                    z_values = seq(0,45),
+                                    lambda_mat = lambda_est[N,],
+                                    n_draws = 2000,
+                                    n_sims = 100)
 
 ```
 
@@ -139,22 +146,25 @@ res <- run_convolution_with_tilting(family = "Poisson",
 The figure presents the predictive density formed by convolving the estimated bottom-level Poisson distributions. The resulting density is subsequently tilted so that its expectation matches the corresponding one-step-ahead predictive mean, ensuring coherence between the full predictive distribution and the point forecast.
 
 ```{r}
+# Observed data 
+obs_t <- poisson_sim_data[N, "Tot"]
+obs_df <- data.frame(node = names(obs_t), observed = obs_t) 
 
 # Extract predictive means at time t
 lambda_t <- lambda_est[N, "Tot"]
+means_df <- data.frame(node = names(lambda_t), mean = lambda_t) 
 
 # tilted density
 df_plot <- res$tilted_density[[1]]
 
-means_df <- data.frame(node = names(lambda_t), mean = lambda_t) 
-  
-
 ggplot2::ggplot() +
   ggplot2::geom_col(data = df_plot, ggplot2::aes(x = Z, y = Density, fill='Tilted density')) +
   ggplot2::geom_vline(data = means_df,
-             ggplot2::aes(xintercept = mean, linetype = "Predicitive mean")) +
-  ggplot2::facet_wrap(~ node, nrow=5) +
+             ggplot2::aes(xintercept = mean, linetype = "Predicitive mean"),  linewidth = 1) +
+    ggplot2::geom_vline(data = obs_df,
+             ggplot2::aes(xintercept = Tot, linetype = "Observed data"),  linewidth = 1) +
   ggplot2::scale_colour_brewer(palette="Set1") +
+  ggplot2::guides(fill='none')+
   ggplot2::labs(x = "Counts",
        y = "Tilted probability mass")
 
