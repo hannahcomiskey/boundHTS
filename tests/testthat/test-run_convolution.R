@@ -90,15 +90,15 @@ test_that("Poisson convolution runs with posterior samples", {
                                n_draws = NULL,
                                z_values = seq(0, 100))
 
-  expect_type(result, "list")
+  expect_type(dens_post, "list")
 
   expect_true(all(
     c("Node", "Z", "Density") %in%
-      names(result[[1]])
+      names(dens_post[[1]])
   ))
 
   expect_equal(
-    nrow(result[[1]]),
+    nrow(dens_post[[1]]),
     length(z_values)
   )
 
@@ -106,112 +106,124 @@ test_that("Poisson convolution runs with posterior samples", {
 
 test_that("Beta convolution runs with point estimates", {
 
-  groups <- list(
-    State = c("NSW", "VIC"),
-    National = c("AUS")
-  )
+  set.seed(123)
 
-  alpha_list <- list(
-    c(2, 5),
-    7
-  )
+  S_beta <- rbind(Total = c(1, 1, 1, 1),
+                  A = c(1, 1, 0, 0),
+                  B = c(0, 0, 1, 1),
+                  A1 = c(1, 0, 0, 0),
+                  A2 = c(0, 1, 0, 0),
+                  B1 = c(0, 0, 1, 0),
+                  B2 = c(0, 0, 0, 1))
+  colnames(S_beta) <- c("A1", "A2", "B1", "B2")
 
-  beta_list <- list(
-    c(6, 3),
-    4
-  )
+  weights_list <- list(Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
+                       A = c(A1 = 0.40, A2 = 0.60),
+                       B = c(B1 = 0.30, B2 = 0.70))
 
-  weights_list <- list(
-    c(0.4, 0.6),
-    1
-  )
+  alpha_mat <- c(Total = 8, A = 5, B = 6, A1 = 2, A2 = 4, B1 = 3, B2 = 5)
 
-  result <- run_convolution(
+  beta_mat <- c(Total = 4, A = 3, B = 2, A1 = 6, A2 = 5, B1 = 7, B2 = 4)
+
+  dens <- run_convolution(
     family = "Beta",
-    groups = groups,
+    S = S_beta,
     point = TRUE,
     z_values = NULL,
-    alpha_list = alpha_list,
-    beta_list = beta_list,
-    weights_list = weights_list
+    alpha_mat = alpha_mat,
+    beta_mat = beta_mat,
+    weights_list = weights_list,
+    n_draws = 500,
+    n_sims = 50
   )
-
-  expect_type(result, "list")
+  expect_type(dens, "list")
 
 })
 
 test_that("ZOIB convolution runs with point estimates", {
 
-  groups <- list(
-    State = c("NSW", "VIC"),
-    National = c("AUS")
-  )
 
-  alpha_list <- list(
-    c(2, 5),
-    7
-  )
+  set.seed(123)
 
-  beta_list <- list(
-    c(6, 3),
-    4
-  )
+  S_beta <- rbind(Total = c(1, 1, 1, 1),
+                  A = c(1, 1, 0, 0),
+                  B = c(0, 0, 1, 1),
+                  A1 = c(1, 0, 0, 0),
+                  A2 = c(0, 1, 0, 0),
+                  B1 = c(0, 0, 1, 0),
+                  B2 = c(0, 0, 0, 1))
+  colnames(S_beta) <- c("A1", "A2", "B1", "B2")
 
-  zoi_list <- list(
-    c(0.1, 0.2),
-    0.05
-  )
+  weights_list <- list(Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
+                       A = c(A1 = 0.40, A2 = 0.60),
+                       B = c(B1 = 0.30, B2 = 0.70))
 
-  coi_list <- list(
-    c(0.05, 0.10),
-    0.02
-  )
+  alpha_mat <- c(Total = 8, A = 5, B = 6, A1 = 2, A2 = 4, B1 = 3, B2 = 5)
 
-  weights_list <- list(
-    c(0.4, 0.6),
-    1
-  )
+  beta_mat <- c(Total = 4, A = 3, B = 2, A1 = 6, A2 = 5, B1 = 7, B2 = 4)
 
-  result <- run_convolution(
+  zoi_mat <- c(Total = 0.01, A = 0.03, B = 0.02, A1 = 0.06, A2 = 0.05, B1 = 0.07, B2 = 0.04)
+
+  coi_mat <- c(Total = 0.01, A = 0.01, B = 0.01, A1 = 0.01, A2 = 0.01, B1 = 0.01, B2 = 0.01)
+
+  dens <- run_convolution(
     family = "ZOIB",
-    groups = groups,
+    S = S_beta,
     point = TRUE,
     z_values = NULL,
-    alpha_list = alpha_list,
-    beta_list = beta_list,
-    zoi_list = zoi_list,
-    coi_list = coi_list,
-    weights_list = weights_list
+    alpha_mat = alpha_mat,
+    beta_mat = beta_mat,
+    zoi_mat = zoi_mat,
+    coi_mat = coi_mat,
+    weights_list = weights_list,
+    n_draws = 500,
+    n_sims = 50
   )
-
-  expect_type(result, "list")
-
+  expect_type(dens, "list")
 })
 
 test_that("run_convolution returns densities with expected columns", {
 
-  groups <- list(
-    NSW = c("NSW_Male", "NSW_Female"),
-    National = c("AUS")
-  )
+  set.seed(123)
 
-  lambda_list <- list(
-    c(12, 10),
-    22
-  )
+  S_beta <- rbind(Total = c(1, 1, 1, 1),
+                  A = c(1, 1, 0, 0),
+                  B = c(0, 0, 1, 1),
+                  A1 = c(1, 0, 0, 0),
+                  A2 = c(0, 1, 0, 0),
+                  B1 = c(0, 0, 1, 0),
+                  B2 = c(0, 0, 0, 1))
+  colnames(S_beta) <- c("A1", "A2", "B1", "B2")
 
-  z_values <- 0:20
+  weights_list <- list(Total = c(A1 = 0.10, A2 = 0.15, B1 = 0.30, B2 = 0.45),
+                       A = c(A1 = 0.40, A2 = 0.60),
+                       B = c(B1 = 0.30, B2 = 0.70))
 
-  result <- run_convolution(
-    family = "Poisson",
-    groups = groups,
+  alpha_mat <- c(Total = 8, A = 5, B = 6, A1 = 2, A2 = 4, B1 = 3, B2 = 5)
+
+  beta_mat <- c(Total = 4, A = 3, B = 2, A1 = 6, A2 = 5, B1 = 7, B2 = 4)
+
+  zoi_mat <- c(Total = 0.01, A = 0.03, B = 0.02, A1 = 0.06, A2 = 0.05, B1 = 0.07, B2 = 0.04)
+
+  coi_mat <- c(Total = 0.01, A = 0.01, B = 0.01, A1 = 0.01, A2 = 0.01, B1 = 0.01, B2 = 0.01)
+
+  dens <- run_convolution(
+    family = "ZOIB",
+    S = S_beta,
     point = TRUE,
-    z_values = z_values,
-    lambda_list = lambda_list
+    z_values = NULL,
+    alpha_mat = alpha_mat,
+    beta_mat = beta_mat,
+    zoi_mat = zoi_mat,
+    coi_mat = coi_mat,
+    weights_list = weights_list,
+    n_draws = 500,
+    n_sims = 50
   )
+  expect_type(dens, "list")
 
   expect_named(
-    result[[1]],
+    dens[[1]],
     c("Node", "Z", "Density")
   )
 
