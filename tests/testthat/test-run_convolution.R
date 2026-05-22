@@ -99,7 +99,7 @@ test_that("Poisson convolution runs with posterior samples", {
 
   expect_equal(
     nrow(dens_post[[1]]),
-    length(z_values)
+    length(seq(0, 100))
   )
 
 })
