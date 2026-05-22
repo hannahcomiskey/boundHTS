@@ -112,7 +112,7 @@ We estimate a coherent top-series probability mass function (PMF) using a convol
 - the **top-level series** (`Tot`) estimates
 - the **bottom-level series** (`AA`, `AB`, `BA`, `BB`) estimates
 - A fine grid over which the density exists
-
+- A summation matrix S
 
 #### Step 3.1: Generate PMF via convolution and tilt the convoluted PMF towards the predictive mean.
 ```{r}
